@@ -1,0 +1,12 @@
+{
+    'dc':{'titles':[{"title":"My Dataset Title"}]},
+    'foundry':{
+        'inputs': ['a'],
+        'outputs': ['c'],
+        'type': "tabular",
+        'uri':["https://s3.amazonaws.com/keras-datasets/boston_housing.npz"],
+        'hash':"asdaasdhahd87264283674",
+        'references':["@abc"]
+    }
+   
+}

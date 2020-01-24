@@ -1,0 +1,34 @@
+import setuptools
+
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+packages=setuptools.find_packages(),
+setuptools.setup(
+    name='materials-foundry',
+    version='0.0.1',
+    author="Ben Blaiszik",
+    author_email="blaiszik@uchicago.edu",
+    packages=setuptools.find_packages(),
+    description="Package to support simplified application of machine learning models to  datasets in materials science",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    install_requires=[
+        "mdf_forge",
+        "dlhub_client",
+        "numpy>=1.15.4",
+        "pandas>=0.23.4"
+    ],
+    python_requires=">=3.7",
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: Apache Software License",
+        "Natural Language :: English",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Topic :: Scientific/Engineering"
+    ],
+    keywords=[],
+    license="Apache License, Version 2.0",
+    url="https://github.com/globus-labs/foundry"
+)

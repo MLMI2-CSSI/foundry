@@ -1,0 +1,11 @@
+{
+	"dc": {},
+	"mdf": {},
+	"dataset": {
+		"inputs": ["configuration", "magnetic_moment", "stability", "delta_e", "total_energy", "volume_pa", "composition", "dft_converged", "dft_cutoff_energy", "dft_exchange_correlation_functional", "crystal_structure_number_of_atoms", "crystal_structure_space_group", "crystal_structure_volume"],
+		"outputs": ["bandgap"],
+        "type": "tabular",
+        "version":"0.1",
+        "sources":["https://data.materialsdatafacility.org/public/foundry_dataframe.json"]
+	}
+}

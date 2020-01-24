@@ -1,0 +1,1 @@
+{"dc": {"title": [{"title": "Fashion MNIST"}]}, "mdf": {}, "foundry": {"inputs": [], "outputs": ["label"], "input_descriptions": ["28x28 greyscale image"], "output_descriptions": ["T-shirt/top", "Trouser", "Pullover", "Dress", "Coat", "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot"], "type": "class"}}
