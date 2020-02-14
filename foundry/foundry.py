@@ -216,21 +216,3 @@ class Foundry(FoundryMetadata):
                                           interval=kwargs.get('interval',20),
                                           download_datasets=True)
         return self
-
-    @staticmethod
-    def get_data(scheme, host, path):
-        """
-        Arrange data files on the local system to allow load_data to be invoked
-        
-        For more complicated data structures, users should
-        subclass Foundry and override the load_data function 
-        """
-        from keras.utils import get_file
-
-        if scheme.lower() == "http" or scheme.lower() == "https":
-            origin="{}://{}{}".format(scheme, host, path)
-            return get_file("{}".format(path.split('/')[-1]), 
-            origin=origin,
-            cache_subdir="boston",
-            cache_dir="~/.foundry")
-
