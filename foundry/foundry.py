@@ -10,6 +10,7 @@ from enum import Enum
 import pandas as pd
 import requests
 import json
+import glob
 import os
 
 """
@@ -114,6 +115,10 @@ class Foundry(FoundryMetadata):
                               "name":r['dc']['titles'][0]['title'],
                               "year":r['dc']['publicationYear']} for r in res])
 
+    def get_packages(self):
+        paths = glob.glob(self.config.local_cache_dir+'/*/')
+        pkgs = [path.split('/')[-2] for path in paths]
+        return {"paths":paths, "packages":pkgs}
 
     def run(self, name, X, **kwargs):
         # run the model with given data
