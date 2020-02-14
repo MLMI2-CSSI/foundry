@@ -13,7 +13,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=[
-        "mdf_forge",
+        "mdf_forge>=0.7.6",
         "dlhub_client",
         "numpy>=1.15.4",
         "pandas>=0.23.4"
