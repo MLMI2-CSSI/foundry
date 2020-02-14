@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 packages=setuptools.find_packages(),
 setuptools.setup(
-    name='materials-foundry',
+    name='foundry',
     version='0.0.1',
     author="Ben Blaiszik",
     author_email="blaiszik@uchicago.edu",
