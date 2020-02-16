@@ -123,9 +123,22 @@ class Foundry(FoundryMetadata):
         else:
             return [path.split('/')[-2] for path in pkg_paths]
             
+    def collect_dataframes(self, inputs=[], outputs=[], packages=None):
+        frame_files = glob.glob(self.config.local_cache_dir+'/*/*dataframe*', 
+                                recursive=True)
 
-        # pkgs = [path.split('/')[-2] for path in paths]
-        # return {"paths":paths, "packages":pkgs}
+        frames = []
+        for frame in frame_files:
+            df_tmp = pd.read_json(frame)
+            df_tmp['source'] = frame
+            frames.append(df_tmp)
+        df = pd.concat(frames)
+
+        if inputs and outputs:
+            return df[inputs], df[outputs]            
+        else:
+            return df
+
 
     def run(self, name, X, **kwargs):
         # run the model with given data
