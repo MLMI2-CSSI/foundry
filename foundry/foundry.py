@@ -115,10 +115,17 @@ class Foundry(FoundryMetadata):
                               "name":r['dc']['titles'][0]['title'],
                               "year":r['dc']['publicationYear']} for r in res])
 
-    def get_packages(self):
-        paths = glob.glob(self.config.local_cache_dir+'/*/')
-        pkgs = [path.split('/')[-2] for path in paths]
-        return {"paths":paths, "packages":pkgs}
+    def get_packages(self, paths=False):
+        pkg_paths = glob.glob(self.config.local_cache_dir+'/*/')
+        if paths:
+            return [{"path":path, 
+                    "package":path.split('/')[-2]} for path in pkg_paths]
+        else:
+            return [path.split('/')[-2] for path in pkg_paths]
+            
+
+        # pkgs = [path.split('/')[-2] for path in paths]
+        # return {"paths":paths, "packages":pkgs}
 
     def run(self, name, X, **kwargs):
         # run the model with given data
