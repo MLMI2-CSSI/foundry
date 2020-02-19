@@ -16,7 +16,9 @@ setuptools.setup(
         "mdf_forge>=0.7.6",
         "dlhub_client",
         "numpy>=1.15.4",
-        "pandas>=0.23.4"
+        "pandas>=0.23.4",
+        "pydantic>=1.4",
+        "mdf_connect_client>=0.3.7"
     ],
     python_requires=">=3.7",
     classifiers=[
