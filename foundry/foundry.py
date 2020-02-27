@@ -11,6 +11,7 @@ import pandas as pd
 import requests
 import json
 import glob
+import h5py
 import os
 
 """
@@ -36,6 +37,7 @@ TODO:
 class FoundryDatasetType(Enum):
     tabular="tabular"
     files="files"
+    hdf5="hdf5"
     other="other"
         
 class FoundryDataset(BaseModel):
@@ -74,6 +76,14 @@ class FoundryMetadata(BaseModel):
         arbitrary_types_allowed = True
 
 class Foundry(FoundryMetadata):
+    """Foundry Client Base Class
+    TODO:
+    -------
+    Add Docstring
+
+    """
+
+
     from_file: Optional[bool]
 
     __services = ["transfer"]
@@ -85,18 +95,42 @@ class Foundry(FoundryMetadata):
     connect_client = MDFConnectClient(test=True)
 
     def from_file(self, file=None):
+        """Create a Foundry client from a file
+
+        Args:
+            file (str): Path to the file containing
+            (default: self.config.metadata_file)
+
+        Returns
+        -------
+        Foundry: an instantiated Foundry client
+        """
+
         if file is None: file= self.config.metadata_file
         with open ("./{}".format(file)) as fp:
             obj = json.load(fp)
             return Foundry(**obj)
 
     def load(self, name, download=True, **kwargs):
-        """ 
-        Load the contents of a foundry dataset package 
-        
+        """Load the metadata for a Foundry dataset into the client
+
+        Args:
+            name (str): Name of the foundry dataset
+            download (bool): If True, download the data associated with the package (default is True)
+    
+        Keyword Args:
+            interval (int): How often to poll Globus to check if transfers are complete
+
+        Returns
+        -------
+            self
         """
         # MDF specific logic
-        res = self.forge_client.search('mdf.source_id:{name}'.format(name=name), advanced=True)
+        res = self.forge_client.match_field('mdf.organizations','foundry').match_resource_types('dataset')
+        res = res.match_field('mdf.source_id',name).search()
+
+
+        #res = self.forge_client.search('mdf.source_id:{name}'.format(name=name), advanced=True)
         res = res[0]
         res['dataset'] = res['projects']['foundry']
         res['dataset']['type'] = res['dataset']['package_type']
@@ -110,12 +144,28 @@ class Foundry(FoundryMetadata):
         return self
 
     def list(self):
-        res = self.forge_client.match_field('mdf.organizations','foundry').search()
+        """List available Foundry data packages
+
+        Returns
+        -------
+            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, and publication year
+        """
+        res = self.forge_client.match_field('mdf.organizations','foundry').match_resource_types('dataset').search()
+
         return pd.DataFrame([{"source_id":r['mdf']['source_id'], 
                               "name":r['dc']['titles'][0]['title'],
-                              "year":r['dc']['publicationYear']} for r in res])
+                              "year":r['dc'].get('publicationYear', None)} for r in res])
 
     def get_packages(self, paths=False):
+        """Get available local data packages
+
+        Args:
+           paths (bool): If True return paths in addition to package, if False return package name only
+
+        Returns
+        -------
+            (list): List describing local Foundry packages
+        """
         pkg_paths = glob.glob(self.config.local_cache_dir+'/*/')
         if paths:
             return [{"path":path, 
@@ -124,6 +174,16 @@ class Foundry(FoundryMetadata):
             return [path.split('/')[-2] for path in pkg_paths]
             
     def collect_dataframes(self, inputs=[], outputs=[], packages=None):
+        """Collect dataframes of local data packages
+
+        Args:
+           inputs (list): List of strings for input columns
+           outputs (list): List of strings for output columns
+
+        Returns
+        -------
+            (pandas.DataFrame): Collected dataframe with specified inputs and outputs
+        """
         frame_files = glob.glob(self.config.local_cache_dir+'/*/*dataframe*', 
                                 recursive=True)
 
@@ -140,14 +200,25 @@ class Foundry(FoundryMetadata):
             return df
 
 
-    def run(self, name, X, **kwargs):
-        # run the model with given data
-        return self.dlhub_client.run(name, inputs=X)
+    def run(self, name, inputs, **kwargs):
+        """Run a model on data
+
+        Args:
+           name (str): DLHub model name
+           inputs: Data to send to DLHub as inputs (should be JSON serializable)
+
+        Returns
+        -------
+             Returns results after invocation via the DLHub service
+
+        TODO:
+        -------
+        - Pass **kwargs through to DLHub client and document kwargs
+        """
+        return self.dlhub_client.run(name, inputs=inputs)
 
     def load_data(self, source_id=None):
-        """
-        Load in the data associated with the prescribed dataset
-        Returns: Tuple of X, y values
+        """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
         stored in self.dataframe_file. The contents are read, and 
@@ -156,6 +227,14 @@ class Foundry(FoundryMetadata):
 
         For more complicated data structures, users should
         subclass Foundry and override the load_data function 
+
+        Args:
+           inputs (list): List of strings for input columns
+           outputs (list): List of strings for output columns
+
+        Returns
+        -------
+             (tuple): Tuple of X, y values
         """
 
         if source_id:
@@ -180,6 +259,12 @@ class Foundry(FoundryMetadata):
                                                                    self.config.dataframe_file), lines=True)
 
             return self.dataset.dataframe[self.dataset.inputs], self.dataset.dataframe[self.dataset.outputs]
+        if self.dataset.type.value == "hdf5":
+            f = h5py.File('./foundry.hdf5','r')
+            inputs = [f[i[0:]] for i in self.dataset.inputs]
+            outputs = [f[i[0:]] for i in self.dataset.outputs]
+            return (inputs, outputs)
+
         elif self.dataset.type.value == "file":
             self.dataset.dataframe = pd.read_json('./'+self.config.dataframe_file)
             #self.dereference_columns()
