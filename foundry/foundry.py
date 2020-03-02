@@ -1,4 +1,3 @@
-
 from pydantic import AnyUrl, ValidationError, BaseModel
 from typing import List, Dict, Optional, Any
 from collections import namedtuple
@@ -35,45 +34,69 @@ TODO:
 
 
 class FoundryDatasetType(Enum):
-    tabular="tabular"
-    files="files"
-    hdf5="hdf5"
-    other="other"
-        
+    """Foundry Dataset Types
+    Enumeration of the possible Foundry dataset types
+    """
+
+    tabular = "tabular"
+    files = "files"
+    hdf5 = "hdf5"
+    other = "other"
+
+
 class FoundryDataset(BaseModel):
+    """Foundry Dataset
+    Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
+    """
+
     inputs: List = []
     outputs: List = []
     input_descriptions: Optional[List] = []
     output_descriptions: Optional[List] = []
     type: FoundryDatasetType = None
-    #hash: Optional[str] = []
+    # hash: Optional[str] = []
     version: Optional[str] = ""
     short_name: Optional[str] = ""
-    #references: Optional[List[str]] = []
+    # references: Optional[List[str]] = []
     dataframe: Optional[Any] = None
-    #sources: Optional[List[AnyUrl]] = []
+    # sources: Optional[List[AnyUrl]] = []
 
     class Config:
         arbitrary_types_allowed = True
 
+
 class FoundryConfig(BaseModel):
+    """Foundry Configuration
+    Configuration information for Foundry Dataset
+
+    Args:
+        dataframe_file (str): Filename to read dataframe contents from
+        metadata_file (str): Filename to read metadata contents from defaults to reading for MDF Discover
+        destination_endpoint (str): Globus endpoint ID to transfer data to (defaults to local GCP installation)
+        local_cache_dir (str): Path to local Foundry package cache
+    """
+
     dataframe_file: Optional[str] = "foundry_dataframe.json"
     metadata_file: Optional[str] = "foundry_metadata.json"
     destination_endpoint: Optional[str] = None
     local: Optional[bool] = False
     local_cache_dir = "./data"
-    
+
+
 class FoundryMetadata(BaseModel):
-    dc: Optional[Dict] = {} #pydantic Datacite?
+    dc: Optional[Dict] = {}  # pydantic Datacite?
     mdf: Optional[Dict] = {}
     dataset: FoundryDataset = {}
-    config: FoundryConfig = FoundryConfig(dataframe_file="foundry_dataframe.json",
-                                          metadata_file="foundry_metadata.json",
-                                          local=False,
-                                          local_cache_dir="./data")
+    config: FoundryConfig = FoundryConfig(
+        dataframe_file="foundry_dataframe.json",
+        metadata_file="foundry_metadata.json",
+        local=False,
+        local_cache_dir="./data",
+    )
 
     class Config:
         arbitrary_types_allowed = True
+
 
 class Foundry(FoundryMetadata):
     """Foundry Client Base Class
@@ -83,15 +106,16 @@ class Foundry(FoundryMetadata):
 
     """
 
-
     from_file: Optional[bool]
 
     __services = ["transfer"]
     __app_name = "Foundry"
 
     dlhub_client = DLHubClient()
-    forge_client = Forge('mdf-test', services=__services)
-    transfer_client = mdf_toolbox.login(services=__services, app_name=__app_name)['transfer']
+    forge_client = Forge("mdf-test", services=__services)
+    transfer_client = mdf_toolbox.login(services=__services, app_name=__app_name)[
+        "transfer"
+    ]
     connect_client = MDFConnectClient(test=True)
 
     def from_file(self, file=None):
@@ -106,8 +130,9 @@ class Foundry(FoundryMetadata):
         Foundry: an instantiated Foundry client
         """
 
-        if file is None: file= self.config.metadata_file
-        with open ("./{}".format(file)) as fp:
+        if file is None:
+            file = self.config.metadata_file
+        with open("./{}".format(file)) as fp:
             obj = json.load(fp)
             return Foundry(**obj)
 
@@ -126,20 +151,21 @@ class Foundry(FoundryMetadata):
             self
         """
         # MDF specific logic
-        res = self.forge_client.match_field('mdf.organizations','foundry').match_resource_types('dataset')
-        res = res.match_field('mdf.source_id',name).search()
+        res = self.forge_client.match_field(
+            "mdf.organizations", "foundry"
+        ).match_resource_types("dataset")
+        res = res.match_field("mdf.source_id", name).search()
 
-
-        #res = self.forge_client.search('mdf.source_id:{name}'.format(name=name), advanced=True)
+        # res = self.forge_client.search('mdf.source_id:{name}'.format(name=name), advanced=True)
         res = res[0]
-        res['dataset'] = res['projects']['foundry']
-        res['dataset']['type'] = res['dataset']['package_type']
-        del(res['projects']['foundry'])
+        res["dataset"] = res["projects"]["foundry"]
+        res["dataset"]["type"] = res["dataset"]["package_type"]
+        del res["projects"]["foundry"]
 
         self = Foundry(**res)
 
-        if download is True: # Add check for package existence
-            self.download(interval=kwargs.get('interval', 10))
+        if download is True:  # Add check for package existence
+            self.download(interval=kwargs.get("interval", 10))
 
         return self
 
@@ -150,11 +176,22 @@ class Foundry(FoundryMetadata):
         -------
             (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, and publication year
         """
-        res = self.forge_client.match_field('mdf.organizations','foundry').match_resource_types('dataset').search()
+        res = (
+            self.forge_client.match_field("mdf.organizations", "foundry")
+            .match_resource_types("dataset")
+            .search()
+        )
 
-        return pd.DataFrame([{"source_id":r['mdf']['source_id'], 
-                              "name":r['dc']['titles'][0]['title'],
-                              "year":r['dc'].get('publicationYear', None)} for r in res])
+        return pd.DataFrame(
+            [
+                {
+                    "source_id": r["mdf"]["source_id"],
+                    "name": r["dc"]["titles"][0]["title"],
+                    "year": r["dc"].get("publicationYear", None),
+                }
+                for r in res
+            ]
+        )
 
     def get_packages(self, paths=False):
         """Get available local data packages
@@ -166,13 +203,14 @@ class Foundry(FoundryMetadata):
         -------
             (list): List describing local Foundry packages
         """
-        pkg_paths = glob.glob(self.config.local_cache_dir+'/*/')
+        pkg_paths = glob.glob(self.config.local_cache_dir + "/*/")
         if paths:
-            return [{"path":path, 
-                    "package":path.split('/')[-2]} for path in pkg_paths]
+            return [
+                {"path": path, "package": path.split("/")[-2]} for path in pkg_paths
+            ]
         else:
-            return [path.split('/')[-2] for path in pkg_paths]
-            
+            return [path.split("/")[-2] for path in pkg_paths]
+
     def collect_dataframes(self, inputs=[], outputs=[], packages=None):
         """Collect dataframes of local data packages
 
@@ -184,21 +222,21 @@ class Foundry(FoundryMetadata):
         -------
             (pandas.DataFrame): Collected dataframe with specified inputs and outputs
         """
-        frame_files = glob.glob(self.config.local_cache_dir+'/*/*dataframe*', 
-                                recursive=True)
+        frame_files = glob.glob(
+            self.config.local_cache_dir + "/*/*dataframe*", recursive=True
+        )
 
         frames = []
         for frame in frame_files:
             df_tmp = pd.read_json(frame)
-            df_tmp['source'] = frame
+            df_tmp["source"] = frame
             frames.append(df_tmp)
         df = pd.concat(frames)
 
         if inputs and outputs:
-            return df[inputs], df[outputs]            
+            return df[inputs], df[outputs]
         else:
             return df
-
 
     def run(self, name, inputs, **kwargs):
         """Run a model on data
@@ -239,36 +277,44 @@ class Foundry(FoundryMetadata):
 
         if source_id:
             path = os.path.join(self.config.local_cache_dir, source_id)
-        else: 
-            path = os.path.join(self.config.local_cache_dir, self.mdf['source_id'])
+        else:
+            path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
         # Handle Foundry-defined types.
         if self.dataset.type.value == "tabular":
             # If the file is not local, fetch the contents with Globus
-            # Check if the contents are local 
+            # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
             # for source in self.dataset.sources:
             #     r = requests.get(source, allow_redirects=True)
             #     open(self.config.dataframe_file, 'wb').write(r.content)
 
             try:
-                self.dataset.dataframe = pd.read_json(os.path.join(path, 
-                                                                   self.config.dataframe_file))
+                self.dataset.dataframe = pd.read_json(
+                    os.path.join(path, self.config.dataframe_file)
+                )
             except:
                 # Try to read individual lines instead
-                self.dataset.dataframe = pd.read_json(os.path.join(path, 
-                                                                   self.config.dataframe_file), lines=True)
+                self.dataset.dataframe = pd.read_json(
+                    os.path.join(path, self.config.dataframe_file), lines=True
+                )
 
-            return self.dataset.dataframe[self.dataset.inputs], self.dataset.dataframe[self.dataset.outputs]
+            return (
+                self.dataset.dataframe[self.dataset.inputs],
+                self.dataset.dataframe[self.dataset.outputs],
+            )
         if self.dataset.type.value == "hdf5":
-            f = h5py.File('./foundry.hdf5','r')
+            f = h5py.File("./foundry.hdf5", "r")
             inputs = [f[i[0:]] for i in self.dataset.inputs]
             outputs = [f[i[0:]] for i in self.dataset.outputs]
             return (inputs, outputs)
 
         elif self.dataset.type.value == "file":
-            self.dataset.dataframe = pd.read_json('./'+self.config.dataframe_file)
-            #self.dereference_columns()
-            return self.dataset.dataframe[self.dataset.inputs], self.dataset.dataframe[self.dataset.outputs]
+            self.dataset.dataframe = pd.read_json("./" + self.config.dataframe_file)
+            # self.dereference_columns()
+            return (
+                self.dataset.dataframe[self.dataset.inputs],
+                self.dataset.dataframe[self.dataset.outputs],
+            )
         else:
             raise NotImplementedError
 
@@ -282,47 +328,57 @@ class Foundry(FoundryMetadata):
         print("DC:{}".format(self.dc))
         print("Dataset:{}".format(self.dataset.json(exclude={"dataframe"})))
 
-    def publish(self, foundry_metadata, update=False,  **kwargs):
+    def publish(self, foundry_metadata, update=False, **kwargs):
         """
         Submit a data package
         """
         print(kwargs)
 
-        self.connect_client.create_dc_block(title=kwargs['title'],
-                   authors=kwargs['authors'],
-                   affiliations=kwargs.get('affiliations',[]),
-                   subjects = kwargs.get('tags',["machine learning","foundry"]))
+        self.connect_client.create_dc_block(
+            title=kwargs["title"],
+            authors=kwargs["authors"],
+            affiliations=kwargs.get("affiliations", []),
+            subjects=kwargs.get("tags", ["machine learning", "foundry"]),
+        )
         self.connect_client.add_organization("Foundry")
         self.connect_client.set_project_block("foundry", foundry_metadata)
-        self.connect_client.add_data_source(kwargs.get('data_sources',[]))
+        self.connect_client.add_data_source(kwargs.get("data_sources", []))
 
         res = self.connect_client.submit_dataset(update=update)
         return res
 
-        
     def from_file(self, file=None):
-        if file is None: file= self.config.metadata_file
-        with open ("./{}".format(file)) as fp:
+        if file is None:
+            file = self.config.metadata_file
+        with open("./{}".format(file)) as fp:
             obj = json.load(fp)
             return Foundry(**obj)
 
     def to_file(self, file=None):
-        if file is None: file= self.config.metadata_file
-        with open ("./{}".format(file)) as fp:
-            obj = json.dump(self.json(exclude={"dlhub_client","forge_client"}), fp)
+        if file is None:
+            file = self.config.metadata_file
+        with open("./{}".format(file)) as fp:
+            obj = json.dump(self.json(exclude={"dlhub_client", "forge_client"}), fp)
 
     def configure(self, **kwargs):
         self.config = FoundryConfig(**kwargs)
         return self
 
     def download(self, **kwargs):
-        #Check if the dir already exists
-        if os.path.isdir(os.path.join(self.config.local_cache_dir, self.mdf['source_id'])):
+        # Check if the dir already exists
+        if os.path.isdir(
+            os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
+        ):
             return self
 
-        res = self.forge_client.search('mdf.source_id:{name}'.format(name=self.mdf['source_id']), advanced=True)
-        self.forge_client.globus_download(res, dest=self.config.local_cache_dir, 
-                                          dest_ep=self.config.destination_endpoint, 
-                                          interval=kwargs.get('interval',20),
-                                          download_datasets=True)
+        res = self.forge_client.search(
+            "mdf.source_id:{name}".format(name=self.mdf["source_id"]), advanced=True
+        )
+        self.forge_client.globus_download(
+            res,
+            dest=self.config.local_cache_dir,
+            dest_ep=self.config.destination_endpoint,
+            interval=kwargs.get("interval", 20),
+            download_datasets=True,
+        )
         return self
