@@ -77,6 +77,7 @@ class FoundryConfig(BaseModel):
     """
 
     dataframe_file: Optional[str] = "foundry_dataframe.json"
+    data_file: Optional[str] = "foundry.hdf5"
     metadata_file: Optional[str] = "foundry_metadata.json"
     destination_endpoint: Optional[str] = None
     local: Optional[bool] = False
@@ -117,24 +118,6 @@ class Foundry(FoundryMetadata):
         "transfer"
     ]
     connect_client = MDFConnectClient(test=True)
-
-    def from_file(self, file=None):
-        """Create a Foundry client from a file
-
-        Args:
-            file (str): Path to the file containing
-            (default: self.config.metadata_file)
-
-        Returns
-        -------
-        Foundry: an instantiated Foundry client
-        """
-
-        if file is None:
-            file = self.config.metadata_file
-        with open("./{}".format(file)) as fp:
-            obj = json.load(fp)
-            return Foundry(**obj)
 
     def load(self, name, download=True, **kwargs):
         """Load the metadata for a Foundry dataset into the client
@@ -213,7 +196,6 @@ class Foundry(FoundryMetadata):
 
     def collect_dataframes(self, inputs=[], outputs=[], packages=None):
         """Collect dataframes of local data packages
-
         Args:
            inputs (list): List of strings for input columns
            outputs (list): List of strings for output columns
@@ -284,10 +266,6 @@ class Foundry(FoundryMetadata):
             # If the file is not local, fetch the contents with Globus
             # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
-            # for source in self.dataset.sources:
-            #     r = requests.get(source, allow_redirects=True)
-            #     open(self.config.dataframe_file, 'wb').write(r.content)
-
             try:
                 self.dataset.dataframe = pd.read_json(
                     os.path.join(path, self.config.dataframe_file)
@@ -302,37 +280,34 @@ class Foundry(FoundryMetadata):
                 self.dataset.dataframe[self.dataset.inputs],
                 self.dataset.dataframe[self.dataset.outputs],
             )
-        if self.dataset.type.value == "hdf5":
-            f = h5py.File("./foundry.hdf5", "r")
+        elif self.dataset.type.value == "hdf5":
+            f = h5py.File(os.path.join(path, self.config.data_file), "r")
             inputs = [f[i[0:]] for i in self.dataset.inputs]
             outputs = [f[i[0:]] for i in self.dataset.outputs]
             return (inputs, outputs)
-
-        elif self.dataset.type.value == "file":
-            self.dataset.dataframe = pd.read_json("./" + self.config.dataframe_file)
-            # self.dereference_columns()
-            return (
-                self.dataset.dataframe[self.dataset.inputs],
-                self.dataset.dataframe[self.dataset.outputs],
-            )
         else:
             raise NotImplementedError
-
-    def dereference_columns(self, reference_char="*"):
-        for key in self.dataframe.keys():
-            if key[0] == reference_char:
-                self.dataframe[key] = self.dataframe[key].map(lambda x: np.load(x))
-        return self.dataframe
 
     def describe(self):
         print("DC:{}".format(self.dc))
         print("Dataset:{}".format(self.dataset.json(exclude={"dataframe"})))
 
     def publish(self, foundry_metadata, update=False, **kwargs):
+        """Submit a data package for publication
+        Args:
+            foundry_metadata (dict): Path to the file containing
+            update (bool): True if this is an update to a prior data package
+            (default: self.config.metadata_file)
+        Keyword Args:
+            title (str): Title of the data package
+            authors (list): List of data package author names e.g., Jack Black or Nunez, Victoria
+            affiliations (list): List of author affiliations
+            tags (list): List of tags to apply to the data package
+
+        Returns
+        -------
+        (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset 
         """
-        Submit a data package
-        """
-        print(kwargs)
 
         self.connect_client.create_dc_block(
             title=kwargs["title"],
@@ -348,6 +323,17 @@ class Foundry(FoundryMetadata):
         return res
 
     def from_file(self, file=None):
+        """Create a Foundry client from a file
+
+        Args:
+            file (str): Path to the file containing
+            (default: self.config.metadata_file)
+
+        Returns
+        -------
+        (Foundry): an newly instantiated Foundry client
+        """
+
         if file is None:
             file = self.config.metadata_file
         with open("./{}".format(file)) as fp:
@@ -355,10 +341,22 @@ class Foundry(FoundryMetadata):
             return Foundry(**obj)
 
     def to_file(self, file=None):
+        """Create a Foundry client from a file
+
+        Args:
+            file (str): Path to the file to save metadata to
+            (default: self.config.metadata_file)
+
+        Returns
+        -------
+        (Foundry) self: for chaining
+        """
+
         if file is None:
             file = self.config.metadata_file
         with open("./{}".format(file)) as fp:
             obj = json.dump(self.json(exclude={"dlhub_client", "forge_client"}), fp)
+        return self
 
     def configure(self, **kwargs):
         self.config = FoundryConfig(**kwargs)
@@ -382,3 +380,4 @@ class Foundry(FoundryMetadata):
             download_datasets=True,
         )
         return self
+
