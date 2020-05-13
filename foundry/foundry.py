@@ -112,7 +112,8 @@ class Foundry(FoundryMetadata):
     __services = ["transfer"]
     __app_name = "Foundry"
     
-    transfer_client = mdf_toolbox.login(services=__services, app_name=__app_name
+    transfer_client = mdf_toolbox.login(services=__services, 
+                                        app_name=__app_name,
                                         no_browser=True)[
         "transfer"
     ]
