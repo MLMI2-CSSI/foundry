@@ -111,12 +111,14 @@ class Foundry(FoundryMetadata):
 
     __services = ["transfer"]
     __app_name = "Foundry"
-
-    dlhub_client = DLHubClient()
-    forge_client = Forge("mdf-test", services=__services)
-    transfer_client = mdf_toolbox.login(services=__services, app_name=__app_name)[
+    
+    transfer_client = mdf_toolbox.login(services=__services, app_name=__app_name
+                                        no_browser=True)[
         "transfer"
     ]
+    dlhub_client = DLHubClient()
+    forge_client = Forge("mdf-test", services=__services)
+    
     connect_client = MDFConnectClient(test=True)
 
     def load(self, name, download=True, **kwargs):
