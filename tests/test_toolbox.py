@@ -6,3 +6,4 @@ def test_login():
     # Make sure Foundry can be reached
     f = Foundry()
     f.get_packages()
+    assert True
