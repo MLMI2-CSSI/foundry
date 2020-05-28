@@ -114,7 +114,8 @@ class Foundry(FoundryMetadata):
     
     transfer_client = mdf_toolbox.login(services=__services, 
                                         app_name=__app_name,
-                                        no_browser=True)[
+                                        no_browser=True,
+                                        no_local_server=True)[
         "transfer"
     ]
     dlhub_client = DLHubClient()
