@@ -107,21 +107,32 @@ class Foundry(FoundryMetadata):
 
     """
 
-    from_file: Optional[bool]
+    # transfer_client: Any
+    dlhub_client: Any
+    forge_client: Any
+    # connect_client: #Add this back in later, not necessary for current functionality
 
-    __services = ["transfer"]
-    __app_name = "Foundry"
-    
-    transfer_client = mdf_toolbox.login(services=__services, 
-                                        app_name=__app_name,
-                                        no_browser=True,
-                                        no_local_server=True)[
-        "transfer"
-    ]
-    dlhub_client = DLHubClient()
-    forge_client = Forge("mdf-test", services=__services)
-    
-    connect_client = MDFConnectClient(test=True)
+    def __init__(self, no_browser=False, no_local_server=False, **data):
+        super().__init__(**data)
+        auths = mdf_toolbox.login(
+            services=["data_mdf", "search", "petrel", "transfer", "dlhub"],
+            app_name="Foundry",
+            make_clients=True,
+            no_browser=no_browser,
+            no_local_server=no_local_server,
+        )
+
+        self.forge_client = Forge(
+            index="mdf-test",
+            search_client=auths["search"],
+            transfer_client=auths["transfer"],
+            data_mdf_authorizer=auths["data_mdf"],
+            petrel_authorizer=auths["petrel"],
+        )
+
+        self.dlhub_client = DLHubClient(
+            dlh_authorizer=auths["dlhub"], search_client=auths["search"]
+        )
 
     def load(self, name, download=True, **kwargs):
         """Load the metadata for a Foundry dataset into the client
@@ -143,7 +154,6 @@ class Foundry(FoundryMetadata):
         ).match_resource_types("dataset")
         res = res.match_field("mdf.source_id", name).search()
 
-        # res = self.forge_client.search('mdf.source_id:{name}'.format(name=name), advanced=True)
         res = res[0]
         res["dataset"] = res["projects"]["foundry"]
         res["dataset"]["type"] = res["dataset"]["package_type"]
@@ -384,4 +394,3 @@ class Foundry(FoundryMetadata):
             download_datasets=True,
         )
         return self
-
