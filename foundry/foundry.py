@@ -112,7 +112,9 @@ class Foundry(FoundryMetadata):
     forge_client: Any
     # connect_client: #Add this back in later, not necessary for current functionality
 
-    def __init__(self, no_browser=False, no_local_server=False, **data):
+    def __init__(
+        self, no_browser=False, no_local_server=False, search_index="mdf-test", **data
+    ):
         super().__init__(**data)
         auths = mdf_toolbox.login(
             services=["data_mdf", "search", "petrel", "transfer", "dlhub"],
@@ -123,7 +125,7 @@ class Foundry(FoundryMetadata):
         )
 
         self.forge_client = Forge(
-            index="mdf-test",
+            index=search_index,
             search_client=auths["search"],
             transfer_client=auths["transfer"],
             data_mdf_authorizer=auths["data_mdf"],
