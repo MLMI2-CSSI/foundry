@@ -20,7 +20,7 @@ setuptools.setup(
         "pydantic>=1.4",
         "mdf_connect_client>=0.3.7"
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.6",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",
