@@ -116,6 +116,7 @@ class Foundry(FoundryMetadata):
         self, no_browser=False, no_local_server=False, search_index="mdf-test", **data
     ):
         super().__init__(**data)
+        print("Before Toolbox Login")
         auths = mdf_toolbox.login(
             services=["data_mdf", "search", "petrel", "transfer", "dlhub"],
             app_name="Foundry",
@@ -123,7 +124,9 @@ class Foundry(FoundryMetadata):
             no_browser=no_browser,
             no_local_server=no_local_server,
         )
+        print("After Toolbox Login")
 
+        print("Before Forge Login")
         self.forge_client = Forge(
             index=search_index,
             search_client=auths["search"],
@@ -131,10 +134,13 @@ class Foundry(FoundryMetadata):
             data_mdf_authorizer=auths["data_mdf"],
             petrel_authorizer=auths["petrel"],
         )
+        print("After Forge Login")
 
+        print("Before DLHub Login")
         self.dlhub_client = DLHubClient(
             dlh_authorizer=auths["dlhub"], search_client=auths["search"]
         )
+        print("After DLHub Login")
 
     def load(self, name, download=True, **kwargs):
         """Load the metadata for a Foundry dataset into the client
