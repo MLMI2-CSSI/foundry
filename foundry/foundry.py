@@ -129,6 +129,7 @@ class Foundry(FoundryMetadata):
         print("Before Forge Login")
         self.forge_client = Forge(
             index=search_index,
+            services=None,
             search_client=auths["search"],
             transfer_client=auths["transfer"],
             data_mdf_authorizer=auths["data_mdf"],
