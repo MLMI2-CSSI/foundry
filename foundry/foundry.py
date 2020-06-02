@@ -150,6 +150,7 @@ class Foundry(FoundryMetadata):
             fx_authorizer=auths[
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
             ],
+            force_login=False,
         )
         print("After DLHub Login")
 
