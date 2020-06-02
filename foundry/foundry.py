@@ -3,7 +3,6 @@ from typing import List, Dict, Optional, Any
 from collections import namedtuple
 from dlhub_sdk import DLHubClient
 from mdf_forge import Forge
-from mdf_connect_client import MDFConnectClient
 import mdf_toolbox
 from enum import Enum
 import pandas as pd
