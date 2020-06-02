@@ -117,7 +117,14 @@ class Foundry(FoundryMetadata):
         super().__init__(**data)
         print("Before Toolbox Login")
         auths = mdf_toolbox.login(
-            services=["data_mdf", "search", "petrel", "transfer", "dlhub"],
+            services=[
+                "data_mdf",
+                "search",
+                "petrel",
+                "transfer",
+                "dlhub",
+                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
+            ],
             app_name="Foundry",
             make_clients=True,
             no_browser=no_browser,
@@ -138,7 +145,12 @@ class Foundry(FoundryMetadata):
 
         print("Before DLHub Login")
         self.dlhub_client = DLHubClient(
-            dlh_authorizer=auths["dlhub"], search_client=auths["search"]
+            dlh_authorizer=auths["dlhub"],
+            search_client=auths["search"],
+            fx_authorizer=auths[
+                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
+            ],
+            force_login=False,
         )
         print("After DLHub Login")
 
