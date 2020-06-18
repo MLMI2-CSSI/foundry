@@ -115,7 +115,6 @@ class Foundry(FoundryMetadata):
         self, no_browser=False, no_local_server=False, search_index="mdf-test", **data
     ):
         super().__init__(**data)
-        print("Before Toolbox Login")
         auths = mdf_toolbox.login(
             services=[
                 "data_mdf",
@@ -130,9 +129,7 @@ class Foundry(FoundryMetadata):
             no_browser=no_browser,
             no_local_server=no_local_server,
         )
-        print("After Toolbox Login")
 
-        print("Before Forge Login")
         self.forge_client = Forge(
             index=search_index,
             services=None,
@@ -141,9 +138,7 @@ class Foundry(FoundryMetadata):
             data_mdf_authorizer=auths["data_mdf"],
             petrel_authorizer=auths["petrel"],
         )
-        print("After Forge Login")
 
-        print("Before DLHub Login")
         self.dlhub_client = DLHubClient(
             dlh_authorizer=auths["dlhub"],
             search_client=auths["search"],
@@ -152,7 +147,6 @@ class Foundry(FoundryMetadata):
             ],
             force_login=False,
         )
-        print("After DLHub Login")
 
     def load(self, name, download=True, **kwargs):
         """Load the metadata for a Foundry dataset into the client
@@ -396,7 +390,7 @@ class Foundry(FoundryMetadata):
         self.config = FoundryConfig(**kwargs)
         return self
 
-    def download(self, **kwargs):
+    def download(self, globus=True, **kwargs):
         # Check if the dir already exists
         if os.path.isdir(
             os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
@@ -406,11 +400,16 @@ class Foundry(FoundryMetadata):
         res = self.forge_client.search(
             "mdf.source_id:{name}".format(name=self.mdf["source_id"]), advanced=True
         )
-        self.forge_client.globus_download(
-            res,
-            dest=self.config.local_cache_dir,
-            dest_ep=self.config.destination_endpoint,
-            interval=kwargs.get("interval", 20),
-            download_datasets=True,
-        )
+        if globus:
+            self.forge_client.globus_download(
+                res,
+                dest=self.config.local_cache_dir,
+                dest_ep=self.config.destination_endpoint,
+                interval=kwargs.get("interval", 20),
+                download_datasets=True,
+            )
+        else:
+            self.forge_client.http_download(
+                res, dest=self.config.local_cache_dir, preserve_dir=True
+            )
         return self
