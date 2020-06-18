@@ -148,7 +148,7 @@ class Foundry(FoundryMetadata):
             force_login=False,
         )
 
-    def load(self, name, download=True, **kwargs):
+    def load(self, name, download=True, globus=True, **kwargs):
         """Load the metadata for a Foundry dataset into the client
 
         Args:
@@ -176,7 +176,7 @@ class Foundry(FoundryMetadata):
         self = Foundry(**res)
 
         if download is True:  # Add check for package existence
-            self.download(interval=kwargs.get("interval", 10))
+            self.download(interval=kwargs.get("interval", 10), globus=globus)
 
         return self
 
@@ -265,7 +265,7 @@ class Foundry(FoundryMetadata):
         """
         return self.dlhub_client.run(name, inputs=inputs)
 
-    def load_data(self, source_id=None):
+    def load_data(self, source_id=None, globus=True):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
