@@ -9,7 +9,7 @@ setuptools.setup(
     author="Ben Blaiszik",
     author_email="blaiszik@uchicago.edu",
     packages=setuptools.find_packages(),
-    description="Package to support simplified application of machine learning models to  datasets in materials science",
+    description="Package to support simplified application of machine learning models to datasets in materials science",
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=[
@@ -24,13 +24,13 @@ setuptools.setup(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: Apache Software License",
+        "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
         "Topic :: Scientific/Engineering",
     ],
     keywords=[],
-    license="Apache License, Version 2.0",
-    url="https://github.com/globus-labs/foundry",
+    license="MIT License",
+    url="https://github.com/MLMI2-CSSI/foundry",
 )
