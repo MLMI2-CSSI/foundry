@@ -1,0 +1,21 @@
+language: python
+python:
+ - '3.7'
+ - '3.8'
+install:
+ - pip install --upgrade pip
+ - pip install -e .
+ - pip install -r requirements.txt
+script:
+ - pytest
+before_install:
+- openssl aes-256-cbc -K $encrypted_39a50b90a369_key -iv $encrypted_39a50b90a369_iv
+  -in travis.tar.enc -out travis.tar -d
+- tar xvf travis.tar
+- mv .globus-native-apps.cfg ~/.globus-native-apps.cfg
+deploy:
+   provider: pypi
+   user: meschw04
+   password:
+      secure: OVK9eINgVm9CxItklRtpiwFkam3rdLYnn3G5xZwQsT6ia0LAN5QhLW7pvnMJQWgrdGVMm6NkGqxiHaEwMXQP8T99OQofFthbax1yLagBsYfML0eNIvbfsGyqq0NBw/VVBusPEtCDGCxDP6grIq1HSkhOOb4Lc3EBmznOlWFkMRWym4s+th/OROV9a4YpT43wkDfgpurkneV6NK2wUa3ixrz8MdUM95y/8vrzXRjs71C9o/kjq3xkaZ3lsWxawRgFutgB7pD0awEe1AZeqS7xPV0ZEUqDP69rcMXQHmoLwwBlnDFTAibqF3b+t+fp+qo/uOCZjz68SU0J2QP4BC4BB54xpIEfmwtIhvmfIkGz+E2980mhHGbW161k5QyzI8uDVdRCdwbszgrCHed0smJhosw9qi8mOGklJpJcdQXoO6Ty2b6WA9JnKEZ4w3Xq43EuDSKUliK1a2vnfTDUnn5k0idxNby2bjkqppW72qTE+BWaySMIzK2ZXMrPz0TuuG3hVKYPQKXLdwE3JlcMpIMqY28iA4Y0qKwGe+ZudDDn0svsIfb57qad8E+SWFW1EcVPNGPSctSMHTl1qXwZHHc1ruZ+VS/5P4dZibiwImduBmQbl/JMJFjUrADQMNXoKMNNZXMuZKvRFHqFzXz3Sbg0kPMA82Uq6LaTzmhaCKCQ2aA=
+
