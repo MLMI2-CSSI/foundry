@@ -9,8 +9,7 @@ install:
 script:
  - pytest
 before_install:
-- openssl aes-256-cbc -K $encrypted_39a50b90a369_key -iv $encrypted_39a50b90a369_iv
-  -in travis.tar.enc -out travis.tar -d
+- openssl aes-256-cbc -K $encrypted_5880cf525281_key -iv $encrypted_5880cf525281_iv -in travis.tar.enc -out travis.tar -d
 - tar xvf travis.tar
 - mv .globus-native-apps.cfg ~/.globus-native-apps.cfg
 deploy:
