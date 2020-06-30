@@ -1,1 +1,0 @@
-{"dc": {}, "mdf": {}, "foundry": {"inputs": ["CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT"], "outputs": ["price"], "type": "tabular"}}
