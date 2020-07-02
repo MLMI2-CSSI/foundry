@@ -370,8 +370,8 @@ def test_forge_aggregate_sources():
     assert isinstance(res1, list)
     assert len(res1) > 10000
     assert isinstance(res1[0], dict)
-
-
+'''
+#TEST 14
 def test_forge_fetch_datasets_from_results():
     # Get some results
     f = Forge(index="mdf")
@@ -418,7 +418,7 @@ def test_forge_fetch_datasets_from_results():
     unknown_entry = {"mdf": {"resource_type": "unknown"}}
     assert f.fetch_datasets_from_results(unknown_entry) == []
 
-
+#TEST 15
 def test_forge_http_download(capsys):
     f = Forge(index="mdf")
     # Simple case
@@ -486,7 +486,7 @@ def test_forge_http_download(capsys):
     out, err = capsys.readouterr()
     assert "Error: Found unknown resource_type 'foobar'. Skipping entry." in out
 
-
+#TEST 16
 @pytest.mark.xfail(reason="Test should have a local endpoint.")
 def test_forge_globus_download():
     f = Forge(index="mdf")
@@ -514,7 +514,7 @@ def test_forge_globus_download():
     assert os.path.exists(os.path.join(dest_path, "test_multifetch.txt"))
     os.remove(os.path.join(dest_path, "test_fetch.txt"))
     os.remove(os.path.join(dest_path, "test_multifetch.txt"))
-
+'''
 
 def test_forge_http_stream(capsys):
     f = Forge(index="mdf")
