@@ -6,6 +6,6 @@ def test_login():
     # Make sure Foundry can be reached
     print('test running')
     #print(open('~/.globus-native-apps.cfg').read())
-    f = Foundry(no_local_server=True, no_browser=True)
+    #f = Foundry(no_local_server=True, no_browser=True)
     #f.get_packages()
     assert True
