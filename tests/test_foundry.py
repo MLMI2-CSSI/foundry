@@ -110,6 +110,7 @@ example_bad_resource = {
 #   0: Exclusive match, no values other than argument found
 #   1: Inclusive match, some values other than argument found
 #   2: Partial match, value is found in some but not all results
+#TEST 1
 def check_field(res, field, regex):
     dict_path = ""
     for key in field.split("."):
@@ -151,7 +152,7 @@ def check_field(res, field, regex):
         # No match
         return -1
 
-
+#TEST 2
 def test_forge_match_source_names():
     f = Forge(index="mdf")
     # One source
@@ -172,7 +173,7 @@ def test_forge_match_source_names():
     # No source
     assert f.match_source_names("") == f
 
-
+#TEST 3
 def test_forge_test_match_records():
     f = Forge(index="mdf")
     # One record
@@ -192,7 +193,7 @@ def test_forge_test_match_records():
     # No args
     assert f.match_records("", "") == f
 
-
+#TEST 4
 def test_forge_match_elements():
     f = Forge(index="mdf")
     # One element
@@ -211,7 +212,7 @@ def test_forge_match_elements():
     # No elements
     assert f.match_elements("") == f
 
-
+#TEST 5
 def test_forge_match_titles():
     # One title
     f = Forge(index="mdf")
@@ -233,7 +234,7 @@ def test_forge_match_titles():
     # No titles
     assert f.match_titles("") == f
 
-
+#TEST 6
 def test_forge_match_years(capsys):
     # One year of data/results
     f = Forge(index="mdf")
@@ -275,7 +276,7 @@ def test_forge_match_years(capsys):
 
     assert f.match_years(start=2015, stop=2015, inclusive=False).search() == []
 
-
+#TEST 7
 def test_forge_match_resource_types():
     f = Forge(index="mdf")
     # Test one type
@@ -291,7 +292,7 @@ def test_forge_match_resource_types():
     # Test zero types
     assert f.match_resource_types("") == f
 
-
+#TEST 8
 def test_forge_match_organizations():
     f = Forge(index="mdf")
     # One repo
@@ -310,7 +311,7 @@ def test_forge_match_organizations():
     # No repos
     assert f.match_organizations("") == f
 
-
+#TEST 9
 def test_forge_match_dois():
     f = Forge(index="mdf")
     # One doi
@@ -331,7 +332,7 @@ def test_forge_match_dois():
     # No doi
     assert f.match_dois("") == f
 
-
+#TEST 10
 def test_forge_search_by_elements():
     f = Forge(index="mdf")
     elements = ["Cu", "Al"]
@@ -343,7 +344,7 @@ def test_forge_search_by_elements():
     assert check_field(res1, "material.elements", "Al") == 1
     assert check_field(res1, "mdf.source_name", "oqmd") == 2
 
-
+#TEST 11
 def test_forge_search_by_titles():
     f = Forge(index="mdf")
     titles1 = ['"High-throughput Ab-initio Dilute Solute Diffusion Database"']
@@ -356,13 +357,13 @@ def test_forge_search_by_titles():
     assert check_field(res2, "dc.titles.[].title",
                        "NIST X-ray Photoelectron Spectroscopy Database") == 2
 
-
+#TEST 12
 def test_forge_search_by_dois():
     f = Forge(index="mdf")
     res1 = f.search_by_dois("https://dx.doi.org/10.13011/M3B36G")
     assert check_field(res1, "dc.identifier.identifier", "https://dx.doi.org/10.13011/M3B36G") == 0
 
-
+#TEST 13
 def test_forge_aggregate_sources():
     # Test limit
     f = Forge(index="mdf")
@@ -515,7 +516,7 @@ def test_forge_globus_download():
     os.remove(os.path.join(dest_path, "test_fetch.txt"))
     os.remove(os.path.join(dest_path, "test_multifetch.txt"))
 '''
-
+#TEST 17
 def test_forge_http_stream(capsys):
     f = Forge(index="mdf")
     # Simple case
@@ -553,7 +554,7 @@ def test_forge_http_stream(capsys):
     assert ("Error 404 when attempting to access "
             "'https://data.materialsdatafacility.org/test/should_not_exist.txt'") in out
 
-
+#TEST 18
 def test_forge_chaining():
     f = Forge(index="mdf")
     f.match_field("source_name", "cip")
@@ -562,7 +563,7 @@ def test_forge_chaining():
     res2 = f.match_field("source_name", "cip").match_field("material.elements", "Al").search()
     assert all([r in res2 for r in res1]) and all([r in res1 for r in res2])
 
-
+#TEST 19
 def test_forge_anonymous(capsys):
     f = Forge(anonymous=True)
     # Test search
@@ -589,7 +590,7 @@ def test_forge_anonymous(capsys):
     with pytest.raises(StopIteration):
         next(res)
 
-
+#TEST 20
 def test_get_dataset_version():
     # Get the version number of the OQMD
     f = Forge()
@@ -601,7 +602,7 @@ def test_get_dataset_version():
     with pytest.raises(ValueError):
         f.get_dataset_version('notreal')
 
-
+#TEST 21
 def test_describe_field(capsys):
     f = Forge()
     # Basic usage (raw=True for ease of testing)
@@ -647,7 +648,7 @@ def test_describe_field(capsys):
     out, err = capsys.readouterr()
     assert "Error: Field 'foo' (from 'foo.bar')" in out
 
-
+#TEST 22
 def test_describe_organization(capsys):
     f = Forge()
     # Basic usage (with raw=True)
