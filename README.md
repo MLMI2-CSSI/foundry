@@ -7,11 +7,10 @@ This work was supported by the National Science Foundation under NSF Award Numbe
 
 
 # Other Support
-Foundry brings together many components in the materials data ecosystem. Including
+Foundry brings together many components in the materials data ecosystem. Including MAST-ML, the Data and Learning Hub for Science (DLHub), and The Materials Data Facility (MDF). 
 
 ## MAST-ML
-
-## ...
+This work was supported by the National Science Foundation (NSF) SI2 award No. 1148011 and DMREF award number DMR-1332851
 
 ## The Data and Learning Hub for Science (DLHub)
 This material is based upon work supported by Laboratory Directed Research and Development (LDRD) funding from Argonne National Laboratory, provided by the Director, Office of Science, of the U.S. Department of Energy under Contract No. DE-AC02-06CH11357.
