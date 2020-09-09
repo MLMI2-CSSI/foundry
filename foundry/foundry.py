@@ -10,6 +10,7 @@ import requests
 import json
 import glob
 import h5py
+import time
 import os
 
 """
@@ -111,9 +112,9 @@ class Foundry(FoundryMetadata):
     forge_client: Any
     # connect_client: #Add this back in later, not necessary for current functionality
 
-    def __init__(
-        self, no_browser=False, no_local_server=False, search_index="mdf-test", **data
-    ):
+    xtract_tokens: Any
+
+    def __init__(self, no_browser=False, no_local_server=False, search_index="mdf-test", **data):
         super().__init__(**data)
         auths = mdf_toolbox.login(
             services=[
@@ -148,7 +149,13 @@ class Foundry(FoundryMetadata):
             force_login=False,
         )
 
-    def load(self, name, download=True, globus=True, **kwargs):
+        self.xtract_tokens = {
+            'auth_token': auths['petrel'].access_token,
+            'transfer_token': auths['transfer'].authorizer.access_token,
+            'funx_token': auths['https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all'].access_token
+        }
+
+    def load(self, name, download=True, globus=True, verbose=False, **kwargs):
         """Load the metadata for a Foundry dataset into the client
 
         Args:
@@ -176,7 +183,7 @@ class Foundry(FoundryMetadata):
         self = Foundry(**res)
 
         if download is True:  # Add check for package existence
-            self.download(interval=kwargs.get("interval", 10), globus=globus)
+            self.download(interval=kwargs.get("interval", 10), globus=globus, verbose=verbose)
 
         return self
 
@@ -390,7 +397,7 @@ class Foundry(FoundryMetadata):
         self.config = FoundryConfig(**kwargs)
         return self
 
-    def download(self, globus=True, **kwargs):
+    def download(self, globus=True, verbose=False, **kwargs):
         # Check if the dir already exists
         if os.path.isdir(
             os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
@@ -409,7 +416,77 @@ class Foundry(FoundryMetadata):
                 download_datasets=True,
             )
         else:
-            self.forge_client.http_download(
-                res, dest=self.config.local_cache_dir, preserve_dir=True
-            )
+            source_id = self.mdf['source_id']
+            xtract_base_url = "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com"
+
+            # MDF Materials Data at NCSA 
+            source_ep_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"
+            base_url = "https://data.materialsdatafacility.org"
+            folder_to_crawl = f"/foundry/{source_id}/"
+
+            # This only matters if you want files grouped together. 
+            grouper = "matio"
+
+            auth_token = self.xtract_tokens['auth_token']
+            transfer_token = self.xtract_tokens['transfer_token']
+            funcx_token = self.xtract_tokens['transfer_token']
+
+            headers = {'Authorization': f"Bearer {auth_token}", 'Transfer': transfer_token, 'FuncX': funcx_token, 'Petrel': auth_token}
+            if verbose: print(f"Headers: {headers}")
+
+            # Initialize the crawl. This kicks off the Globus EP crawling service on the backend. 
+            crawl_url = f'{xtract_base_url}/crawl'
+            if verbose: print(f"Crawl URL is : {crawl_url}")
+            crawl_req = requests.post(crawl_url, json={'repo_type': "GLOBUS", 'eid': source_ep_id, 'dir_path': folder_to_crawl, 'Transfer': transfer_token, 'Authorization': funcx_token,'grouper': grouper, 'https_info': {'base_url':base_url}})
+            crawl_id = json.loads(crawl_req.content)['crawl_id']
+            if verbose: print(f"Crawl ID: {crawl_id}")
+
+            # Wait for the crawl to finish before we can start fetching our metadata. 
+            while True: 
+                crawl_status = requests.get(f'{xtract_base_url}/get_crawl_status', json={'crawl_id': crawl_id})
+                if verbose: print(crawl_status)
+                crawl_content = json.loads(crawl_status.content)
+                if verbose: print(f"Crawl Status: {crawl_content}")
+
+                if crawl_content['crawl_status'] == 'SUCCEEDED':
+                    files_crawled = crawl_content['files_crawled']
+                    if verbose: print("Our crawl has succeeded!")
+                    break
+                else:
+                    if verbose: print("Sleeping before re-polling...")
+                    time.sleep(2)
+
+            # Now we fetch our metadata. Here you can configure n to be maximum number of 
+            # messages you want at once. 
+
+            file_ls = []
+            fetched_files = 0
+            while fetched_files < files_crawled: 
+                fetch_mdata = requests.get(f'{xtract_base_url}/fetch_crawl_mdata', json={'crawl_id': crawl_id, 'n': 2})
+                fetch_content = json.loads(fetch_mdata.content)
+                
+                for file_path in fetch_content['file_ls']:
+                    file_ls.append(file_path)
+                    fetched_files += 1
+                    
+                if fetch_content['queue_empty']:
+                    if verbose: print("Queue is empty! Continuing...")
+                    time.sleep(2)
+            
+            source_path = os.path.join(self.config.local_cache_dir, self.mdf['source_id'])
+
+            if not os.path.exists(self.config.local_cache_dir):
+                os.mkdir(self.config.local_cache_dir)
+                os.mkdir(source_path)
+
+            elif not os.path.exists(source_path):
+                os.mkdir(source_path)
+
+            for file in file_ls:
+                path = file['path']
+                if verbose: print(f'curl -k https://data.materialsdatafacility.org{path} > data/{source_id}/{path[path.rindex("/") + 1:]}')
+                os.system(f'curl -k https://data.materialsdatafacility.org{path} > data/{source_id}/{path[path.rindex("/") + 1:]}')
+
+            print('Done curling.')
+
         return self
