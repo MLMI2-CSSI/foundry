@@ -155,7 +155,7 @@ class Foundry(FoundryMetadata):
             'funx_token': auths['https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all'].access_token
         }
 
-    def load(self, name, download=True, globus=True, **kwargs):
+    def load(self, name, download=True, globus=True, verbose=False, **kwargs):
         """Load the metadata for a Foundry dataset into the client
 
         Args:
@@ -183,7 +183,7 @@ class Foundry(FoundryMetadata):
         self = Foundry(**res)
 
         if download is True:  # Add check for package existence
-            self.download(interval=kwargs.get("interval", 10), globus=globus)
+            self.download(interval=kwargs.get("interval", 10), globus=globus, verbose=verbose)
 
         return self
 
@@ -397,7 +397,7 @@ class Foundry(FoundryMetadata):
         self.config = FoundryConfig(**kwargs)
         return self
 
-    def download(self, globus=True, **kwargs):
+    def download(self, globus=True, verbose=False, **kwargs):
         # Check if the dir already exists
         if os.path.isdir(
             os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
@@ -432,28 +432,28 @@ class Foundry(FoundryMetadata):
             funcx_token = self.xtract_tokens['transfer_token']
 
             headers = {'Authorization': f"Bearer {auth_token}", 'Transfer': transfer_token, 'FuncX': funcx_token, 'Petrel': auth_token}
-            print(f"Headers: {headers}")
+            if verbose: print(f"Headers: {headers}")
 
             # Initialize the crawl. This kicks off the Globus EP crawling service on the backend. 
             crawl_url = f'{xtract_base_url}/crawl'
-            print(f"Crawl URL is : {crawl_url}")
+            if verbose: print(f"Crawl URL is : {crawl_url}")
             crawl_req = requests.post(crawl_url, json={'repo_type': "GLOBUS", 'eid': source_ep_id, 'dir_path': folder_to_crawl, 'Transfer': transfer_token, 'Authorization': funcx_token,'grouper': grouper, 'https_info': {'base_url':base_url}})
             crawl_id = json.loads(crawl_req.content)['crawl_id']
-            print(f"Crawl ID: {crawl_id}")
+            if verbose: print(f"Crawl ID: {crawl_id}")
 
             # Wait for the crawl to finish before we can start fetching our metadata. 
             while True: 
                 crawl_status = requests.get(f'{xtract_base_url}/get_crawl_status', json={'crawl_id': crawl_id})
-                print(crawl_status)
+                if verbose: print(crawl_status)
                 crawl_content = json.loads(crawl_status.content)
-                print(f"Crawl Status: {crawl_content}")
+                if verbose: print(f"Crawl Status: {crawl_content}")
 
                 if crawl_content['crawl_status'] == 'SUCCEEDED':
                     files_crawled = crawl_content['files_crawled']
-                    print("Our crawl has succeeded!")
+                    if verbose: print("Our crawl has succeeded!")
                     break
                 else:
-                    print("Sleeping before re-polling...")
+                    if verbose: print("Sleeping before re-polling...")
                     time.sleep(2)
 
             # Now we fetch our metadata. Here you can configure n to be maximum number of 
@@ -470,17 +470,23 @@ class Foundry(FoundryMetadata):
                     fetched_files += 1
                     
                 if fetch_content['queue_empty']:
-                    print("Queue is empty! Continuing...")
+                    if verbose: print("Queue is empty! Continuing...")
                     time.sleep(2)
-                    
-            print("All files have been fetched! Curling...")
             
-            if not os.path.exists('data/'):
-                os.mkdir('data')
+            source_path = os.path.join(self.config.local_cache_dir, self.mdf['source_id'])
+
+            if not os.path.exists(self.config.local_cache_dir):
+                os.mkdir(self.config.local_cache_dir)
+                os.mkdir(source_path)
+
+            elif not os.path.exists(source_path):
+                os.mkdir(source_path)
 
             for file in file_ls:
                 path = file['path']
-                print(f'curl -k https://data.materialsdatafacility.org{path} > data/{path[path.rindex("/") + 1:]}')
-                os.system(f'curl -k https://data.materialsdatafacility.org{path} > data/{path[path.rindex("/") + 1:]}')
+                if verbose: print(f'curl -k https://data.materialsdatafacility.org{path} > data/{source_id}/{path[path.rindex("/") + 1:]}')
+                os.system(f'curl -k https://data.materialsdatafacility.org{path} > data/{source_id}/{path[path.rindex("/") + 1:]}')
+
+            print('Done curling.')
 
         return self
