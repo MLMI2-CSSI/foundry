@@ -1,11 +1,14 @@
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from pydantic import AnyUrl, ValidationError, BaseModel
 from typing import List, Dict, Optional, Any
+from joblib import Parallel, delayed
 from collections import namedtuple
 from dlhub_sdk import DLHubClient
 from mdf_forge import Forge
-import mdf_toolbox
+import multiprocessing
 from enum import Enum
 import pandas as pd
+import mdf_toolbox
 import requests
 import json
 import glob
@@ -399,9 +402,8 @@ class Foundry(FoundryMetadata):
 
     def download(self, globus=True, verbose=False, **kwargs):
         # Check if the dir already exists
-        if os.path.isdir(
-            os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
-        ):
+        path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
+        if os.path.isdir(path):
             return self
 
         res = self.forge_client.search(
@@ -438,6 +440,7 @@ class Foundry(FoundryMetadata):
             crawl_url = f'{xtract_base_url}/crawl'
             if verbose: print(f"Crawl URL is : {crawl_url}")
             crawl_req = requests.post(crawl_url, json={'repo_type': "GLOBUS", 'eid': source_ep_id, 'dir_path': folder_to_crawl, 'Transfer': transfer_token, 'Authorization': funcx_token,'grouper': grouper, 'https_info': {'base_url':base_url}})
+            if verbose: print('Crawl response:', crawl_req)
             crawl_id = json.loads(crawl_req.content)['crawl_id']
             if verbose: print(f"Crawl ID: {crawl_id}")
 
@@ -481,12 +484,24 @@ class Foundry(FoundryMetadata):
 
             elif not os.path.exists(source_path):
                 os.mkdir(source_path)
+            
+            num_cores = multiprocessing.cpu_count()
+            
+            def download_file(file):
+                requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+                
+                url = 'https://data.materialsdatafacility.org' + file['path']
+                destination = 'data/' + source_id + '/' + file['path'][file['path'].rindex("/") + 1:]
+                response = requests.get(url, verify=False)
+                
+                with open(destination, 'wb') as f:
+                    f.write(response.content)
 
-            for file in file_ls:
-                path = file['path']
-                if verbose: print(f'curl -k https://data.materialsdatafacility.org{path} > data/{source_id}/{path[path.rindex("/") + 1:]}')
-                os.system(f'curl -k https://data.materialsdatafacility.org{path} > data/{source_id}/{path[path.rindex("/") + 1:]}')
+                return { file['path'] + ' status': True }
+            
+            results = Parallel(n_jobs=num_cores)(delayed(download_file)(file) for file in file_ls)
 
             print('Done curling.')
+            print(results)
 
         return self
