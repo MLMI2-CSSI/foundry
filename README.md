@@ -7,39 +7,46 @@ Foundry can be installed via pip with:
 `pip install foundry-ml`
 
 # Example Usage
-Create a foundry client by calling:
 
-`from foundry import Foundry
-f = Foundry()`
+The Foundry client can be used to access datasets using a `source_id`, e.g. here "_test_foundry_fashion_mnist_v1.1":
 
-The Foundry client can then be used to access datasets using a `source_id`:
-
-`f = f.load("_test_foundry_fashion_mnist_v1.1")`
+```python 
+from foundry import Foundry
+f = Foundry()
+f = f.load("_test_foundry_fashion_mnist_v1.1")
+```
 
 This will remotely load the necessary metadata as well as download the data to local storage if it is not already present. To ensure successful data download, have a Globus endpoint [setup](https://www.globus.org/globus-connect-personal) on your machine. Once the data is accessible locally, load the data into the client:
 
-`X, y = f.load_data()`
+```python 
+X, y = f.load_data()
+```
 
 The data is then usable:
 
-<pre><code>n_cols = 6
+```python
+n_cols = 6
 display_shape = (28,28)
 fig, ax = plt.subplots(1,n_cols)
 
 for i in range(0, n_cols):
     ax[i].imshow(X[i].reshape(display_shape), cmap='gray')
-</code></pre>
+```
 
 This example can be found in `examples/fashion-mnist/`.
 
 ### Other uses
 To just download the data without loading the additional metadata:
 
-`f = Foundry().download("_test_foundry_fashion_mnist_v1.1")`
+```python
+f = Foundry().download("_test_foundry_fashion_mnist_v1.1")
+```
 
 While it is strongly recommended to load metadata remotely, it can be done locally with a `foundry_metadata.json` file:
 
-`f = Foundry().from_file()`
+```python 
+f = Foundry().from_file()
+```
 
 # Primary Support
 This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure".
