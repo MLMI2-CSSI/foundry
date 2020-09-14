@@ -1,4 +1,4 @@
-from .foundry import Foundry
+from foundry_files import Foundry
 import pytest
 
 def test_login():
