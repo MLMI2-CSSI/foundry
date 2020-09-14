@@ -1,0 +1,8 @@
+globus-sdk>=1.2.1
+requests>=2.18.4
+tqdm>=4.19.4
+six>=1.11.0
+dlhub_sdk>=0.0.1
+h5py>=2.10.0
+pydantic>=1.6.1
+joblib>=0.16.0
