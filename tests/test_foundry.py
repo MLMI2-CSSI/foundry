@@ -1,3 +1,5 @@
+print('hi')
+
 import os
 import re
 import types
@@ -5,8 +7,10 @@ import types
 import mdf_toolbox
 import pytest
 
-from mdf_forge import Forge
 
+print('there')
+from mdf_forge import Forge
+print('here')
 
 # Sample results for download testing
 example_result1 = {
