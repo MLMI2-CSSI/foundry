@@ -25,9 +25,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Globus auth
       run: |
-        openssl aes-256-cbc -K $encrypted_a7c8f759f73f_key -iv $encrypted_a7c8f759f73f_iv -in travis.tar.enc -out travis.tar -d
-        tar xvf travis.tar
-        mv .globus-native-apps.cfg ~/.globus-native-apps.cfg
+        cat ${{ secret.GLOBUS_CONFIG }} > ~/.globus-native-apps.cfg
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
