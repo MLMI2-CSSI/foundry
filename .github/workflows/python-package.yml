@@ -25,7 +25,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Globus auth
       run: |
-        cat "${{ secrets.GLOBUS_CONFIG }}" > ~/.globus-native-apps.cfg
+        echo "${{ secrets.GLOBUS_CONFIG }}" > ~/.globus-native-apps.cfg
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
