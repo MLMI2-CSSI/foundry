@@ -6,4 +6,3 @@ dlhub_sdk>=0.0.1
 h5py>=2.10.0
 pydantic>=1.6.1
 joblib>=0.16.0
-mdf_forge>=0.7.6
