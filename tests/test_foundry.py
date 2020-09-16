@@ -155,7 +155,7 @@ def check_field(res, field, regex):
 
 def test_forge_match_source_names():
     os.system('echo hello')
-    f = Forge(index="mdf")
+    f = Forge(index="mdf", no_local_server=True, no_browser=True)
     os.system('echo there')
     assert True
     '''
