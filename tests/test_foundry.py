@@ -1,16 +1,10 @@
-print('hi')
-
 import os
 import re
 import types
 
 import mdf_toolbox
 import pytest
-
-
-print('there')
 from mdf_forge import Forge
-print('here')
 
 # Sample results for download testing
 example_result1 = {
@@ -109,7 +103,6 @@ example_bad_resource = {
 
 
 def test_this():
-    print('hello')
     assert True
 
 # Helper
@@ -161,7 +154,9 @@ def check_field(res, field, regex):
 
 
 def test_forge_match_source_names():
+    os.system('echo hello')
     f = Forge(index="mdf")
+    os.system('echo there')
     # One source
     f.match_source_names("khazana_vasp")
     res1 = f.search()
