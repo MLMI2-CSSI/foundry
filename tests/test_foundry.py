@@ -158,7 +158,7 @@ def check_field(res, field, regex):
     else:
         # No match
         return -1
-'''
+
 
 def test_forge_match_source_names():
     f = Forge(index="mdf")
@@ -180,7 +180,7 @@ def test_forge_match_source_names():
     # No source
     assert f.match_source_names("") == f
 
-
+'''
 def test_forge_test_match_records():
     f = Forge(index="mdf")
     # One record
