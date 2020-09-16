@@ -102,9 +102,6 @@ example_bad_resource = {
 }
 
 
-def test_this():
-    assert True
-
 # Helper
 # Return codes:
 #  -1: No match, the value was never found
@@ -158,7 +155,6 @@ def test_forge_match_source_names():
     f = Forge(index="mdf", no_local_server=True, no_browser=True)
     os.system('echo there')
     assert True
-    '''
     # One source
     f.match_source_names("khazana_vasp")
     res1 = f.search()
@@ -700,4 +696,3 @@ def test_describe_organization(capsys):
     res = f.describe_organization("foobar")
     out, err = capsys.readouterr()
     assert "Error 404" in out
-'''
