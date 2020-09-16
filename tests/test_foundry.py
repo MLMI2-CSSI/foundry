@@ -111,7 +111,7 @@ example_bad_resource = {
 def test_this():
     print('hello')
     assert True
-'''
+
 # Helper
 # Return codes:
 #  -1: No match, the value was never found
@@ -158,7 +158,7 @@ def check_field(res, field, regex):
     else:
         # No match
         return -1
-
+'''
 
 def test_forge_match_source_names():
     f = Forge(index="mdf")
