@@ -28,10 +28,6 @@ jobs:
       shell: bash
       env:
         GLOBUS_CONFIG: "${{ secrets.GLOBUS_CONFIG }}"
-    - name: List
-      run: ls -a ~
-    - name: Hash
-      run: wc ~/.globus-native-apps.cfg
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
