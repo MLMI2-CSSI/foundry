@@ -419,7 +419,7 @@ def test_forge_fetch_datasets_from_results():
     unknown_entry = {"mdf": {"resource_type": "unknown"}}
     assert f.fetch_datasets_from_results(unknown_entry) == []
 
-
+'''
 def test_forge_http_download(capsys):
     f = Forge(index="mdf")
     # Simple case
@@ -553,7 +553,7 @@ def test_forge_http_stream(capsys):
     assert not os.path.exists("./should_not_exist.txt")
     assert ("Error 404 when attempting to access "
             "'https://data.materialsdatafacility.org/test/should_not_exist.txt'") in out
-
+'''
 
 def test_forge_chaining():
     f = Forge(index="mdf")
