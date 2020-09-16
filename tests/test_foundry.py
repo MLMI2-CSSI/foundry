@@ -111,7 +111,7 @@ example_bad_resource = {
 def test_this():
     print('hello')
     assert True
-
+'''
 # Helper
 # Return codes:
 #  -1: No match, the value was never found
@@ -703,3 +703,4 @@ def test_describe_organization(capsys):
     res = f.describe_organization("foobar")
     out, err = capsys.readouterr()
     assert "Error 404" in out
+'''
