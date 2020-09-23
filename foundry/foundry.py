@@ -1,6 +1,6 @@
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from foundry.models import FoundryMetadata, FoundryConfig
 from pydantic import AnyUrl, ValidationError
-from foundry.models import FoundryMetadata
 from joblib import Parallel, delayed
 from collections import namedtuple
 from dlhub_sdk import DLHubClient
