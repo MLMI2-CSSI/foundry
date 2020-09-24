@@ -7,7 +7,7 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 ## Contributing code
 
-If you have improvements to TensorFlow, send us your pull requests! For those
+If you have improvements to Foundry, send us your pull requests! For those
 just getting started, Github has a
 [how to](https://help.github.com/articles/using-pull-requests/).
 
@@ -33,7 +33,7 @@ comment thread to coordinate.
     (by default) transferred to the Foundry team. This means that the benefit
     of the contribution must be compared against the cost of maintaining the
     feature.
-*   Tests should follow [testing best practices](https://www.tensorflow.org/community/contribute/tests)
+*   Tests should follow [testing best practices](https://www..org/community/contribute/tests)
     guide.
 
 
