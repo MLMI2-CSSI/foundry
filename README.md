@@ -50,6 +50,19 @@ While it is strongly recommended to load metadata remotely, it can be done local
 f = Foundry().from_file()
 ```
 
+# Using Foundry on Cloud Computing Resources
+Foundry works with common cloud computing providers like the NSF sponsored Jetstream and Google Colab. When instantiating the Foundry client, simple add the following arguments to use a compatible authentication flow.
+
+```python 
+f = Foundry(no_browser=True, no_local_server=True)
+```
+
+When downloading data, add the following argument to download contents by HTTPS. This method may be non-performant for large datasets
+```python 
+f.download(globus=False)
+```
+
+
 # Primary Support
 This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure".
 
