@@ -4,6 +4,7 @@ tqdm>=4.19.4
 six>=1.11.0
 dlhub_sdk>=0.0.1
 h5py>=2.10.0
+pandas==1.2.2
 pydantic>=1.6.1
 joblib>=0.16.0
 mdf_forge>=0.7.6
