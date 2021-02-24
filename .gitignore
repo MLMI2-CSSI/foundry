@@ -1,4 +1,4 @@
-build/*
+*/build/*
 *.DS_STORE
 *.pyc
 *.idea
