@@ -53,6 +53,7 @@ class Foundry(FoundryMetadata):
                 "petrel",
                 "transfer",
                 "dlhub",
+                "openid",
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
             ],
             app_name="Foundry",
@@ -82,7 +83,7 @@ class Foundry(FoundryMetadata):
         self.xtract_tokens = {
             "auth_token": auths["petrel"].access_token,
             "transfer_token": auths["transfer"].authorizer.access_token,
-            "funx_token": auths[
+            "funcx_token": auths[
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
             ].access_token,
         }
@@ -365,10 +366,10 @@ class Foundry(FoundryMetadata):
 
             auth_token = self.xtract_tokens["auth_token"]
             transfer_token = self.xtract_tokens["transfer_token"]
-            funcx_token = self.xtract_tokens["transfer_token"]
+            funcx_token = self.xtract_tokens["funcx_token"]
 
             headers = {
-                "Authorization": f"Bearer {auth_token}",
+                "Authorization": auth_token,
                 "Transfer": transfer_token,
                 "FuncX": funcx_token,
                 "Petrel": auth_token,
@@ -380,18 +381,19 @@ class Foundry(FoundryMetadata):
             crawl_url = f"{xtract_base_url}/crawl"
             if verbose:
                 print(f"Crawl URL is : {crawl_url}")
+
+            first_ep_dict = {
+                "repo_type": "GLOBUS",
+                "eid": source_ep_id,
+                "dir_paths": [folder_to_crawl],
+                "grouper": grouper,
+            }
+            tokens = {"Transfer": transfer_token, "Authorization": funcx_token}
             crawl_req = requests.post(
-                crawl_url,
-                json={
-                    "repo_type": "GLOBUS",
-                    "eid": source_ep_id,
-                    "dir_path": folder_to_crawl,
-                    "Transfer": transfer_token,
-                    "Authorization": funcx_token,
-                    "grouper": grouper,
-                    "https_info": {"base_url": base_url},
-                },
+                f"{xtract_base_url}/crawl",
+                json={"endpoints": [first_ep_dict], "tokens": tokens},
             )
+
             if verbose:
                 print("Crawl response:", crawl_req)
             crawl_id = json.loads(crawl_req.content)["crawl_id"]
@@ -409,7 +411,7 @@ class Foundry(FoundryMetadata):
                 if verbose:
                     print(f"Crawl Status: {crawl_content}")
 
-                if crawl_content["crawl_status"] == "SUCCEEDED":
+                if crawl_content["crawl_status"] == "complete":
                     files_crawled = crawl_content["files_crawled"]
                     if verbose:
                         print("Our crawl has succeeded!")
