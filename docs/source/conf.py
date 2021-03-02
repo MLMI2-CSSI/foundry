@@ -18,8 +18,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'foundry'
-copyright = '2021, Ben Blaiszik, KJ Schmidt, Aristana Scourtas'
-author = 'Ben Blaiszik, KJ Schmidt, Aristana Scourtas'
+copyright = '2021, Ben Blaiszik, KJ Schmidt, Marcus Schwarting, Aristana Scourtas'
+author = 'Ben Blaiszik, KJ Schmidt, Marcus Schwarting, Aristana Scourtas'
 
 # The full version, including alpha/beta/rc tags
 release = '0.0.5'
