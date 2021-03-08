@@ -7,6 +7,7 @@ import pandas as pd
 from mdf_forge import Forge
 from foundry import Foundry
 from dlhub_sdk import DLHubClient
+from mdf_connect_client import MDFConnectClient
 
 test_dataset = "_test_blaiszik_foundry_iris_v2.1"
 expected_title = "Foundry - Iris Dataset"
@@ -16,6 +17,7 @@ def test_foundry_init_cloud():
     f1 = Foundry(no_browser=True, no_local_server=True)
     assert isinstance(f1.dlhub_client, DLHubClient)
     assert isinstance(f1.forge_client, Forge)
+    assert isinstance(f1.connect_client, MDFConnectClient)
 
 
 @pytest.mark.xfail(reason="Tests will fail in cloud")
@@ -23,14 +25,17 @@ def test_foundry_init_cloud():
     f = Foundry()
     assert isinstance(f.dlhub_client, DLHubClient)
     assert isinstance(f.forge_client, Forge)
+    assert isinstance(f.connect_client, MDFConnectClient)
 
     f2 = Foundry(no_browser=False, no_local_server=True)
     assert isinstance(f2.dlhub_client, DLHubClient)
     assert isinstance(f2.forge_client, Forge)
+    assert isinstance(f2.connect_client, MDFConnectClient)
 
     f3 = Foundry(no_browser=True, no_local_server=False)
     assert isinstance(f3.dlhub_client, DLHubClient)
     assert isinstance(f3.forge_client, Forge)
+    assert isinstance(f3.connect_client, MDFConnectClient)
 
 
 def test_list():
@@ -73,6 +78,16 @@ def test_dataframe_load():
     assert isinstance(X, pd.DataFrame)
     assert len(y) > 1
     assert isinstance(y, pd.DataFrame)
+
+
+def test_publish():
+    # TODO
+    pass
+
+
+def test_check_status():
+    # TODO
+    pass
 
 
 # Helper
