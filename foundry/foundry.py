@@ -108,6 +108,7 @@ class Foundry(FoundryMetadata):
         ).match_resource_types("dataset")
         res = res.match_field("mdf.source_id", name).search()
 
+        # TODO: if object empty, handle
         res = res[0]
         res["dataset"] = res["projects"]["foundry"]
         res["dataset"]["type"] = res["dataset"]["package_type"]
