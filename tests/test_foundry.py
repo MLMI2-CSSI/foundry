@@ -8,8 +8,8 @@ from mdf_forge import Forge
 from foundry import Foundry
 from dlhub_sdk import DLHubClient
 
-test_dataset = "_test_foundry_stein_v1.1"
-expected_title = "JCAP images and absorption spectra for 179072 metal oxides"
+test_dataset = "_test_blaiszik_foundry_iris_v2.1"
+expected_title = "Foundry - Iris Dataset"
 
 
 def test_foundry_init_cloud():
@@ -48,8 +48,6 @@ def test_metadata_pull():
 
 @pytest.mark.xfail(reason="Test should have a local endpoint, will fail cloud CI")
 def test_download_globus():
-    test_dataset = "_test_foundry_stein_v1.1"
-    expected_title = "JCAP images and absorption spectra for 179072 metal oxides"
     f = Foundry(no_browser=True, no_local_server=True)
     f = f.load(test_dataset, download=True)
     assert f.dc["titles"][0]["title"] == expected_title
@@ -68,7 +66,6 @@ def test_download_https():
 
 
 def test_dataframe_load():
-    test_dataset = "_test_foundry_stein_v1.1"
     f = Foundry(no_browser=True, no_local_server=True)
     f = f.load(test_dataset, download=True)
     X, y = f.load_data()
