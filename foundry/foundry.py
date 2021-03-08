@@ -5,6 +5,7 @@ from joblib import Parallel, delayed
 from collections import namedtuple
 from dlhub_sdk import DLHubClient
 from mdf_forge import Forge
+from mdf_connect_client import MDFConnectClient
 import multiprocessing
 from typing import Any
 import pandas as pd
@@ -38,7 +39,7 @@ class Foundry(FoundryMetadata):
     # transfer_client: Any
     dlhub_client: Any
     forge_client: Any
-    # connect_client: #Add this back in later, not necessary for current functionality
+    connect_client: Any
 
     xtract_tokens: Any
 
@@ -49,6 +50,7 @@ class Foundry(FoundryMetadata):
         auths = mdf_toolbox.login(
             services=[
                 "data_mdf",
+                "mdf_connect",
                 "search",
                 "petrel",
                 "transfer",
@@ -69,6 +71,10 @@ class Foundry(FoundryMetadata):
             transfer_client=auths["transfer"],
             data_mdf_authorizer=auths["data_mdf"],
             petrel_authorizer=auths["petrel"],
+        )
+
+        self.connect_client = MDFConnectClient(
+            authorizer=auths["mdf_connect"]
         )
 
         self.dlhub_client = DLHubClient(
