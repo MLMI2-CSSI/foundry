@@ -1,0 +1,5 @@
+mdf_forge >= 0.7.6
+click
+h5py
+git+git://github.com/MLMI2-CSSI/foundry-cli.git
+git+git://github.com/MLMI2-CSSI/foundry.git
