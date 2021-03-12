@@ -1,7 +1,7 @@
 {
   "name": "Fashion MNIST Image Storing",
   "version": "1.0.0",
-  "description": "Example of how hdf5 files can be used to store image data for a Foundry dataset",
+  "description": "Storing hdf5 image files",
   "private":true,
   "dependencies":{
     "_test_foundry_fashion_mnist_v1.1": "1.1"
