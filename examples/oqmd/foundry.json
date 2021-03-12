@@ -1,0 +1,9 @@
+{
+    "name": "OQMD Data Analysis",
+    "version": "1.0.0",
+    "description": "Creating dataframe and metadata for OQMD dataset",
+    "private":true,
+    "dependencies":{
+      "_test_foundry_oqmd_v1.1": "1.1"
+    }
+  }
