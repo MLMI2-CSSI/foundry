@@ -1,7 +1,7 @@
 {
     "name": "Iris Analysis",
     "version": "1.0.0",
-    "description": "Datasets for iris DLhub model",
+    "description": "Dataset for iris DLhub model",
     "private":true,
     "dependencies":{
       "_test_blaiszik_foundry_iris_v2.1": "2.1"
