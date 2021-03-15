@@ -1,1 +1,3 @@
-from .foundry import Foundry  # noqa: F401
+from .foundry import Foundry
+from . import models
+
