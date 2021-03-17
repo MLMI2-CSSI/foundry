@@ -73,8 +73,10 @@ class Foundry(FoundryMetadata):
             petrel_authorizer=auths["petrel"],
         )
 
+        # TODO: when release-ready, remove test=True
         self.connect_client = MDFConnectClient(
-            authorizer=auths["mdf_connect"]
+            authorizer=auths["mdf_connect"],
+            test=True
         )
 
         self.dlhub_client = DLHubClient(
@@ -270,32 +272,41 @@ class Foundry(FoundryMetadata):
         print("DC:{}".format(self.dc))
         print("Dataset:{}".format(self.dataset.json(exclude={"dataframe"})))
 
-    def publish(self, foundry_metadata, update=False, **kwargs):
+    def publish(self, foundry_metadata, data_source, title, authors, update=False, publication_year=None, **kwargs):
         """Submit a data package for publication
         Args:
-            foundry_metadata (dict): Path to the file containing
+            foundry_metadata (dict): Dict of metadata describing data package
+            data_source (string): Url for Globus endpoint
+            title (string): Title of data package
+            authors (list): List of data package author names e.g., Jack Black or Nunez, Victoria
             update (bool): True if this is an update to a prior data package
             (default: self.config.metadata_file)
+            publication_year (int): Year of dataset publication. If None, will be set to the current calendar year.
+            (default: $current_year)
         Keyword Args:
-            title (str): Title of the data package
-            authors (list): List of data package author names e.g., Jack Black or Nunez, Victoria
             affiliations (list): List of author affiliations
             tags (list): List of tags to apply to the data package
+            short_name (string): Shortened/abbreviated name of the data package
+            publisher (string): Data publishing entity (e.g. MDF, Zenodo, etc.)
+
 
         Returns
         -------
         (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset 
         """
 
+        # TODO: add publisher
+        # TODO: add publication year (current year) -- if None, assign current year
         self.connect_client.create_dc_block(
-            title=kwargs["title"],
-            authors=kwargs["authors"],
+            title=title,
+            authors=authors,
             affiliations=kwargs.get("affiliations", []),
             subjects=kwargs.get("tags", ["machine learning", "foundry"]),
         )
         self.connect_client.add_organization("Foundry")
         self.connect_client.set_project_block("foundry", foundry_metadata)
-        self.connect_client.add_data_source(kwargs.get("data_sources", []))
+        self.connect_client.add_data_source(data_source)
+        self.connect_client.set_source_name(kwargs.get("short_name", title))
 
         res = self.connect_client.submit_dataset(update=update)
         return res
