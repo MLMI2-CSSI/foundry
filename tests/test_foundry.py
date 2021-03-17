@@ -115,13 +115,18 @@ def test_publish():
     # assert res['success']
     # assert res['source_id'] == "_test_scourtas_example_iris_publish_{:.0f}_v1.1".format(timestamp)
 
-    # TODO: check that update is successful
-
     # check that pushing same dataset without update flag fails
     res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
     assert not res['success']
 
+    # check that using update flag allows us to update dataset
+    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name, update=True)
+    assert res['success']
 
+    # check that using update flag for new dataset fails
+    new_short_name = short_name + "_update"
+    res = f.publish(test_metadata, test_data_source, title, authors, short_name=new_short_name, update=True)
+    assert not res['success']
 
 
 def test_check_status():
