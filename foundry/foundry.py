@@ -8,6 +8,7 @@ from mdf_forge import Forge
 from mdf_connect_client import MDFConnectClient
 import multiprocessing
 from typing import Any
+from datetime import date
 import pandas as pd
 import mdf_toolbox
 import requests
@@ -280,9 +281,10 @@ class Foundry(FoundryMetadata):
             title (string): Title of data package
             authors (list): List of data package author names e.g., Jack Black or Nunez, Victoria
             update (bool): True if this is an update to a prior data package
-            (default: self.config.metadata_file)
-            publication_year (int): Year of dataset publication. If None, will be set to the current calendar year.
-            (default: $current_year)
+                (default: self.config.metadata_file)
+            publication_year (int): Year of dataset publication. If None, will be set to the current calendar year by
+                MDF Connect Client.
+                (default: $current_year)
         Keyword Args:
             affiliations (list): List of author affiliations
             tags (list): List of tags to apply to the data package
@@ -295,13 +297,13 @@ class Foundry(FoundryMetadata):
         (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset 
         """
 
-        # TODO: add publisher
-        # TODO: add publication year (current year) -- if None, assign current year
         self.connect_client.create_dc_block(
             title=title,
             authors=authors,
             affiliations=kwargs.get("affiliations", []),
             subjects=kwargs.get("tags", ["machine learning", "foundry"]),
+            publisher=kwargs.get("publisher", ""),
+            publication_year=publication_year
         )
         self.connect_client.add_organization("Foundry")
         self.connect_client.set_project_block("foundry", foundry_metadata)
