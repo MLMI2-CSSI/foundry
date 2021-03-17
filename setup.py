@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 packages = (setuptools.find_packages(),)
 setuptools.setup(
     name="foundry_ml",
-    version="0.0.6",
+    version="0.0.7",
     author="Ben Blaiszik",
     author_email="blaiszik@uchicago.edu",
     packages=setuptools.find_packages(),
