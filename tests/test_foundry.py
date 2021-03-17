@@ -96,6 +96,8 @@ def test_dataframe_load():
 
 
 def test_publish():
+    # TODO: automate dealing with curation and cleaning after tests
+
     f = Foundry(no_browser=True, no_local_server=True)
 
     timestamp = datetime.now().timestamp()
