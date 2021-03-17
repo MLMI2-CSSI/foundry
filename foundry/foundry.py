@@ -5,8 +5,10 @@ from joblib import Parallel, delayed
 from collections import namedtuple
 from dlhub_sdk import DLHubClient
 from mdf_forge import Forge
+from mdf_connect_client import MDFConnectClient
 import multiprocessing
 from typing import Any
+from datetime import date
 import pandas as pd
 import mdf_toolbox
 import requests
@@ -28,7 +30,7 @@ class Foundry(FoundryMetadata):
     # transfer_client: Any
     dlhub_client: Any
     forge_client: Any
-    # connect_client: #Add this back in later, not necessary for current functionality
+    connect_client: Any
 
     xtract_tokens: Any
 
@@ -39,6 +41,7 @@ class Foundry(FoundryMetadata):
         auths = mdf_toolbox.login(
             services=[
                 "data_mdf",
+                "mdf_connect",
                 "search",
                 "petrel",
                 "transfer",
@@ -59,6 +62,12 @@ class Foundry(FoundryMetadata):
             transfer_client=auths["transfer"],
             data_mdf_authorizer=auths["data_mdf"],
             petrel_authorizer=auths["petrel"],
+        )
+
+        # TODO: when release-ready, remove test=True
+        self.connect_client = MDFConnectClient(
+            authorizer=auths["mdf_connect"],
+            test=True
         )
 
         self.dlhub_client = DLHubClient(
@@ -97,6 +106,7 @@ class Foundry(FoundryMetadata):
         ).match_resource_types("dataset")
         res = res.match_field("mdf.source_id", name).search()
 
+        # TODO: if object empty, handle
         res = res[0]
         res["dataset"] = res["projects"]["foundry"]
         res["dataset"]["type"] = res["dataset"]["package_type"]
@@ -252,35 +262,67 @@ class Foundry(FoundryMetadata):
         print("DC:{}".format(self.dc))
         print("Dataset:{}".format(self.dataset.json(exclude={"dataframe"})))
 
-    def publish(self, foundry_metadata, update=False, **kwargs):
+    def publish(self, foundry_metadata, data_source, title, authors, update=False, publication_year=None, **kwargs):
         """Submit a data package for publication
         Args:
-            foundry_metadata (dict): Path to the file containing
-            update (bool): True if this is an update to a prior data package
-            (default: self.config.metadata_file)
-        Keyword Args:
-            title (str): Title of the data package
+            foundry_metadata (dict): Dict of metadata describing data package
+            data_source (string): Url for Globus endpoint
+            title (string): Title of data package
             authors (list): List of data package author names e.g., Jack Black or Nunez, Victoria
+            update (bool): True if this is an update to a prior data package
+                (default: self.config.metadata_file)
+            publication_year (int): Year of dataset publication. If None, will be set to the current calendar year by
+                MDF Connect Client.
+                (default: $current_year)
+        Keyword Args:
             affiliations (list): List of author affiliations
             tags (list): List of tags to apply to the data package
+            short_name (string): Shortened/abbreviated name of the data package
+            publisher (string): Data publishing entity (e.g. MDF, Zenodo, etc.)
+
 
         Returns
         -------
-        (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset 
+        (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset. Contains `source_id`, which
+            can be used to check the status of the submission
         """
 
         self.connect_client.create_dc_block(
-            title=kwargs["title"],
-            authors=kwargs["authors"],
+            title=title,
+            authors=authors,
             affiliations=kwargs.get("affiliations", []),
             subjects=kwargs.get("tags", ["machine learning", "foundry"]),
+            publisher=kwargs.get("publisher", ""),
+            publication_year=publication_year
         )
         self.connect_client.add_organization("Foundry")
         self.connect_client.set_project_block("foundry", foundry_metadata)
-        self.connect_client.add_data_source(kwargs.get("data_sources", []))
+        self.connect_client.add_data_source(data_source)
+        self.connect_client.set_source_name(kwargs.get("short_name", title))
 
         res = self.connect_client.submit_dataset(update=update)
         return res
+
+    def check_status(self, source_id, short=False, raw=False):
+        """Check the status of your submission.
+
+        Arguments:
+            source_id (str): The ``source_id`` (``source_name`` + version information) of the
+                    submission to check. Returned in the ``res`` result from ``publish()`` via MDF Connect Client.
+            short (bool): When ``False``, will print a status summary containing
+                    all of the status steps for the dataset.
+                    When ``True``, will print a short finished/processing message,
+                    useful for checking many datasets' status at once.
+                    **Default:** ``False``
+            raw (bool): When ``False``, will print a nicely-formatted status summary.
+                    When ``True``, will return the full status result.
+                    For direct human consumption, ``False`` is recommended.
+                    **Default:** ``False``
+
+        Returns:
+            If ``raw`` is ``True``, *dict*: The full status result.
+        """
+        return self.connect_client.check_status(source_id, short, raw)
 
     def configure(self, **kwargs):
         """Set Foundry config

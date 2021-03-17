@@ -6,6 +6,8 @@ dlhub_sdk>=0.0.1
 h5py>=2.10.0
 pandas==1.2.2
 pydantic>=1.6.1
-sphinx-materialdesign-theme==0.1.11
+Sphinx>=3.5.1
+sphinx-materialdesign-theme>=0.1.11
 joblib>=0.16.0
 mdf_forge>=0.7.6
+mdf-connect-client>=0.3.8
