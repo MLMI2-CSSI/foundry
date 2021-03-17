@@ -18,16 +18,6 @@ import h5py
 import time
 import os
 
-"""
-TODO: 
-* Merge functionality from dlhub_sdk (remove in dlhub_sdk)
-* Split FoundrySources into separate file
-* Caching for datasets
-* List available datasets
-* Add arg to describe dataset to accept short_name
-* Push and pull functionality for datasets
-"""
-
 
 class Foundry(FoundryMetadata):
     """Foundry Client Base Class
@@ -99,7 +89,6 @@ class Foundry(FoundryMetadata):
 
     def load(self, name, download=True, globus=True, verbose=False, **kwargs):
         """Load the metadata for a Foundry dataset into the client
-
         Args:
             name (str): Name of the foundry dataset
             download (bool): If True, download the data associated with the package (default is True)
@@ -335,47 +324,34 @@ class Foundry(FoundryMetadata):
         """
         return self.connect_client.check_status(source_id, short, raw)
 
-    def from_file(self, file=None):
-        """Create a Foundry client from a file
-
-        Args:
+    def configure(self, **kwargs):
+        """Set Foundry config
+        Keyword Args:
             file (str): Path to the file containing
             (default: self.config.metadata_file)
 
-        Returns
-        -------
-        (Foundry): an newly instantiated Foundry client
-        """
-
-        if file is None:
-            file = self.config.metadata_file
-        with open("./{}".format(file)) as fp:
-            obj = json.load(fp)
-            return Foundry(**obj)
-
-    def to_file(self, file=None):
-        """Create a Foundry client from a file
-
-        Args:
-            file (str): Path to the file to save metadata to
-            (default: self.config.metadata_file)
+        dataframe_file (str): filename for the dataframe file default:"foundry_dataframe.json"
+        data_file (str): : filename for the data file default:"foundry.hdf5"
+        destination_endpoint (str): Globus endpoint UUID where Foundry data should move
+        local_cache_dir (str): Where to place collected data default:"./data"
 
         Returns
         -------
-        (Foundry) self: for chaining
+        (Foundry): self: for chaining
         """
-
-        if file is None:
-            file = self.config.metadata_file
-        with open("./{}".format(file)) as fp:
-            obj = json.dump(self.json(exclude={"dlhub_client", "forge_client"}), fp)
-        return self
-
-    def configure(self, **kwargs):
         self.config = FoundryConfig(**kwargs)
         return self
 
     def download(self, globus=True, verbose=False, **kwargs):
+        """Download a Foundry dataset
+        Args:
+            globus (bool): if True, use Globus to download the data else try HTTPS
+            verbose (bool): if True print out debug information during the download
+
+        Returns
+        -------
+        (Foundry): self: for chaining
+        """
         # Check if the dir already exists
         path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
         if os.path.isdir(path):
