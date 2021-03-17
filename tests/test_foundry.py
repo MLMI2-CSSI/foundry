@@ -115,9 +115,13 @@ def test_publish():
     # assert res['success']
     # assert res['source_id'] == "_test_scourtas_example_iris_publish_{:.0f}_v1.1".format(timestamp)
 
-    # TODO: test that update with update flag is successful
-    # TODO: test that pushing same dataset/name without update flag fails (NOTE: this still fails even after
-    #   dataset is deleted via Globus UI)
+    # TODO: check that update is successful
+
+    # check that pushing same dataset without update flag fails
+    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
+    assert not res['success']
+
+
 
 
 def test_check_status():
