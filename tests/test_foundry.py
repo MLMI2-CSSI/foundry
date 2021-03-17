@@ -2,6 +2,7 @@ import os
 import re
 import types
 import pytest
+from datetime import datetime
 import mdf_toolbox
 import pandas as pd
 from mdf_forge import Forge
@@ -11,6 +12,20 @@ from mdf_connect_client import MDFConnectClient
 
 test_dataset = "_test_blaiszik_foundry_iris_v2.1"
 expected_title = "Foundry - Iris Dataset"
+test_metadata = {
+    "inputs": ["sepal length (cm)", "sepal width (cm)", "petal length (cm)", "petal width (cm)"],
+    "input_descriptions": ["sepal length in unit(cm)", "sepal width in unit(cm)", "petal length in unit(cm)",
+                           "petal width in unit(cm)"],
+    "input_units": ["cm", "cm", "cm", "cm"],
+    "outputs": ["y"],
+    "output_descriptions": ["flower type"],
+    "output_units": [],
+    "output_labels": ["setosa", "versicolor", "virginica"],
+    "short_name": "iris_example",
+    "package_type": "tabular"
+}
+# Globus endpoint for '_test_blaiszik_foundry_iris_v2.1'
+test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry%2F"
 
 
 def test_foundry_init_cloud():
@@ -81,8 +96,28 @@ def test_dataframe_load():
 
 
 def test_publish():
-    # TODO
-    pass
+    f = Foundry(no_browser=True, no_local_server=True)
+
+    timestamp = datetime.now().timestamp()
+    title = "scourtas_example_iris_test_publish_{:.0f}".format(timestamp)
+    short_name = "example_AS_iris_test_{:.0f}".format(timestamp)
+    authors = ["A Scourtas"]
+
+    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
+
+    # publish with short name
+    assert res['success']
+    assert res['source_id'] == "_test_example_iris_{:.0f}_v1.1".format(timestamp)
+
+    # TODO: publish with long title -- for some reason even when I change the title, it still says it's already pub'd
+    # title += "long"
+    # res = f.publish(test_metadata, test_data_source, title, authors)
+    # assert res['success']
+    # assert res['source_id'] == "_test_scourtas_example_iris_publish_{:.0f}_v1.1".format(timestamp)
+
+    # TODO: test that update with update flag is successful
+    # TODO: test that pushing same dataset/name without update flag fails (NOTE: this still fails even after
+    #   dataset is deleted via Globus UI)
 
 
 def test_check_status():
