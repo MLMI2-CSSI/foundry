@@ -294,7 +294,8 @@ class Foundry(FoundryMetadata):
 
         Returns
         -------
-        (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset 
+        (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset. Contains `source_id`, which
+            can be used to check the status of the submission
         """
 
         self.connect_client.create_dc_block(
@@ -312,6 +313,27 @@ class Foundry(FoundryMetadata):
 
         res = self.connect_client.submit_dataset(update=update)
         return res
+
+    def check_status(self, source_id, short=False, raw=False):
+        """Check the status of your submission.
+
+        Arguments:
+            source_id (str): The ``source_id`` (``source_name`` + version information) of the
+                    submission to check. Returned in the ``res`` result from ``publish()`` via MDF Connect Client.
+            short (bool): When ``False``, will print a status summary containing
+                    all of the status steps for the dataset.
+                    When ``True``, will print a short finished/processing message,
+                    useful for checking many datasets' status at once.
+                    **Default:** ``False``
+            raw (bool): When ``False``, will print a nicely-formatted status summary.
+                    When ``True``, will return the full status result.
+                    For direct human consumption, ``False`` is recommended.
+                    **Default:** ``False``
+
+        Returns:
+            If ``raw`` is ``True``, *dict*: The full status result.
+        """
+        return self.connect_client.check_status(source_id, short, raw)
 
     def from_file(self, file=None):
         """Create a Foundry client from a file
