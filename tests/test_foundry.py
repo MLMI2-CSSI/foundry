@@ -130,7 +130,7 @@ def test_publish():
 
 
 def test_check_status():
-    # TODO
+    # TODO: the 'active messages' in MDF CC's check_status() don't appear to do anything? need to determine how to test
     pass
 
 
