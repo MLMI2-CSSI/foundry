@@ -92,7 +92,16 @@ class Foundry(FoundryMetadata):
             ].access_token,
         }
 
-    def load(self, name, download=True, globus=True, verbose=False, **kwargs):
+    def load(
+        self,
+        name,
+        version="1.1",
+        provider="MDF",
+        download=True,
+        globus=True,
+        verbose=False,
+        **kwargs,
+    ):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
@@ -105,19 +114,35 @@ class Foundry(FoundryMetadata):
         -------
             self
         """
+        res = []
         # MDF specific logic
-        res = self.forge_client.match_field(
-            "mdf.organizations", "foundry"
-        ).match_resource_types("dataset")
-        res = res.match_field("mdf.source_id", name).search()
+        # Handle DOI inputs
+        if name.startswith("10.") and provider == "MDF":
+            res = (
+                self.forge_client.match_dois(name)
+                .match_resource_types("dataset")
+                .match_field("mdf.organizations", "foundry")
+                .search()
+            )
 
-        # TODO: if object empty, handle
-        res = res[0]
-        res["dataset"] = res["projects"]["foundry"]
-        res["dataset"]["type"] = res["dataset"]["package_type"]
-        del res["projects"]["foundry"]
+        # Handle MDF source_ids
+        else:
+            print("source_id")
+            res = (
+                self.forge_client.match_field("mdf.organizations", "foundry")
+                .match_resource_types("dataset")
+                .match_field("mdf.source_id", name)
+                .search()
+            )
 
-        self = Foundry(**res)
+        if not res:
+            return self
+        else:
+            res = res[0]
+            res["dataset"] = res["projects"]["foundry"]
+            res["dataset"]["type"] = res["dataset"]["package_type"]
+            del res["projects"]["foundry"]
+            self = Foundry(**res)
 
         if download is True:  # Add check for package existence
             self.download(
@@ -549,4 +574,3 @@ class Foundry(FoundryMetadata):
         )
 
         return self
-
