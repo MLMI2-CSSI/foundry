@@ -14,6 +14,7 @@ from mdf_connect_client import MDFConnectClient
 import multiprocessing
 from typing import Any
 from datetime import date
+import multiprocessing
 import pandas as pd
 import mdf_toolbox
 import requests
@@ -71,8 +72,7 @@ class Foundry(FoundryMetadata):
 
         # TODO: when release-ready, remove test=True
         self.connect_client = MDFConnectClient(
-            authorizer=auths["mdf_connect"],
-            test=True
+            authorizer=auths["mdf_connect"], test=True
         )
 
         self.dlhub_client = DLHubClient(
@@ -267,7 +267,16 @@ class Foundry(FoundryMetadata):
         print("DC:{}".format(self.dc))
         print("Dataset:{}".format(self.dataset.json(exclude={"dataframe"})))
 
-    def publish(self, foundry_metadata, data_source, title, authors, update=False, publication_year=None, **kwargs):
+    def publish(
+        self,
+        foundry_metadata,
+        data_source,
+        title,
+        authors,
+        update=False,
+        publication_year=None,
+        **kwargs,
+    ):
         """Submit a data package for publication
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
@@ -298,7 +307,7 @@ class Foundry(FoundryMetadata):
             affiliations=kwargs.get("affiliations", []),
             subjects=kwargs.get("tags", ["machine learning", "foundry"]),
             publisher=kwargs.get("publisher", ""),
-            publication_year=publication_year
+            publication_year=publication_year,
         )
         self.connect_client.add_organization("Foundry")
         self.connect_client.set_project_block("foundry", foundry_metadata)
@@ -503,3 +512,41 @@ class Foundry(FoundryMetadata):
             print(results)
 
         return self
+
+    def build(self, spec, globus=False, interval=3, file=False):
+        """Build a Foundry Data Package
+        Args:
+            spec (multiple): dict or str (relative filename) of the data package specification
+            globus (bool): if True use Globus to fetch datasets
+            interval (int): Polling interval on checking task status in seconds.
+            type (str): One of "file" or None
+
+        Returns
+        -------
+        (Foundry): self: for chaining
+        """
+
+        print("Building Data Package")
+        num_cores = multiprocessing.cpu_count()
+
+        def start_download(ds, interval=interval, globus=False):
+            print("=== Fetching Data Package {} ===".format(ds.name))
+            f = Foundry().load(ds.name, download=False)
+            f = f.download(interval=interval, globus=globus)
+            return {"success": True}
+
+        if file:
+            with open(file, "r") as fp:
+                fs = FoundrySpecification(**json.load(fp))
+        else:
+            fs = FoundrySpecification(**spec)
+
+        fs.remove_duplicate_dependencies()
+
+        results = Parallel(n_jobs=num_cores)(
+            delayed(start_download)(ds, interval=interval, globus=globus)
+            for ds in fs.dependencies
+        )
+
+        return self
+
