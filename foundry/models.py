@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional, Any
 from pydantic import BaseModel
 from enum import Enum
+import pandas as pd
 
 # class FoundryMetric(BaseModel):
 #     pass
@@ -10,6 +11,44 @@ from enum import Enum
 #     metric: FoundryMetric = None
 #     datasets: List[FoundryDataset] = []
 #     description: str = ""
+
+
+### Classes for Foundry Data Package Specification
+class FoundrySpecificationDataset(BaseModel):
+    """Pydantic base class for datasets within the Foundry data package specification"""
+
+    name: Optional[str]
+    provider: Optional[str] = "MDF"
+    version: Optional[str]
+
+
+class FoundrySpecification(BaseModel):
+    """Pydantic base class for interacting with the Foundry data package specification
+    The specification provides a way to group datasets and manage versions
+    """
+
+    name: str = ""
+    version: str = ""
+    description: str = ""
+    private: bool = False
+    dependencies: List[FoundrySpecificationDataset]
+
+    def add_dependency(self, name, version, provider="MDF"):
+        ds = FoundrySpecificationDataset(name=name, provider=provider, version=version)
+        self.dependencies.append(ds)
+
+    def remove_duplicate_dependencies(self):
+        df = pd.DataFrame(self.dict()["dependencies"])
+
+        self.clear_dependencies()
+        for i, row in df.drop_duplicates().iterrows():
+            self.add_dependency(name=row["name"], version=row["version"])
+
+    def clear_dependencies(self):
+        self.dependencies = []
+
+
+### END Classes for Foundry Data Package Specification
 
 
 class FoundryDatasetType(Enum):
