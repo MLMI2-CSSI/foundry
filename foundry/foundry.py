@@ -1,5 +1,10 @@
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from foundry.models import FoundryMetadata, FoundryConfig
+from foundry.models import (
+    FoundryMetadata,
+    FoundryConfig,
+    FoundrySpecificationDataset,
+    FoundrySpecification,
+)
 from pydantic import AnyUrl, ValidationError
 from joblib import Parallel, delayed
 from collections import namedtuple
