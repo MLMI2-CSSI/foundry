@@ -1,6 +1,6 @@
 # Getting started with Foundry
 
-![](.gitbook/assets/foundry.png)
+![](.gitbook/assets/foundry-purple.png)
 
 ## What is Foundry?
 
