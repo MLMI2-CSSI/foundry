@@ -4,6 +4,11 @@
 * [Examples](examples.md)
 * [Project Support](project-support.md)
 
+## Publishing
+
+* [Publishing Datasets](publishing/publishing-datasets.md)
+* [Publishing Models](publishing/publishing-models.md)
+
 ## How to contribute
 
 * [Contribution Process](how-to-contribute/contributing.md)
