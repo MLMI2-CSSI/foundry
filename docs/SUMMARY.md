@@ -1,6 +1,7 @@
 # Table of contents
 
 * [Introduction](README.md)
+* [Examples](examples.md)
 * [Project Support](project-support.md)
 
 ## How to contribute
