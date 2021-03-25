@@ -1,8 +1,6 @@
-# Examples
+# Basic Usage Examples
 
 ## [See Scientific Examples](https://github.com/MLMI2-CSSI/foundry/tree/master/examples)
-
-## Basic Usage
 
 The Foundry client can be used to access datasets using a `source_id`, e.g. here "\_test\_foundry\_fashion\_mnist\_v1.1":
 

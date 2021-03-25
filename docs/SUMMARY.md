@@ -1,7 +1,12 @@
 # Table of contents
 
 * [Introduction](README.md)
-* [Examples](examples.md)
+
+## Examples <a id="examples-1"></a>
+
+---
+
+* [Basic Usage Examples](examples.md)
 
 ## Publishing
 
