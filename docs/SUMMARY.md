@@ -2,16 +2,13 @@
 
 * [Introduction](README.md)
 
-## Examples <a id="examples-1"></a>
+## Usage <a id="examples-1"></a>
 
 ---
 
 * [Basic Usage Examples](examples.md)
-
-## Publishing
-
-* [Publishing Datasets](publishing/publishing-datasets.md)
-* [Publishing Models](publishing/publishing-models.md)
+* [Publishing Datasets](publishing-datasets.md)
+* [Publishing Models](publishing-models.md)
 
 ## How to contribute
 
