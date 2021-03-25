@@ -65,7 +65,3 @@ When downloading data, add the following argument to download contents by HTTPS.
 f.download(globus=False)
 ```
 
-
-
-
-
