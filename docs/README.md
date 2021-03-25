@@ -28,7 +28,7 @@ This will remotely load the necessary metadata as well as download the data to l
 X, y = f.load_data()
 ```
 
-The data is then usable:
+The data are then usable:
 
 ```python
 n_cols = 6
@@ -89,29 +89,5 @@ This material is based upon work supported by Laboratory Directed Research and D
 
 This work was performed under financial assistance award 70NANB14H012 from U.S. Department of Commerce, National Institute of Standards and Technology as part of the [Center for Hierarchical Material Design \(CHiMaD\)](http://chimad.northwestern.edu). This work was performed under the following financial assistance award 70NANB19H005 from U.S. Department of Commerce, National Institute of Standards and Technology as part of the Center for Hierarchical Materials Design \(CHiMaD\). This work was also supported by the National Science Foundation as part of the [Midwest Big Data Hub](http://midwestbigdatahub.org) under NSF Award Number: 1636950 "BD Spokes: SPOKE: MIDWEST: Collaborative: Integrative Materials Design \(IMaD\): Leverage, Innovate, and Disseminate". [https://www.materialsdatafacility.org](https://www.materialsdatafacility.org)
 
-## Documentation
 
-Formal documentation is currently under development. You may see the Foundry documentation thus far [here](https://foundry.readthedocs.io/en/latest/?).
-
-### Building the documentation locally
-
-#### Instructions for developers
-
-Foundry documentation is built and served by [Read the Docs](https://docs.readthedocs.io/en/stable/). To run a local build and generate the HTML files on your local machine, you need to install [Sphinx](https://www.sphinx-doc.org/en/master/usage/quickstart.html):
-
-```text
-pip install sphinx
-```
-
-When you clone the Foundry repo, there should be a `/docs` directory with all the relevant files, including a Makefile and a `/source` subdirectory.
-
-To generate the build files, from the root of the `/docs` subdirectory run
-
-```text
-make html
-```
-
-Now, under `/docs/build/html` you should find the necessary HTML files. Open `index.html` in your browser to view the documentation.
-
-Between changes to `confy.py` or associated source files, it's good practice to run `make clean` before running `make html`.
 
