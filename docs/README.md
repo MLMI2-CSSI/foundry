@@ -22,7 +22,9 @@ f = Foundry()
 f = f.load("_test_foundry_fashion_mnist_v1.1")
 ```
 
-This will remotely load the necessary metadata as well as download the data to local storage if it is not already present. To ensure successful data download, have a Globus endpoint [setup](https://www.globus.org/globus-connect-personal) on your machine. Once the data is accessible locally, load the data into the client:
+This will remotely load the necessary metadata \(e.g., data location, data keys, etc.\) as well as download the data to local storage if it is not already present. Data can be downloaded via HTTPS without additional setup or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine.
+
+ Once the data are accessible locally, load the data into the client:
 
 ```python
 X, y = f.load_data()
@@ -39,7 +41,7 @@ for i in range(0, n_cols):
     ax[i].imshow(X[i].reshape(display_shape), cmap='gray')
 ```
 
-This example can be found in `examples/fashion-mnist/`.
+This example can be found in `/examples/fashion-mnist/`.
 
 #### Other uses
 
@@ -47,12 +49,6 @@ To just download the data without loading the additional metadata:
 
 ```python
 f = Foundry().download("_test_foundry_fashion_mnist_v1.1")
-```
-
-While it is strongly recommended to load metadata remotely, it can be done locally with a `foundry_metadata.json` file:
-
-```python
-f = Foundry().from_file()
 ```
 
 ## Using Foundry on Cloud Computing Resources
