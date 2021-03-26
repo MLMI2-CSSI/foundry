@@ -4,6 +4,8 @@ description: Information on how to publish datasets
 
 # Publishing Datasets
 
+## [Skip to Publication Example Notebook](https://github.com/MLMI2-CSSI/foundry/blob/master/examples/foundry_publication_example.ipynb)
+
 ## Shaping Datasets
 
 For a general dataset to be translated into a usable Foundry dataset, it should follow one of the prescribed shapes.
@@ -70,7 +72,18 @@ Foundry also supports of data from hierarchical data formats \(e.g., HDF5\). In 
 
 ## Describing Datasets
 
+**DataCite Metadata \(object\):** All datasets can be described using metadata in compliance with the [DataCite metadata format](https://schema.datacite.org). This metadata captures . Many of these capabilities have helper functions in the SDK, to make it easier to match the DataCite schema
 
+**Keys \(object\):** Key objects provide a mapping that allows Foundry to read data from the underlying data structure into usable Python objects. Key objects have the following properties
+
+* **`key (str)`**A name mapping to a column name \(e.g., for csv files\) or key within a data structure \(e.g., for HDF5 files\)
+* **`type (str)`** The type of key this entry represents. Currently suported types are _**\["input", "target" \]**_
+* **`units (str)[optional]`** _****The scientific units associated with a key. Default: None_
+* **`description (str)[optional]`** _****A free text description of the key. Default: None_
+
+**short\_name \(str\):** Short name is a unique name associated with this dataset to make loading and . 
+
+**type \(str\):** The type provides a hint to Foundry on how to map the keys into loading operations. _Options \["tabular","hdf5"\]_
 
 ```text
 "foundry": {
@@ -90,9 +103,14 @@ Foundry also supports of data from hierarchical data formats \(e.g., HDF5\). In 
 		}
 	],
 	"short_name": "my_short_name",
-	"package_type": "files"
+	"type": "tabular"
 }
 ```
 
 
+
+## Future Work
+
+* Add support for wildcard key type specifications
+* Add link to example publication
 
