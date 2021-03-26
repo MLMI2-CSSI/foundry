@@ -18,6 +18,12 @@ Foundry Datasets are comprised of two key components, data and descriptive metad
 
 
 
+## Example - Image Data in Folders
+
+Not yet supported
+
+
+
 ## Metadata
 
 TODO: Add information on the fields allowed in Foundry Metadata
