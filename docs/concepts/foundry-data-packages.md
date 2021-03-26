@@ -4,25 +4,25 @@ Foundry Data Packages allow for a logical and portable way to specify, and colle
 
 ## Data Package Specification Fields
 
-`name` : \(string\) A name for the data package
+**`name`** : \(string\) A name for the data package
 
-`version` : \(string\) A version of the form &lt;major&gt;.&lt;minor&gt;.&lt;sub&gt; e.g., "1.2.0"
+**`version`** : \(string\) A version of the form &lt;major&gt;.&lt;minor&gt;.&lt;sub&gt; e.g., "1.2.0"
 
-`description`  : \(string\) A short description of the data package and its intended use
+**`description`**  : \(string\) A short description of the data package and its intended use
 
-`tags`  : \(list\) A list of tag strings associated with the data package
+**`tags`**  : \(list\) A list of tag strings associated with the data package
 
-`dependencies`  : \(list\) A list of dependency objects associated with the data package
+**`dependencies`**  : \(list\) A list of dependency objects associated with the data package
 
-`private`  : \(bool\) Whether the data package is to be registered in a public data package index
+**`private`**  : \(bool\) Whether the data package is to be registered in a public data package index
 
 ### Dependency Objects
 
-`identifier` : \(string\) Unique identifier for the dataset
+**`identifier`** : \(string\) Unique identifier for the dataset
 
-`version` : \(string\) The version of the dataset to use
+**`version`** : \(string\) The version of the dataset to use
 
-`provider` : \(string\) The dataset provider. _Currently only "MDF" is supported_
+**`provider`** : \(string\) The dataset provider. _Currently only "MDF" is supported_
 
 ```javascript
 {
