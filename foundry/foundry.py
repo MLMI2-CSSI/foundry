@@ -130,10 +130,16 @@ class Foundry(FoundryMetadata):
         if not res:
             return self
         else:
+            # res is list of all matches in Forge
+            # TODO: handle if there are multiple matches
             res = res[0]
+            
+            # map result to FoundryMetadata Pydantic structure (see models.py)
             res["dataset"] = res["projects"]["foundry"]
             res["dataset"]["type"] = res["dataset"]["package_type"]
             del res["projects"]["foundry"]
+
+            # TODO: reassign values to self in a safer way
             self = Foundry(**res)
 
         if download is True:  # Add check for package existence
