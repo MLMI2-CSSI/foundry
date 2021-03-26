@@ -12,24 +12,13 @@ f = f.load("_test_foundry_fashion_mnist_v1.1")
 
 This will remotely load the metadata \(e.g., data location, data keys, etc.\) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine.
 
- Once the data are accessible locally, access the data with the `load_data()` method.
+Once the data are accessible locally, access the data with the `load_data()` method.
 
 ```python
 X, y = f.load_data()
 ```
 
-The data are then usable:
-
-```python
-n_cols = 6
-display_shape = (28,28)
-fig, ax = plt.subplots(1,n_cols)
-
-for i in range(0, n_cols):
-    ax[i].imshow(X[i].reshape(display_shape), cmap='gray')
-```
-
-This example can be found in [`/examples/fashion-mnist/`](https://github.com/MLMI2-CSSI/foundry/tree/master/examples/fashion-mnist).
+The data are then usable within the `X` and `y` variables. This full example can be found in [`/examples/fashion-mnist/`](https://github.com/MLMI2-CSSI/foundry/tree/master/examples/fashion-mnist).
 
 ## Using Foundry on Cloud Computing Resources
 
