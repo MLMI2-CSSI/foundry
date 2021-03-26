@@ -92,16 +92,7 @@ class Foundry(FoundryMetadata):
             ].access_token,
         }
 
-    def load(
-        self,
-        name,
-        version="1.1",
-        provider="MDF",
-        download=True,
-        globus=True,
-        verbose=False,
-        **kwargs,
-    ):
+    def load(self, name, version="1.1", provider="MDF", download=True, globus=True, verbose=False, **kwargs,):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
@@ -118,6 +109,7 @@ class Foundry(FoundryMetadata):
         # MDF specific logic
         # Handle DOI inputs
         if name.startswith("10.") and provider == "MDF":
+            print("Loading by DOI")
             res = (
                 self.forge_client.match_dois(name)
                 .match_resource_types("dataset")
@@ -127,7 +119,7 @@ class Foundry(FoundryMetadata):
 
         # Handle MDF source_ids
         else:
-            print("source_id")
+            print("Loading by source_id")
             res = (
                 self.forge_client.match_field("mdf.organizations", "foundry")
                 .match_resource_types("dataset")
