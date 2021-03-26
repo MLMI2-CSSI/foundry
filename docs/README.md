@@ -8,9 +8,11 @@ Foundry is a Python package that simplifies the discovery and usage of machine-l
 
 ## Installation
 
-Foundry can be installed via PyPI with pip
+Foundry can be installed on any operating system with Python with pip
 
-`pip install foundry-ml`
+```text
+pip install foundry-ml
+```
 
 ## Project Support
 
