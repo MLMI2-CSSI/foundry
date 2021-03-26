@@ -14,6 +14,7 @@ from mdf_connect_client import MDFConnectClient
 import multiprocessing
 from typing import Any
 from datetime import date
+import multiprocessing
 import pandas as pd
 import mdf_toolbox
 import requests
@@ -71,8 +72,7 @@ class Foundry(FoundryMetadata):
 
         # TODO: when release-ready, remove test=True
         self.connect_client = MDFConnectClient(
-            authorizer=auths["mdf_connect"],
-            test=True
+            authorizer=auths["mdf_connect"], test=True
         )
 
         self.dlhub_client = DLHubClient(
@@ -92,7 +92,7 @@ class Foundry(FoundryMetadata):
             ].access_token,
         }
 
-    def load(self, name, download=True, globus=True, verbose=False, **kwargs):
+    def load(self, name, version="1.1", provider="MDF", download=True, globus=True, verbose=False, **kwargs,):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
@@ -105,19 +105,42 @@ class Foundry(FoundryMetadata):
         -------
             self
         """
+        res = []
         # MDF specific logic
-        res = self.forge_client.match_field(
-            "mdf.organizations", "foundry"
-        ).match_resource_types("dataset")
-        res = res.match_field("mdf.source_id", name).search()
+        # Handle DOI inputs
+        if name.startswith("10.") and provider == "MDF":
+            print("Loading by DOI")
+            res = (
+                self.forge_client.match_dois(name)
+                .match_resource_types("dataset")
+                .match_field("mdf.organizations", "foundry")
+                .search()
+            )
 
-        # TODO: if object empty, handle
-        res = res[0]
-        res["dataset"] = res["projects"]["foundry"]
-        res["dataset"]["type"] = res["dataset"]["package_type"]
-        del res["projects"]["foundry"]
+        # Handle MDF source_ids
+        else:
+            print("Loading by source_id")
+            res = (
+                self.forge_client.match_field("mdf.organizations", "foundry")
+                .match_resource_types("dataset")
+                .match_field("mdf.source_id", name)
+                .search()
+            )
 
-        self = Foundry(**res)
+        if not res:
+            return self
+        else:
+            # res is list of all matches in Forge
+            # TODO: handle if there are multiple matches
+            res = res[0]
+            
+            # map result to FoundryMetadata Pydantic structure (see models.py)
+            res["dataset"] = res["projects"]["foundry"]
+            res["dataset"]["type"] = res["dataset"]["package_type"]
+            del res["projects"]["foundry"]
+
+            # TODO: reassign values to self in a safer way
+            self = Foundry(**res)
 
         if download is True:  # Add check for package existence
             self.download(
@@ -267,7 +290,16 @@ class Foundry(FoundryMetadata):
         print("DC:{}".format(self.dc))
         print("Dataset:{}".format(self.dataset.json(exclude={"dataframe"})))
 
-    def publish(self, foundry_metadata, data_source, title, authors, update=False, publication_year=None, **kwargs):
+    def publish(
+        self,
+        foundry_metadata,
+        data_source,
+        title,
+        authors,
+        update=False,
+        publication_year=None,
+        **kwargs,
+    ):
         """Submit a data package for publication
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
@@ -298,7 +330,7 @@ class Foundry(FoundryMetadata):
             affiliations=kwargs.get("affiliations", []),
             subjects=kwargs.get("tags", ["machine learning", "foundry"]),
             publisher=kwargs.get("publisher", ""),
-            publication_year=publication_year
+            publication_year=publication_year,
         )
         self.connect_client.add_organization("Foundry")
         self.connect_client.set_project_block("foundry", foundry_metadata)
@@ -501,5 +533,42 @@ class Foundry(FoundryMetadata):
 
             print("Done curling.")
             print(results)
+
+        return self
+
+    def build(self, spec, globus=False, interval=3, file=False):
+        """Build a Foundry Data Package
+        Args:
+            spec (multiple): dict or str (relative filename) of the data package specification
+            globus (bool): if True use Globus to fetch datasets
+            interval (int): Polling interval on checking task status in seconds.
+            type (str): One of "file" or None
+
+        Returns
+        -------
+        (Foundry): self: for chaining
+        """
+
+        print("Building Data Package")
+        num_cores = multiprocessing.cpu_count()
+
+        def start_download(ds, interval=interval, globus=False):
+            print("=== Fetching Data Package {} ===".format(ds.name))
+            f = Foundry().load(ds.name, download=False)
+            f = f.download(interval=interval, globus=globus)
+            return {"success": True}
+
+        if file:
+            with open(file, "r") as fp:
+                fs = FoundrySpecification(**json.load(fp))
+        else:
+            fs = FoundrySpecification(**spec)
+
+        fs.remove_duplicate_dependencies()
+
+        results = Parallel(n_jobs=num_cores)(
+            delayed(start_download)(ds, interval=interval, globus=globus)
+            for ds in fs.dependencies
+        )
 
         return self
