@@ -2,11 +2,11 @@
 
 * [Introduction](README.md)
 
-## Usage <a id="examples-1"></a>
+## Usage
 
 ---
 
-* [Basic Usage Examples](examples.md)
+* [Getting Started with Python](examples.md)
 * [Publishing Datasets](publishing-datasets.md)
 * [Publishing Models](publishing-models.md)
 * [Command Line Interface \(CLI\)](command-line-interface.md)
