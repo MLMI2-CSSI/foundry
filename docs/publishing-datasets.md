@@ -4,6 +4,8 @@ description: Information on how to publish datasets
 
 # Publishing Datasets
 
+In order to publish datasets, the datasets must 1\) adhere to specified Foundry dataset shapes \([see here](publishing-datasets.md#shaping-datasets)\), and 2\)  be described with required information \([see here](publishing-datasets.md#describing-datasets)\). Together, the dataset shape and description enable researchers to reuse the datasets more easily.
+
 ## [Skip to Publication Example Notebook](https://github.com/MLMI2-CSSI/foundry/blob/master/examples/foundry_publication_example.ipynb)
 
 ## Shaping Datasets
