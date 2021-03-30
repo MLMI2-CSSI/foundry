@@ -1,6 +1,10 @@
 # Getting Started with Python
 
-## [See Scientific Examples](https://github.com/MLMI2-CSSI/foundry/tree/master/examples)
+## See Scientific Examples
+
+[Checkout our example notebooks ](https://github.com/MLMI2-CSSI/foundry/tree/master/examples)for how to load or publish datasets using Foundry.
+
+## Quickstart
 
 The Foundry client can be used to access datasets using a `source_id`, e.g. here "\_test\_foundry\_fashion\_mnist\_v1.1":
 
