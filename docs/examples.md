@@ -16,6 +16,12 @@ f = f.load("_test_foundry_fashion_mnist_v1.1")
 
 This will remotely load the metadata \(e.g., data location, data keys, etc.\) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine.
 
+To see all available datasets by their `source_id`, use the `list()` method.
+
+```python
+print(f.list())
+```
+
 Once the data are accessible locally, access the data with the `load_data()` method.
 
 ```python
