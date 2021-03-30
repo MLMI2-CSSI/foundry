@@ -115,6 +115,48 @@ Foundry also supports data from hierarchical data formats \(e.g., HDF5\). In thi
 
 Once your dataset is in the proper shape, and you have created the associated metadata structure, you can publish to Foundry!
 
+Currently, you can publish any dataset you have stored in the Globus file system. In the following, assume your previously defined metadata are stored in `metadata` :
+
+```python
+from foundry import Foundry
+
+# Globus endpoint URL where your dataset is located
+data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry%2F_test_blaiszik_foundry_iris_v1.2%2F"
+
+# full title of dataset
+title = "Scourtas example iris dataset"
+
+# authors to list 
+authors = ["A Scourtas", "B Blaiszik"]
+
+# shorthand title (optional)
+short_name = "example_AS_iris"
+
+# affiliations of authors (optional)
+affiliations = ["Globus Labs, UChicago"]
+
+# publisher of the data (optional)
+publisher = "Materials Data Facility"
+
+# publication year (optional)
+publication_year = 2021
+
+
+f = Foundry()
+res = f.publish(metadata, data_source, title, authors, short_name=short_name))
+```
+
+The `publish()` method returns a result object that you can inspect for information about the state of the publication. For the above publication, `res` would have the format:
+
+```python
+{'error': None,
+ 'source_id': '_test_example_iris_v1.1',
+ 'status_code': 202,
+ 'success': True}
+```
+
+
+
 ## Future Work
 
 * Add support for wildcard key type specifications
