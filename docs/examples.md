@@ -1,6 +1,6 @@
 # Getting Started with Python
 
-## See Scientific Examples
+## Scientific Examples
 
 [Checkout our example notebooks ](https://github.com/MLMI2-CSSI/foundry/tree/master/examples)for how to load or publish datasets using Foundry.
 
