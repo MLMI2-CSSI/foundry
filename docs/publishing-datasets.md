@@ -12,7 +12,7 @@ In order to publish datasets, the datasets must 1\) adhere to specified Foundry 
 
 ## Shaping Datasets
 
-For a general dataset to be translated into a usable Foundry dataset, it should follow one of the prescribed shapes.
+For a general dataset to be translated into a usable Foundry dataset, it should follow one of the prescribed shapes. It should also be described by a Key object, which provides a mapping that allows Foundry to read data from the underlying data structure into usable Python objects \([see Describing Datasets](publishing-datasets.md#describing-datasets) for more info\). 
 
 **Tabular Data**
 
@@ -24,7 +24,7 @@ Tabular data should include in a form where columns represent the different keys
 | 0.34 | 0.91 | 0.73 |
 | ... | ... | ... |
 
-For this example dataset the keys list would be:  
+For this example dataset the Key object would be:  
 
 ```text
 "keys":[{
@@ -52,7 +52,7 @@ For this example dataset the keys list would be:
 
 ### Hierarchical Data
 
-Foundry also supports of data from hierarchical data formats \(e.g., HDF5\). In this case features and outputs can be represented with `/` notation. For example, if the features of a dataset are located in an array stored in `/data/arr1` and `/other_data/arr2` while the outputs are in `/data/band_gaps`
+Foundry also supports data from hierarchical data formats \(e.g., HDF5\). In this case features and outputs can be represented with `/` notation. For example, if the features of a dataset are located in an array stored in `/data/arr1` and `/other_data/arr2` while the outputs are in `/data/band_gaps`, the Key object would be:
 
 ```text
 "keys":[{
@@ -111,7 +111,9 @@ Foundry also supports of data from hierarchical data formats \(e.g., HDF5\). In 
 }
 ```
 
+## Publishing
 
+Once your dataset is in the proper shape, and you have created the associated metadata structure, you can publish to Foundry!
 
 ## Future Work
 
