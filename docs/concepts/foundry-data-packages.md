@@ -1,6 +1,6 @@
 # Foundry Data Packages
 
-Foundry Data Packages allow for a logical and portable way to specify, and collect data for analyses. From a data package , a user can easily build a local data environment matching the data package.
+Foundry Data Packages allow for a logical and portable way to specify, and collect data for analyses. From a data package, a user can easily build a local data environment matching the data package.
 
 ## Data Package Specification Fields
 
