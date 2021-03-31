@@ -94,9 +94,9 @@ Foundry also supports data from hierarchical data formats \(e.g., HDF5\). In thi
 	"dc": {},
 	"keys": [{
 			"type": "input",
-			"name": "*",
+			"name": "feature_1",
 			"units": "",
-			"description": "These are the inputs"
+			"description": "This is an input"
 		},
 		{
 			"type": "target",
@@ -119,7 +119,7 @@ Before continuing, be sure that you have 1\) signed up for a [free Globus accoun
 
 Once your dataset is in the proper shape, and you have created the associated metadata structure, you can publish to Foundry!
 
-Currently, you can publish any dataset you have stored on a Globus endpoint or Google Drive. In the following, assume your previously defined metadata are stored in `metadata` :
+Currently, you can publish any dataset you have stored on a Globus endpoint or Google Drive. In the following, assume your [previously defined metadata](publishing-datasets.md#describing-datasets) are stored in `metadata` :
 
 ```python
 from foundry import Foundry
