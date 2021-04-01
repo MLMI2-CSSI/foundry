@@ -52,7 +52,7 @@ For this example dataset the Key object would be:
 
 ### Hierarchical Data
 
-Foundry also supports data from hierarchical data formats \(e.g., HDF5\). In this case features and outputs can be represented with `/` notation. For example, if the features of a dataset are located in an array stored in `/data/arr1` and `/other_data/arr2` while the outputs are in `/data/band_gaps`, the Key object would be:
+Foundry also supports data from hierarchical data formats \(e.g., [HDF5](https://www.h5py.org)\). In this case features and outputs can be represented with `/` notation. For example, if the features of a dataset are located in an array stored in `/data/arr1` and `/other_data/arr2` while the outputs are in `/data/band_gaps`, the Key object would be:
 
 ```text
 "keys":[{
