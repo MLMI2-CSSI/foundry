@@ -32,7 +32,7 @@ f.list()
 
 ### Loading Datasets
 
-The Foundry client can be used to access datasets using a `source_id`, e.g. here "\_test\_foundry\_fashion\_mnist_v1.1"._ You can retrieve the `source_id` from the [`list()` method](examples.md#listing-datasets).
+The Foundry client can be used to access datasets using a `source_id`, e.g. here `"_test_foundry_fashion_mnist_v1.1"`_._ You can retrieve the `source_id` from the [`list()` method](examples.md#listing-datasets).
 
 ```python
 from foundry import Foundry
