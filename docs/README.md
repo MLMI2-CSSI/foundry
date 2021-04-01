@@ -14,6 +14,13 @@ Foundry can be installed on any operating system with Python with pip
 pip install foundry-ml
 ```
 
+### Globus
+
+Foundry uses the Globus platform for authentication, search, and to optimize some data transfer operations. Follow the steps below to get set up.
+
+* [Create a free account.](https://app.globus.org) You can create a free account here with your institutional credentials or with free IDs \(GlobusID, Google, ORCID, etc\).
+* [Set up a Globus Connect Personal endpoint ](https://www.globus.org/globus-connect-personal)_**\(optional\)**_. While this step is optional, some Foundry capabilities will work more efficiently when using GCP.
+
 ## Project Support
 
 This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure".
