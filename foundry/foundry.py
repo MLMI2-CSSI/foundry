@@ -92,12 +92,15 @@ class Foundry(FoundryMetadata):
             ].access_token,
         }
 
-    def load(self, name, download=True, globus=True, verbose=False, **kwargs):
+    def load(self, name, download=True, globus=True, verbose=False, metadata=None, **kwargs):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
             download (bool): If True, download the data associated with the package (default is True)
-    
+            globus (bool): If True, download using Globus, otherwise https
+            verbose (bool): If True print additional debug information
+            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata. 
+
         Keyword Args:
             interval (int): How often to poll Globus to check if transfers are complete
 
@@ -106,10 +109,13 @@ class Foundry(FoundryMetadata):
             self
         """
         # MDF specific logic
-        res = self.forge_client.match_field(
-            "mdf.organizations", "foundry"
-        ).match_resource_types("dataset")
-        res = res.match_field("mdf.source_id", name).search()
+        if not metadata:
+            res = self.forge_client.match_field(
+                "mdf.organizations", "foundry"
+            ).match_resource_types("dataset")
+            res = res.match_field("mdf.source_id", name).search()
+        else:
+            res = metadata
 
         # TODO: if object empty, handle
         res = res[0]
@@ -233,9 +239,9 @@ class Foundry(FoundryMetadata):
 
         if source_id:
             path = os.path.join(self.config.local_cache_dir, source_id)
-            print("Here")
         else:
-            path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
+            path = os.path.join(self.config.local_cache_dir,
+                                self.mdf["source_id"])
         # Handle Foundry-defined types.
         if self.dataset.type.value == "tabular":
             # If the file is not local, fetch the contents with Globus
@@ -252,13 +258,13 @@ class Foundry(FoundryMetadata):
                 )
 
             return (
-                self.dataset.dataframe[self.dataset.inputs],
-                self.dataset.dataframe[self.dataset.outputs],
+                self.dataset.dataframe[self.get_keys("input")],
+                self.dataset.dataframe[self.get_keys("output")],
             )
         elif self.dataset.type.value == "hdf5":
             f = h5py.File(os.path.join(path, self.config.data_file), "r")
-            inputs = [f[i[0:]] for i in self.dataset.inputs]
-            outputs = [f[i[0:]] for i in self.dataset.outputs]
+            inputs = [f[i[0:]] for i in self.get_keys("input")]
+            outputs = [f[i[0:]] for i in self.get_keys("output")]
             return (inputs, outputs)
         else:
             raise NotImplementedError
@@ -479,14 +485,15 @@ class Foundry(FoundryMetadata):
             num_cores = multiprocessing.cpu_count()
 
             def download_file(file):
-                requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+                requests.packages.urllib3.disable_warnings(
+                    InsecureRequestWarning)
 
                 url = "https://data.materialsdatafacility.org" + file["path"]
                 destination = (
                     "data/"
                     + source_id
                     + "/"
-                    + file["path"][file["path"].rindex("/") + 1 :]
+                    + file["path"][file["path"].rindex("/") + 1:]
                 )
                 response = requests.get(url, verify=False)
 
@@ -503,3 +510,9 @@ class Foundry(FoundryMetadata):
             print(results)
 
         return self
+
+    def get_keys(self, type, as_object=False):
+        if as_object:
+            return [key for key in self.dataset.keys if key.type == type]
+        else:
+            return [key.key for key in self.dataset.keys if key.type == type]

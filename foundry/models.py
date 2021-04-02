@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, AnyHttpUrl
 from enum import Enum
 import pandas as pd
 
@@ -50,7 +50,6 @@ class FoundrySpecification(BaseModel):
 
 ### END Classes for Foundry Data Package Specification
 
-
 class FoundryDatasetType(Enum):
     """Foundry Dataset Types
     Enumeration of the possible Foundry dataset types
@@ -61,23 +60,32 @@ class FoundryDatasetType(Enum):
     hdf5 = "hdf5"
     other = "other"
 
+class FoundryKey(BaseModel):
+    key: str = ""
+    type: str = ""
+    units: Optional[str] = ""
+    description: Optional[str] = ""
+
+class FoundryLinks(BaseModel):
+    papers: List[AnyHttpUrl]
+    code: List[AnyHttpUrl]
+    homepage: List[AnyHttpUrl]
+
 
 class FoundryDataset(BaseModel):
     """Foundry Dataset
     Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
     """
 
-    inputs: List = []
-    outputs: List = []
-    input_descriptions: Optional[List] = []
-    output_descriptions: Optional[List] = []
+    keys: List[FoundryKey] = None
     type: FoundryDatasetType = None
     # hash: Optional[str] = []
     version: Optional[str] = ""
     short_name: Optional[str] = ""
-    # references: Optional[List[str]] = []
     dataframe: Optional[Any] = None
-    # sources: Optional[List[AnyUrl]] = []
+    links: Optional[FoundryLinks]
+    citations: Optional[List[str]] = []
+
 
     class Config:
         arbitrary_types_allowed = True
