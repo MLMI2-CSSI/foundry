@@ -14,7 +14,7 @@ In order to publish datasets, the datasets must 1\) adhere to specified Foundry 
 
 For a general dataset to be translated into a usable Foundry dataset, it should follow one of the prescribed shapes. It should also be described by a Key object, which provides a mapping that allows Foundry to read data from the underlying data structure into usable Python objects \([see Describing Datasets](publishing-datasets.md#describing-datasets) for more info\). 
 
-**Tabular Data**
+### **Tabular Data**
 
 Tabular data should include in a form where columns represent the different keys of the data and rows represent individual entries.
 
@@ -82,8 +82,9 @@ Foundry also supports data from hierarchical data formats \(e.g., [HDF5](https:/
 
 * **`key (str)`**A name mapping to a column name \(e.g., for csv files\) or key within a data structure \(e.g., for HDF5 files\)
 * **`type (str)`** The type of key this entry represents. Currently suported types are _**\["input", "target" \]**_
-* **`units (str)[optional]`** _****The scientific units associated with a key. Default: None_
-* **`description (str)[optional]`** _****A free text description of the key. Default: None_
+* **`units (str)[optional]`** _****_The scientific units associated with a key. _Default: None_
+* **`description (str)[optional]`** _****_A free text description of the key. _Default: None_
+* **`labels (list) (str) [optional]`:** A list of strings mapped to integers in a key column
 
 **short\_name \(str\):** Short name is a unique name associated with this dataset to make loading and . 
 
