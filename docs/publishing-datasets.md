@@ -18,13 +18,13 @@ For a general dataset to be translated into a usable Foundry dataset, it should 
 
 Tabular data should include in a form where columns represent the different keys of the data and rows represent individual entries.
 
-| **feature\_1** | **feature\_2** | **band\_gap** |
-| :--- | :--- | :--- |
-| 0.10 | 0.52 | 1.40 |
-| 0.34 | 0.91 | 0.73 |
-| ... | ... | ... |
+| **feature\_1** | **feature\_2** | **material\_type** | band\_gap |
+| :--- | :--- | :--- | :--- |
+| 0.10 | 0.52 | 1 | 1.40 |
+| 0.34 | 0.910 | 0 | 0.73 |
+| ... | ... | ... |  |
 
-For this example dataset the Key object would be:  
+For this example dataset the `Key` object could be:  
 
 ```text
 "keys":[{
@@ -38,6 +38,12 @@ For this example dataset the Key object would be:
 			"units": None,
 			"description": "This is feature 2"
 		},{
+			"key": "material_type",
+			"type": "input",
+			"units": None,
+			"description": "This is the material type",
+			"labels":["perovskite","not perovskite"]
+		}{
 			"key": "band_gap",
 			"type": "target",
 			"units": "eV",
