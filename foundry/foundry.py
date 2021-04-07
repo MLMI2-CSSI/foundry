@@ -290,26 +290,19 @@ class Foundry(FoundryMetadata):
         print("DC:{}".format(self.dc))
         print("Dataset:{}".format(self.dataset.json(exclude={"dataframe"})))
 
-    def publish(
-        self,
-        foundry_metadata,
-        data_source,
-        title,
-        authors,
-        update=False,
-        publication_year=None,
-        **kwargs,
-    ):
-        """Submit a data package for publication
+    def publish(self, foundry_metadata, data_source, title, authors, update=False,
+                publication_year=None, **kwargs,):
+        """Submit a dataset for publication
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
             data_source (string): Url for Globus endpoint
             title (string): Title of data package
-            authors (list): List of data package author names e.g., Jack Black or Nunez, Victoria
+            authors (list): List of data package author names e.g., Jack Black
+                or Nunez, Victoria
             update (bool): True if this is an update to a prior data package
                 (default: self.config.metadata_file)
-            publication_year (int): Year of dataset publication. If None, will be set to the current calendar year by
-                MDF Connect Client.
+            publication_year (int): Year of dataset publication. If None, will
+                be set to the current calendar year by MDF Connect Client.
                 (default: $current_year)
         Keyword Args:
             affiliations (list): List of author affiliations
@@ -317,11 +310,11 @@ class Foundry(FoundryMetadata):
             short_name (string): Shortened/abbreviated name of the data package
             publisher (string): Data publishing entity (e.g. MDF, Zenodo, etc.)
 
-
         Returns
         -------
-        (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset. Contains `source_id`, which
-            can be used to check the status of the submission
+        (dict) MDF Connect Response: Response from MDF Connect to allow tracking
+            of dataset. Contains `source_id`, which can be used to check the
+            status of the submission
         """
 
         self.connect_client.create_dc_block(
@@ -339,6 +332,13 @@ class Foundry(FoundryMetadata):
 
         res = self.connect_client.submit_dataset(update=update)
         return res
+
+    def publish_model(self):
+        """Submit a model or function for publication
+        Args:
+
+        """
+        pass
 
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
