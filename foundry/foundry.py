@@ -259,12 +259,12 @@ class Foundry(FoundryMetadata):
 
             return (
                 self.dataset.dataframe[self.get_keys("input")],
-                self.dataset.dataframe[self.get_keys("output")],
+                self.dataset.dataframe[self.get_keys("target")],
             )
         elif self.dataset.type.value == "hdf5":
             f = h5py.File(os.path.join(path, self.config.data_file), "r")
             inputs = [f[i[0:]] for i in self.get_keys("input")]
-            outputs = [f[i[0:]] for i in self.get_keys("output")]
+            outputs = [f[i[0:]] for i in self.get_keys("target")]
             return (inputs, outputs)
         else:
             raise NotImplementedError
@@ -512,6 +512,17 @@ class Foundry(FoundryMetadata):
         return self
 
     def get_keys(self, type, as_object=False):
+        """Get keys for a Foundry dataset
+
+        Arguments:
+            type (str): The type of key to be returned e.g., "input", "target" 
+            as_object (bool): When ``False``, will return a list of keys in as strings
+                    When ``True``, will return the full key objects
+                    **Default:** ``False``
+        Returns: (list) String representations of keys or if ``as_object`` 
+                    is False otherwise returns the full key objects.
+
+        """
         if as_object:
             return [key for key in self.dataset.keys if key.type == type]
         else:
