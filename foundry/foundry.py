@@ -230,44 +230,22 @@ class Foundry(FoundryMetadata):
 
         Args:
            inputs (list): List of strings for input columns
-           outputs (list): List of strings for output columns
+           targets (list): List of strings for output columns
 
         Returns
-        -------
+        -------s
              (tuple): Tuple of X, y values
         """
+        data = {}
 
-        if source_id:
-            path = os.path.join(self.config.local_cache_dir, source_id)
+        # Handle splits if they exist. Return as a labeled dictionary of tuples
+        if self.dataset.splits:
+            for split in self.dataset.splits:
+                data[split.label] = self._load_data(file=split.path,
+                                                    source_id=source_id, globus=globus)
+            return data
         else:
-            path = os.path.join(self.config.local_cache_dir,
-                                self.mdf["source_id"])
-        # Handle Foundry-defined types.
-        if self.dataset.type.value == "tabular":
-            # If the file is not local, fetch the contents with Globus
-            # Check if the contents are local
-            # TODO: Add hashes and versioning to metadata and checking to the file
-            try:
-                self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, self.config.dataframe_file)
-                )
-            except:
-                # Try to read individual lines instead
-                self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, self.config.dataframe_file), lines=True
-                )
-
-            return (
-                self.dataset.dataframe[self.get_keys("input")],
-                self.dataset.dataframe[self.get_keys("target")],
-            )
-        elif self.dataset.type.value == "hdf5":
-            f = h5py.File(os.path.join(path, self.config.data_file), "r")
-            inputs = [f[i[0:]] for i in self.get_keys("input")]
-            outputs = [f[i[0:]] for i in self.get_keys("target")]
-            return (inputs, outputs)
-        else:
-            raise NotImplementedError
+            return {"data": self._load_data(source_id=source_id, globus=globus)}
 
     def describe(self):
         print("DC:{}".format(self.dc))
@@ -527,3 +505,45 @@ class Foundry(FoundryMetadata):
             return [key for key in self.dataset.keys if key.type == type]
         else:
             return [key.key for key in self.dataset.keys if key.type == type]
+
+    def _load_data(self, file=None, source_id=None, globus=True):
+
+        # Build the path to access the cached data
+        if source_id:
+            path = os.path.join(self.config.local_cache_dir, source_id)
+        else:
+            path = os.path.join(self.config.local_cache_dir,
+                                self.mdf["source_id"])
+
+        # Handle Foundry-defined types.
+        if self.dataset.type.value == "tabular":
+            # Determine which file to load, defaults to config.dataframe_file
+            if not file:
+                file = self.config.dataframe_file
+
+            # If the file is not local, fetch the contents with Globus
+            # Check if the contents are local
+            # TODO: Add hashes and versioning to metadata and checking to the file
+            try:
+                self.dataset.dataframe = pd.read_json(
+                    os.path.join(path, file)
+                )
+            except:
+                # Try to read individual lines instead
+                self.dataset.dataframe = pd.read_json(
+                    os.path.join(path, file), lines=True
+                )
+
+            return (
+                self.dataset.dataframe[self.get_keys("input")],
+                self.dataset.dataframe[self.get_keys("target")],
+            )
+        elif self.dataset.type.value == "hdf5":
+            if not file:
+                file = self.config.data_file
+            f = h5py.File(os.path.join(path, file), "r")
+            inputs = [f[i[0:]] for i in self.get_keys("input")]
+            targets = [f[i[0:]] for i in self.get_keys("target")]
+            return (inputs, targets)
+        else:
+            raise NotImplementedError
