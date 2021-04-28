@@ -15,14 +15,9 @@ from foundry import Foundry
 f = Foundry()
 ```
 
-{% hint style="warning" %}
-If you are running your script on cloud resources \(e.g. Google Colab, Binder\), you should use the following snippet to create your client.
+{% hint style="success" %}
+If you are running your script on cloud resources \(e.g. Google Colab, Binder\), see [Using Foundry on Cloud Computing Resources](examples.md#using-foundry-on-cloud-computing-resources)W
 {% endhint %}
-
-```python
-from foundry import Foundry
-f = Foundry(no_browser=True, no_local_server=True)
-```
 
 ### Listing Datasets
 
@@ -67,6 +62,7 @@ This method may be slow for large datasets and datasets with many files
 {% endhint %}
 
 ```python
-f.download(globus=False)
+f.load(globus=False)
+X, y = f.load_data()
 ```
 
