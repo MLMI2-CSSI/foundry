@@ -15,7 +15,9 @@ from foundry import Foundry
 f = Foundry()
 ```
 
-If you are running your script on cloud resources \(e.g. Google Colab, Binder\), you can use the following:
+{% hint style="warning" %}
+If you are running your script on cloud resources \(e.g. Google Colab, Binder\), you should use the following snippet to create your client.
+{% endhint %}
 
 ```python
 from foundry import Foundry
