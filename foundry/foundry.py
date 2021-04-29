@@ -11,6 +11,7 @@ from collections import namedtuple
 from dlhub_sdk import DLHubClient
 # TODO: do imports nicer
 from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
+from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
 from mdf_forge import Forge
 from mdf_connect_client import MDFConnectClient
 import multiprocessing
@@ -339,7 +340,7 @@ class Foundry(FoundryMetadata):
         pass
         # maybe have whole fxn for model describing? tbd
 
-    def publish_model(self, title, authors, short_name, servable_type, **kwargs):
+    def publish_model(self, options):
         """Submit a model or function for publication
         Args:
             title
@@ -359,8 +360,8 @@ class Foundry(FoundryMetadata):
             outputs (not needed for TF)
             methods (like research methods)
             DOI
-            publication_year
-            version
+            publication_year (advanced)
+            version (advanced)
             visibility (dict of users and groups, each a list)
             funding reference
             rights
@@ -370,52 +371,107 @@ class Foundry(FoundryMetadata):
             ? add files?
 
 
+        options = {
+            "title": "",
+            "short_name": "",
+            "authors": ["L, F", "z, xy"],
+            "servable": {
+                "type": "",
+                other servable-specific options
+            },
+            "affiliations": [],
+            "domains": [],
+            "doi": "",
+            "abstract": "",
+            "methods": "",
+            "references": [{
+                "identifier": "",
+                "identifier_type": "",
+                "relation_type": ""
+            }],
+            "requirements": {
+                "lib_name": <version_number>
+            },
+            "inputs": {
+                "data_type": "",
+                "description": "",
+                "shape": [],
+                "item_type": string or {},
+                kwargs
+            },
+            "outputs": {
+                "data_type": "",
+                "description": "",
+                "shape": [],
+                "item_type": string or {},
+                kwargs
+            },
+            "visibility": {
+                "users": [],
+                "groups": []
+            },
+            "funding_references": [{
+                "name": "",
+                "identifier": "",
+                "identifier_type": "",
+                "award_number": "",
+                "award_title": "",
+                "award_uri": ""
+            }],
+            "rights": {
+                "uri": "",
+                "rights": ""
+            }
+        }
+
+
         Questions for Ben:
         - what are the different use cases?
 
         """
         # TODO: checkin with Ben on what should be required, and what's optional
 
-        # TODO: change the kwargs to a dict of options
+        # TODO: add exception handling for key options
 
         ## ok works!
         # look at args needed to describe model
         # describe the model
-        #   #
+        #
         data = pd.read_csv('iris.csv', header=1)
+
         # TODO: make this work for any model type, with if-else
         model_info = ScikitLearnModel.create_model('model.pkl', n_input_columns=len(data.columns) - 1,
                                                    classes=data['species'].unique())
-        print(model_info)
         # publish it
-        model_info.set_name(short_name)
-        model_info.set_title(title)
+        model_info.set_name(options["short_name"])
+        model_info.set_title(options["title"])
         # TODO: bug where if you put in name without comma, get list index out of range error
-        model_info.set_authors(authors, kwargs.get("affiliations", []))
-        model_info.add_requirements(kwargs.get("requirements", {}))
-        model_info.set_abstract(kwargs.get("abstract", ""))
-        model_info.set_domains(kwargs.get("domains", []))
-        model_info.set_methods(kwargs.get("methods", ""))
+        model_info.set_authors(options["authors"], options.get("affiliations", []))
+        model_info.add_requirements(options.get("requirements", {}))
+        model_info.set_domains(options.get("domains", []))
+        # TODO: can't default to empty strings
+        # model_info.set_abstract(options.get("abstract", ""))
+        # model_info.set_methods(options.get("methods", ""))
         # TODO: ask Ben if user should set this, check what happens if they dont
-        model_info.set_version(kwargs.get("version", ""))
+        # model_info.set_version(kwargs.get("version", ""))
 
-        # TODO: add dict for rights 
+        # TODO: add dict for rights
         # model_info.add_rights()
 
         # advanced use only (most users will not know DOI)
-        if kwargs.get("doi"):
-            model_info.set_doi(kwargs.get("doi"))
+        if options.get("doi"):
+            model_info.set_doi(options.get("doi"))
         # advanced use only (maybe don't include?)
-        if kwargs.get("publication_year"):
-            model_info.set_publication_year(kwargs.get("publication_year"))
+        if options.get("publication_year"):
+            model_info.set_publication_year(options.get("publication_year"))
 
         # TODO: parse dict of lists
         # model_info.set_visibility()
 
-        # TODO: parse dict of references
+        # TODO: parse dict of references (need to loop)
         # model_info.add_related_identifier()
 
-        # TODO: parse dict of options
+        # TODO: parse dict of options (need to loop)
         # model_info.add_funding_reference()
 
         # TODO: figure out how to pass in data_type, description, shape (opt), item_type (opt) and kwargs
@@ -423,10 +479,11 @@ class Foundry(FoundryMetadata):
         # model_info.set_inputs()
         # model_info.set_outputs()
 
+        # TODO: add exception handling
+        validate_against_dlhub_schema(model_info.to_dict(), 'servable')
+        res = self.dlhub_client.publish_servable(model_info)
 
-
-        
-        return
+        return res
 
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
@@ -448,6 +505,14 @@ class Foundry(FoundryMetadata):
             If ``raw`` is ``True``, *dict*: The full status result.
         """
         return self.connect_client.check_status(source_id, short, raw)
+
+    def check_model_status(self, res):
+        """Check status of model or function publication to DLHub
+
+        TODO: currently broken on DLHub side of things
+        """
+        # return self.dlhub_client.get_task_status(res)
+        pass
 
     def configure(self, **kwargs):
         """Set Foundry config
