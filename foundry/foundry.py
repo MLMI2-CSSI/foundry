@@ -9,6 +9,8 @@ from pydantic import AnyUrl, ValidationError
 from joblib import Parallel, delayed
 from collections import namedtuple
 from dlhub_sdk import DLHubClient
+# TODO: do imports nicer
+from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
 from mdf_forge import Forge
 from mdf_connect_client import MDFConnectClient
 import multiprocessing
@@ -333,12 +335,98 @@ class Foundry(FoundryMetadata):
         res = self.connect_client.submit_dataset(update=update)
         return res
 
-    def publish_model(self):
+    def describe_model(self):
+        pass
+        # maybe have whole fxn for model describing? tbd
+
+    def publish_model(self, title, authors, short_name, servable_type, **kwargs):
         """Submit a model or function for publication
         Args:
+            title
+            authors
+            short_name
+            servable_type ("static method", "class method", "keras", "pytorch", "tensorflow", "sklearn")
+
+        Keyword Args:
+            affiliations
+            domains
+            abstract
+            references
+            requirements (dict of library:version keypairs)
+            module (if Python method)
+            function  (if Python method)
+            inputs (not needed for TF) (dict of options)
+            outputs (not needed for TF)
+            methods (like research methods)
+            DOI
+            publication_year
+            version
+            visibility (dict of users and groups, each a list)
+            funding reference
+            rights
+            ? alternate identifier "Add an identifier of this artifact in another service"
+            ? add file?
+            ? add directory?
+            ? add files?
+
+
+        Questions for Ben:
+        - what are the different use cases?
 
         """
-        pass
+        # TODO: checkin with Ben on what should be required, and what's optional
+
+        # TODO: change the kwargs to a dict of options
+
+        ## ok works!
+        # look at args needed to describe model
+        # describe the model
+        #   #
+        data = pd.read_csv('iris.csv', header=1)
+        # TODO: make this work for any model type, with if-else
+        model_info = ScikitLearnModel.create_model('model.pkl', n_input_columns=len(data.columns) - 1,
+                                                   classes=data['species'].unique())
+        print(model_info)
+        # publish it
+        model_info.set_name(short_name)
+        model_info.set_title(title)
+        # TODO: bug where if you put in name without comma, get list index out of range error
+        model_info.set_authors(authors, kwargs.get("affiliations", []))
+        model_info.add_requirements(kwargs.get("requirements", {}))
+        model_info.set_abstract(kwargs.get("abstract", ""))
+        model_info.set_domains(kwargs.get("domains", []))
+        model_info.set_methods(kwargs.get("methods", ""))
+        # TODO: ask Ben if user should set this, check what happens if they dont
+        model_info.set_version(kwargs.get("version", ""))
+
+        # TODO: add dict for rights 
+        # model_info.add_rights()
+
+        # advanced use only (most users will not know DOI)
+        if kwargs.get("doi"):
+            model_info.set_doi(kwargs.get("doi"))
+        # advanced use only (maybe don't include?)
+        if kwargs.get("publication_year"):
+            model_info.set_publication_year(kwargs.get("publication_year"))
+
+        # TODO: parse dict of lists
+        # model_info.set_visibility()
+
+        # TODO: parse dict of references
+        # model_info.add_related_identifier()
+
+        # TODO: parse dict of options
+        # model_info.add_funding_reference()
+
+        # TODO: figure out how to pass in data_type, description, shape (opt), item_type (opt) and kwargs
+        # (probably a dict) for both inputs and outputs
+        # model_info.set_inputs()
+        # model_info.set_outputs()
+
+
+
+        
+        return
 
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
