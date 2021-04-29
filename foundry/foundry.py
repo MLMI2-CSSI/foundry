@@ -377,7 +377,11 @@ class Foundry(FoundryMetadata):
             "authors": ["L, F", "z, xy"],
             "servable": {
                 "type": "",
-                other servable-specific options
+                other servable-specific options, such as
+                "filepath": "",
+                "n_input_columns": int,
+                "serialization_method: ""
+
             },
             "affiliations": [],
             "domains": [],
@@ -430,18 +434,27 @@ class Foundry(FoundryMetadata):
 
         """
         # TODO: checkin with Ben on what should be required, and what's optional
+        # TODO: pick nicer way of handling defaults for things besides get (since if the DLHub default changes, we'd be
+        #   overwriting it
 
         # TODO: add exception handling for key options
 
-        ## ok works!
-        # look at args needed to describe model
-        # describe the model
-        #
-        data = pd.read_csv('iris.csv', header=1)
-
         # TODO: make this work for any model type, with if-else
-        model_info = ScikitLearnModel.create_model('model.pkl', n_input_columns=len(data.columns) - 1,
-                                                   classes=data['species'].unique())
+        if options["servable"]["type"] == "sklearn":
+            model_info = ScikitLearnModel.create_model(options["servable"]["filepath"],
+                                                       options["servable"]["n_input_columns"],
+                                                       options["servable"].get("classes", None),
+                                                       options["servable"].get("serialization_method", "pickle")
+                                                       )
+        else:
+            raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
+                             "'sklearn'\n"
+                             "'keras'\n"
+                             "'pytorch'\n"
+                             "'tensorflow'\n"
+                             "'static method'\n"
+                             "'class method'\n"
+                             .format(options["servable"]["type"]))
         # publish it
         model_info.set_name(options["short_name"])
         model_info.set_title(options["title"])
