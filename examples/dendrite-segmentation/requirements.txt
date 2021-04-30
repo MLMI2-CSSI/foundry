@@ -7,3 +7,4 @@ scikit-image
 tensorflow
 keras-unet
 opencv-python
+json

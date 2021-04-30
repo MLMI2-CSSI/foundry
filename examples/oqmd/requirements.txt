@@ -3,3 +3,4 @@ mdf_connect_client
 funcx==0.0.5
 pandas
 json
+mdf-forge
