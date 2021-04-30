@@ -9,6 +9,10 @@ from pydantic import AnyUrl, ValidationError
 from joblib import Parallel, delayed
 from collections import namedtuple
 from dlhub_sdk import DLHubClient
+# TODO: do imports nicer
+from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
+# from dlhub_sdk.models.servables.keras import KerasModel
+from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
 from mdf_forge import Forge
 from mdf_connect_client import MDFConnectClient
 import multiprocessing
@@ -290,26 +294,19 @@ class Foundry(FoundryMetadata):
         print("DC:{}".format(self.dc))
         print("Dataset:{}".format(self.dataset.json(exclude={"dataframe"})))
 
-    def publish(
-        self,
-        foundry_metadata,
-        data_source,
-        title,
-        authors,
-        update=False,
-        publication_year=None,
-        **kwargs,
-    ):
-        """Submit a data package for publication
+    def publish(self, foundry_metadata, data_source, title, authors, update=False,
+                publication_year=None, **kwargs,):
+        """Submit a dataset for publication
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
             data_source (string): Url for Globus endpoint
             title (string): Title of data package
-            authors (list): List of data package author names e.g., Jack Black or Nunez, Victoria
+            authors (list): List of data package author names e.g., Jack Black
+                or Nunez, Victoria
             update (bool): True if this is an update to a prior data package
                 (default: self.config.metadata_file)
-            publication_year (int): Year of dataset publication. If None, will be set to the current calendar year by
-                MDF Connect Client.
+            publication_year (int): Year of dataset publication. If None, will
+                be set to the current calendar year by MDF Connect Client.
                 (default: $current_year)
         Keyword Args:
             affiliations (list): List of author affiliations
@@ -317,11 +314,11 @@ class Foundry(FoundryMetadata):
             short_name (string): Shortened/abbreviated name of the data package
             publisher (string): Data publishing entity (e.g. MDF, Zenodo, etc.)
 
-
         Returns
         -------
-        (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset. Contains `source_id`, which
-            can be used to check the status of the submission
+        (dict) MDF Connect Response: Response from MDF Connect to allow tracking
+            of dataset. Contains `source_id`, which can be used to check the
+            status of the submission
         """
 
         self.connect_client.create_dc_block(
@@ -338,6 +335,118 @@ class Foundry(FoundryMetadata):
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
         res = self.connect_client.submit_dataset(update=update)
+        return res
+
+    def describe_model(self):
+        pass
+        # maybe have whole fxn for model describing? tbd
+
+    def publish_model(self, options):
+        """Submit a model or function for publication
+        Args:
+            options: dict of all possible options
+        Options keys:
+            title (req)
+            authors (req)
+            short_name (req)
+            servable_type (req) ("static method", "class method", "keras", "pytorch", "tensorflow", "sklearn")
+            affiliations
+            domains
+            abstract
+            references
+            requirements (dict of library:version keypairs)
+            module (if Python method)
+            function  (if Python method)
+            inputs (not needed for TF) (dict of options)
+            outputs (not needed for TF)
+            methods (e.g. research methods)
+            DOI
+            publication_year (advanced)
+            version (advanced)
+            visibility (dict of users and groups, each a list)
+            funding reference
+            rights
+
+            TODO:
+            alternate identifier (to add an identifier of this artifact in another service)
+            add file
+            add directory
+            add files
+
+        """
+        # TODO: pick nicer way of handling defaults for things besides get (since if the DLHub default changes, we'd be
+        #   overwriting it
+
+        # TODO: add exception handling for key options
+
+        # TODO: make this work for any model type, with if-else
+        if options["servable"]["type"] == "sklearn":
+            model_info = ScikitLearnModel.create_model(options["servable"]["filepath"],
+                                                       options["servable"]["n_input_columns"],
+                                                       options["servable"].get("classes", None),
+                                                       options["servable"].get("serialization_method", "pickle")
+                                                       )
+        # TODO: fix weird M1 error with TF
+        # elif options["servable"]['type'] == "keras":
+        #     model_info = KerasModel.create_model(options["servable"]["filepath"],
+        #                                          options["servable"].get("output_names", None),
+        #                                          options["servable"].get("arch_path", None),
+        #                                          options["servable"].get("custom_objects", None)
+        #                                          )
+        else:
+            raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
+                             "'sklearn'\n"
+                             "'keras'\n"
+                             "'pytorch'\n"
+                             "'tensorflow'\n"
+                             "'static method'\n"
+                             "'class method'\n"
+                             .format(options["servable"]["type"]))
+        # publish it
+        model_info.set_name(options["short_name"])
+        model_info.set_title(options["title"])
+        # TODO: fix bug where if you put in name without comma, get list index out of range error
+        model_info.set_authors(options["authors"], options.get("affiliations", []))
+        model_info.add_requirements(options.get("requirements", {}))
+        model_info.set_domains(options.get("domains", []))
+        # TODO: can't default to empty strings, handle
+        # model_info.set_abstract(options.get("abstract", ""))
+        # model_info.set_methods(options.get("methods", ""))
+        # TODO: ask Ben if user should set this, check what happens if they dont
+        # model_info.set_version(kwargs.get("version", ""))
+
+        # TODO: add dict for rights
+        # model_info.add_rights()
+
+        # advanced use only (most users will not know DOI)
+        if options.get("doi"):
+            model_info.set_doi(options.get("doi"))
+        # advanced use only
+        if options.get("publication_year"):
+            model_info.set_publication_year(options.get("publication_year"))
+
+        # TODO: parse dict of lists
+        # model_info.set_visibility()
+
+        # TODO: parse dict of references (need to loop)
+        # model_info.add_related_identifier()
+
+        # TODO: parse dict of options (need to loop)
+        # model_info.add_funding_reference()
+
+        # TODO: pass dict of data_type, description, shape (opt), item_type (opt) and kwargs
+        # model_info.set_inputs()
+        # model_info.set_outputs()
+
+        try:
+            validate_against_dlhub_schema(model_info.to_dict(), 'servable')
+            print("DLHub schema successfully validated")
+        except Exception as e:
+            print("Failed to validate schema properly: {}".format(e))
+            raise e
+
+        res = self.dlhub_client.publish_servable(model_info)
+
         return res
 
     def check_status(self, source_id, short=False, raw=False):
@@ -360,6 +469,14 @@ class Foundry(FoundryMetadata):
             If ``raw`` is ``True``, *dict*: The full status result.
         """
         return self.connect_client.check_status(source_id, short, raw)
+
+    def check_model_status(self, res):
+        """Check status of model or function publication to DLHub
+
+        TODO: currently broken on DLHub side of things
+        """
+        # return self.dlhub_client.get_task_status(res)
+        pass
 
     def configure(self, **kwargs):
         """Set Foundry config
