@@ -11,6 +11,7 @@ from collections import namedtuple
 from dlhub_sdk import DLHubClient
 # TODO: do imports nicer
 from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
+# from dlhub_sdk.models.servables.keras import KerasModel
 from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
 from mdf_forge import Forge
 from mdf_connect_client import MDFConnectClient
@@ -343,12 +344,12 @@ class Foundry(FoundryMetadata):
     def publish_model(self, options):
         """Submit a model or function for publication
         Args:
-            title
-            authors
-            short_name
-            servable_type ("static method", "class method", "keras", "pytorch", "tensorflow", "sklearn")
-
-        Keyword Args:
+            options: dict of all possible options
+        Options keys:
+            title (req)
+            authors (req)
+            short_name (req)
+            servable_type (req) ("static method", "class method", "keras", "pytorch", "tensorflow", "sklearn")
             affiliations
             domains
             abstract
@@ -358,82 +359,21 @@ class Foundry(FoundryMetadata):
             function  (if Python method)
             inputs (not needed for TF) (dict of options)
             outputs (not needed for TF)
-            methods (like research methods)
+            methods (e.g. research methods)
             DOI
             publication_year (advanced)
             version (advanced)
             visibility (dict of users and groups, each a list)
             funding reference
             rights
-            ? alternate identifier "Add an identifier of this artifact in another service"
-            ? add file?
-            ? add directory?
-            ? add files?
 
-
-        options = {
-            "title": "",
-            "short_name": "",
-            "authors": ["L, F", "z, xy"],
-            "servable": {
-                "type": "",
-                other servable-specific options, such as
-                "filepath": "",
-                "n_input_columns": int,
-                "serialization_method: ""
-
-            },
-            "affiliations": [],
-            "domains": [],
-            "doi": "",
-            "abstract": "",
-            "methods": "",
-            "references": [{
-                "identifier": "",
-                "identifier_type": "",
-                "relation_type": ""
-            }],
-            "requirements": {
-                "lib_name": <version_number>
-            },
-            "inputs": {
-                "data_type": "",
-                "description": "",
-                "shape": [],
-                "item_type": string or {},
-                kwargs
-            },
-            "outputs": {
-                "data_type": "",
-                "description": "",
-                "shape": [],
-                "item_type": string or {},
-                kwargs
-            },
-            "visibility": {
-                "users": [],
-                "groups": []
-            },
-            "funding_references": [{
-                "name": "",
-                "identifier": "",
-                "identifier_type": "",
-                "award_number": "",
-                "award_title": "",
-                "award_uri": ""
-            }],
-            "rights": {
-                "uri": "",
-                "rights": ""
-            }
-        }
-
-
-        Questions for Ben:
-        - what are the different use cases?
+            TODO:
+            alternate identifier (to add an identifier of this artifact in another service)
+            add file
+            add directory
+            add files
 
         """
-        # TODO: checkin with Ben on what should be required, and what's optional
         # TODO: pick nicer way of handling defaults for things besides get (since if the DLHub default changes, we'd be
         #   overwriting it
 
@@ -446,6 +386,13 @@ class Foundry(FoundryMetadata):
                                                        options["servable"].get("classes", None),
                                                        options["servable"].get("serialization_method", "pickle")
                                                        )
+        # TODO: fix weird M1 error with TF
+        # elif options["servable"]['type'] == "keras":
+        #     model_info = KerasModel.create_model(options["servable"]["filepath"],
+        #                                          options["servable"].get("output_names", None),
+        #                                          options["servable"].get("arch_path", None),
+        #                                          options["servable"].get("custom_objects", None)
+        #                                          )
         else:
             raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
                              "'sklearn'\n"
@@ -458,11 +405,11 @@ class Foundry(FoundryMetadata):
         # publish it
         model_info.set_name(options["short_name"])
         model_info.set_title(options["title"])
-        # TODO: bug where if you put in name without comma, get list index out of range error
+        # TODO: fix bug where if you put in name without comma, get list index out of range error
         model_info.set_authors(options["authors"], options.get("affiliations", []))
         model_info.add_requirements(options.get("requirements", {}))
         model_info.set_domains(options.get("domains", []))
-        # TODO: can't default to empty strings
+        # TODO: can't default to empty strings, handle
         # model_info.set_abstract(options.get("abstract", ""))
         # model_info.set_methods(options.get("methods", ""))
         # TODO: ask Ben if user should set this, check what happens if they dont
@@ -474,7 +421,7 @@ class Foundry(FoundryMetadata):
         # advanced use only (most users will not know DOI)
         if options.get("doi"):
             model_info.set_doi(options.get("doi"))
-        # advanced use only (maybe don't include?)
+        # advanced use only
         if options.get("publication_year"):
             model_info.set_publication_year(options.get("publication_year"))
 
@@ -487,13 +434,17 @@ class Foundry(FoundryMetadata):
         # TODO: parse dict of options (need to loop)
         # model_info.add_funding_reference()
 
-        # TODO: figure out how to pass in data_type, description, shape (opt), item_type (opt) and kwargs
-        # (probably a dict) for both inputs and outputs
+        # TODO: pass dict of data_type, description, shape (opt), item_type (opt) and kwargs
         # model_info.set_inputs()
         # model_info.set_outputs()
 
-        # TODO: add exception handling
-        validate_against_dlhub_schema(model_info.to_dict(), 'servable')
+        try:
+            validate_against_dlhub_schema(model_info.to_dict(), 'servable')
+            print("DLHub schema successfully validated")
+        except Exception as e:
+            print("Failed to validate schema properly: {}".format(e))
+            raise e
+
         res = self.dlhub_client.publish_servable(model_info)
 
         return res
