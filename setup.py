@@ -14,12 +14,14 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     install_requires=[
         "mdf_forge>=0.7.6",
-        "dlhub_sdk>=0.8.4",
+        "dlhub_sdk>=0.9.4",
         "dlhub_client",
         "numpy>=1.15.4",
         "pandas>=0.23.4",
         "pydantic>=1.4",
         "scikit-learn>=0.24.1"
+        "mdf_connect_client>=0.3.8",
+        "h5py>=3.2.1"
     ],
     python_requires=">=3.6",
     classifiers=[
