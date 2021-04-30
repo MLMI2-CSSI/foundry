@@ -1,0 +1,3 @@
+foundry_ml
+mdf_connect_client
+funcx==0.0.5
