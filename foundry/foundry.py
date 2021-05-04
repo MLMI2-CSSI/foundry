@@ -101,10 +101,7 @@ class Foundry(FoundryMetadata):
         Args:
             name (str): Name of the foundry dataset
             download (bool): If True, download the data associated with the package (default is True)
-            globus (bool): If True, download using Globus, otherwise https
-            verbose (bool): If True print additional debug information
-            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata. 
-
+    
         Keyword Args:
             interval (int): How often to poll Globus to check if transfers are complete
 
@@ -123,6 +120,7 @@ class Foundry(FoundryMetadata):
                 .match_field("mdf.organizations", "foundry")
                 .search()
             )
+
         # Handle MDF source_ids
         else:
             print("Loading by source_id")
@@ -152,6 +150,7 @@ class Foundry(FoundryMetadata):
             self.download(
                 interval=kwargs.get("interval", 10), globus=globus, verbose=verbose
             )
+
         return self
 
     def list(self):
@@ -252,22 +251,44 @@ class Foundry(FoundryMetadata):
 
         Args:
            inputs (list): List of strings for input columns
-           targets (list): List of strings for output columns
+           outputs (list): List of strings for output columns
 
         Returns
-        -------s
+        -------
              (tuple): Tuple of X, y values
         """
-        data = {}
 
-        # Handle splits if they exist. Return as a labeled dictionary of tuples
-        if self.dataset.splits:
-            for split in self.dataset.splits:
-                data[split.label] = self._load_data(file=split.path,
-                                                    source_id=source_id, globus=globus)
-            return data
+        if source_id:
+            path = os.path.join(self.config.local_cache_dir, source_id)
+            print("Here")
         else:
-            return {"data": self._load_data(source_id=source_id, globus=globus)}
+            path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
+        # Handle Foundry-defined types.
+        if self.dataset.type.value == "tabular":
+            # If the file is not local, fetch the contents with Globus
+            # Check if the contents are local
+            # TODO: Add hashes and versioning to metadata and checking to the file
+            try:
+                self.dataset.dataframe = pd.read_json(
+                    os.path.join(path, self.config.dataframe_file)
+                )
+            except:
+                # Try to read individual lines instead
+                self.dataset.dataframe = pd.read_json(
+                    os.path.join(path, self.config.dataframe_file), lines=True
+                )
+
+            return (
+                self.dataset.dataframe[self.dataset.inputs],
+                self.dataset.dataframe[self.dataset.outputs],
+            )
+        elif self.dataset.type.value == "hdf5":
+            f = h5py.File(os.path.join(path, self.config.data_file), "r")
+            inputs = [f[i[0:]] for i in self.dataset.inputs]
+            outputs = [f[i[0:]] for i in self.dataset.outputs]
+            return (inputs, outputs)
+        else:
+            raise NotImplementedError
 
     def describe(self):
         print("DC:{}".format(self.dc))
@@ -607,15 +628,14 @@ class Foundry(FoundryMetadata):
             num_cores = multiprocessing.cpu_count()
 
             def download_file(file):
-                requests.packages.urllib3.disable_warnings(
-                    InsecureRequestWarning)
+                requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
                 url = "https://data.materialsdatafacility.org" + file["path"]
                 destination = (
                     "data/"
                     + source_id
                     + "/"
-                    + file["path"][file["path"].rindex("/") + 1:]
+                    + file["path"][file["path"].rindex("/") + 1 :]
                 )
                 response = requests.get(url, verify=False)
 
@@ -632,7 +652,6 @@ class Foundry(FoundryMetadata):
             print(results)
 
         return self
-
 
     def build(self, spec, globus=False, interval=3, file=False):
         """Build a Foundry Data Package
@@ -670,62 +689,3 @@ class Foundry(FoundryMetadata):
         )
 
         return self
-
-    def get_keys(self, type, as_object=False):
-        """Get keys for a Foundry dataset
-
-        Arguments:
-            type (str): The type of key to be returned e.g., "input", "target" 
-            as_object (bool): When ``False``, will return a list of keys in as strings
-                    When ``True``, will return the full key objects
-                    **Default:** ``False``
-        Returns: (list) String representations of keys or if ``as_object`` 
-                    is False otherwise returns the full key objects.
-
-        """
-        if as_object:
-            return [key for key in self.dataset.keys if key.type == type]
-        else:
-            return [key.key for key in self.dataset.keys if key.type == type]
-
-    def _load_data(self, file=None, source_id=None, globus=True):
-
-        # Build the path to access the cached data
-        if source_id:
-            path = os.path.join(self.config.local_cache_dir, source_id)
-        else:
-            path = os.path.join(self.config.local_cache_dir,
-                                self.mdf["source_id"])
-
-        # Handle Foundry-defined types.
-        if self.dataset.type.value == "tabular":
-            # Determine which file to load, defaults to config.dataframe_file
-            if not file:
-                file = self.config.dataframe_file
-
-            # If the file is not local, fetch the contents with Globus
-            # Check if the contents are local
-            # TODO: Add hashes and versioning to metadata and checking to the file
-            try:
-                self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, file)
-                )
-            except:
-                # Try to read individual lines instead
-                self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, file), lines=True
-                )
-
-            return (
-                self.dataset.dataframe[self.get_keys("input")],
-                self.dataset.dataframe[self.get_keys("target")],
-            )
-        elif self.dataset.type.value == "hdf5":
-            if not file:
-                file = self.config.data_file
-            f = h5py.File(os.path.join(path, file), "r")
-            inputs = [f[i[0:]] for i in self.get_keys("input")]
-            targets = [f[i[0:]] for i in self.get_keys("target")]
-            return (inputs, targets)
-        else:
-            raise NotImplementedError

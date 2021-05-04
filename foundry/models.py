@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any
-from pydantic import BaseModel, AnyHttpUrl
+from pydantic import BaseModel
 from enum import Enum
 import pandas as pd
 
@@ -13,7 +13,7 @@ import pandas as pd
 #     description: str = ""
 
 
-# Classes for Foundry Data Package Specification
+### Classes for Foundry Data Package Specification
 class FoundrySpecificationDataset(BaseModel):
     """Pydantic base class for datasets within the Foundry data package specification"""
 
@@ -34,8 +34,7 @@ class FoundrySpecification(BaseModel):
     dependencies: List[FoundrySpecificationDataset]
 
     def add_dependency(self, name, version, provider="MDF"):
-        ds = FoundrySpecificationDataset(
-            name=name, provider=provider, version=version)
+        ds = FoundrySpecificationDataset(name=name, provider=provider, version=version)
         self.dependencies.append(ds)
 
     def remove_duplicate_dependencies(self):
@@ -49,7 +48,8 @@ class FoundrySpecification(BaseModel):
         self.dependencies = []
 
 
-# END Classes for Foundry Data Package Specification
+### END Classes for Foundry Data Package Specification
+
 
 class FoundryDatasetType(Enum):
     """Foundry Dataset Types
@@ -62,45 +62,22 @@ class FoundryDatasetType(Enum):
     other = "other"
 
 
-class FoundryKey(BaseModel):
-    key: str = ""
-    type: str = ""
-    units: Optional[str] = ""
-    description: Optional[str] = ""
-    labels: Optional[List[str]] = []
-
-
-class FoundrySplit(BaseModel):
-    type: str = ""
-    path: Optional[str] = ""
-    label: Optional[str] = ""
-
-
-class FoundryLink(BaseModel):
-    link: Optional[AnyHttpUrl]
-    doi: Optional[str]
-
-
-class FoundryLinks(BaseModel):
-    papers: List[FoundryLink]
-    code: List[AnyHttpUrl]
-    homepage: List[AnyHttpUrl]
-    models: List[AnyHttpUrl]
-
-
 class FoundryDataset(BaseModel):
     """Foundry Dataset
     Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
     """
 
-    keys: List[FoundryKey] = None
-    splits: Optional[List[FoundrySplit]] = None
+    inputs: List = []
+    outputs: List = []
+    input_descriptions: Optional[List] = []
+    output_descriptions: Optional[List] = []
     type: FoundryDatasetType = None
+    # hash: Optional[str] = []
     version: Optional[str] = ""
     short_name: Optional[str] = ""
+    # references: Optional[List[str]] = []
     dataframe: Optional[Any] = None
-    links: Optional[FoundryLinks]
-    citations: Optional[List[str]] = []
+    # sources: Optional[List[AnyUrl]] = []
 
     class Config:
         arbitrary_types_allowed = True
