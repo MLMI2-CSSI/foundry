@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 packages = (setuptools.find_packages(),)
 setuptools.setup(
     name="foundry_ml",
-    version="0.0.9",
+    version="0.0.10",
     author="Ben Blaiszik",
     author_email="blaiszik@uchicago.edu",
     packages=setuptools.find_packages(),
@@ -21,7 +21,8 @@ setuptools.setup(
         "pydantic>=1.4",
         "scikit-learn>=0.24.1",
         "mdf_connect_client>=0.3.8",
-        "h5py>=3.2.1"
+        "h5py>=3.2.1",
+        "funcx==0.0.5"
     ],
     python_requires=">=3.6",
     classifiers=[
