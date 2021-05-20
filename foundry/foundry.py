@@ -407,7 +407,10 @@ class Foundry(FoundryMetadata):
         model_info.set_title(options["title"])
         # TODO: fix bug where if you put in name without comma, get list index out of range error
         model_info.set_authors(options["authors"], options.get("affiliations", []))
-        model_info.add_requirements(options.get("requirements", {}))
+        # TODO: dont pass in {} as default, overwrites everything -- should def document this
+        # TODO: consider whether that's desired functionality (should users be able to specify 1 or 2 requirements, but
+        #   the container still has other pre-loaded dependencies?
+        # model_info.add_requirements(options.get("requirements", {}))
         model_info.set_domains(options.get("domains", []))
         # TODO: can't default to empty strings, handle
         # model_info.set_abstract(options.get("abstract", ""))
