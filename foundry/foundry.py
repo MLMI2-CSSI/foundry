@@ -11,7 +11,7 @@ from collections import namedtuple
 from dlhub_sdk import DLHubClient
 # TODO: do imports nicer
 from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
-# from dlhub_sdk.models.servables.keras import KerasModel
+from dlhub_sdk.models.servables.keras import KerasModel
 from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
 from mdf_forge import Forge
 from mdf_connect_client import MDFConnectClient
@@ -387,12 +387,12 @@ class Foundry(FoundryMetadata):
                                                        options["servable"].get("serialization_method", "pickle")
                                                        )
         # TODO: fix weird M1 error with TF
-        # elif options["servable"]['type'] == "keras":
-        #     model_info = KerasModel.create_model(options["servable"]["filepath"],
-        #                                          options["servable"].get("output_names", None),
-        #                                          options["servable"].get("arch_path", None),
-        #                                          options["servable"].get("custom_objects", None)
-        #                                          )
+        elif options["servable"]['type'] == "keras":
+            model_info = KerasModel.create_model(options["servable"]["model_path"],
+                                                 options["servable"].get("output_names", None),
+                                                 options["servable"].get("arch_path", None),
+                                                 options["servable"].get("custom_objects", None)
+                                                 )
         else:
             raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
                              "'sklearn'\n"
