@@ -62,12 +62,19 @@ class FoundryDatasetType(Enum):
     other = "other"
 
 
+class FoundryKeyClass(BaseModel):
+    label: str = ""
+    name: str = ""
+
+
 class FoundryKey(BaseModel):
-    key: str = ""
+    key: List[str] = []
     type: str = ""
+    filter: Optional[str] = ""
     units: Optional[str] = ""
     description: Optional[str] = ""
     labels: Optional[List[str]] = []
+    classes: Optional[List[FoundryKeyClass]]
 
 
 class FoundrySplit(BaseModel):
@@ -123,6 +130,7 @@ class FoundryConfig(BaseModel):
     destination_endpoint: Optional[str] = None
     local: Optional[bool] = False
     local_cache_dir = "./data"
+    metadata_key: Optional[str] = "foundry"
 
 
 class FoundryMetadata(BaseModel):
