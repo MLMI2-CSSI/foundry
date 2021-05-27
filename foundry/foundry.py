@@ -111,7 +111,7 @@ class Foundry(FoundryMetadata):
         # MDF specific logic
         if not metadata:
             res = self.forge_client.match_field(
-                "mdf.organizations", "foundry"
+                "mdf.organizations", 'foundry'
             ).match_resource_types("dataset")
             res = res.match_field("mdf.source_id", name).search()
         else:
@@ -119,8 +119,8 @@ class Foundry(FoundryMetadata):
 
         # TODO: if object empty, handle
         res = res[0]
-        res["dataset"] = res["projects"]["foundry"]
-        res["dataset"]["type"] = res["dataset"]["package_type"]
+        res["dataset"] = res["projects"][self.config.metadata_key]
+        res["dataset"]["type"] = res["dataset"]["data_type"]
         del res["projects"]["foundry"]
 
         self = Foundry(**res)
@@ -140,10 +140,13 @@ class Foundry(FoundryMetadata):
             (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, and publication year
         """
         res = (
-            self.forge_client.match_field("mdf.organizations", "foundry")
+            self.forge_client.match_field(
+                "mdf.organizations", 'foundry')
             .match_resource_types("dataset")
             .search()
         )
+
+        print(self.config.metadata_key)
 
         return pd.DataFrame(
             [
@@ -241,6 +244,7 @@ class Foundry(FoundryMetadata):
         # Handle splits if they exist. Return as a labeled dictionary of tuples
         if self.dataset.splits:
             for split in self.dataset.splits:
+                print(split)
                 data[split.label] = self._load_data(file=split.path,
                                                     source_id=source_id, globus=globus)
             return data
@@ -285,7 +289,8 @@ class Foundry(FoundryMetadata):
             publication_year=publication_year
         )
         self.connect_client.add_organization("Foundry")
-        self.connect_client.set_project_block("foundry", foundry_metadata)
+        self.connect_client.set_project_block(
+            self.config.metadata_key, foundry_metadata)
         self.connect_client.add_data_source(data_source)
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
@@ -504,7 +509,11 @@ class Foundry(FoundryMetadata):
         if as_object:
             return [key for key in self.dataset.keys if key.type == type]
         else:
-            return [key.key for key in self.dataset.keys if key.type == type]
+            keys = [key.key for key in self.dataset.keys if key.type == type]
+            key_list = []
+            for k in keys:
+                key_list = key_list + k
+            return key_list
 
     def _load_data(self, file=None, source_id=None, globus=True):
 
