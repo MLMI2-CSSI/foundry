@@ -20,6 +20,7 @@ from typing import Any
 from datetime import date
 import multiprocessing
 import pandas as pd
+from json2table import convert
 import mdf_toolbox
 import requests
 import json
@@ -110,7 +111,7 @@ class Foundry(FoundryMetadata):
             self
         """
         res = []
-        # MDF specific logic
+        
         # Handle DOI inputs
         if name.startswith("10.") and provider == "MDF":
             print("Loading by DOI")
@@ -161,10 +162,13 @@ class Foundry(FoundryMetadata):
             (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, and publication year
         """
         res = (
-            self.forge_client.match_field("mdf.organizations", "foundry")
+            self.forge_client.match_field(
+                "mdf.organizations", self.config.organization)
             .match_resource_types("dataset")
             .search()
         )
+
+        print(self.config.organization)
 
         return pd.DataFrame(
             [
@@ -290,9 +294,17 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
-    def describe(self):
-        print("DC:{}".format(self.dc))
-        print("Dataset:{}".format(self.dataset.json(exclude={"dataframe"})))
+    def _repr_html_(self) -> str:
+        title = self.dc['titles'][0]['title']
+        authors = [creator['creatorName'] for creator in self.dc['creators']]
+        authors = '; '.join(authors)
+
+        buf = f'<h2>{title}</h2>{authors}'
+
+        buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
+        # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
+        # buf = f'{buf}<h3>DataCite</h3>{convert(self.dc)}'
+        return buf
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
                 publication_year=None, **kwargs,):
@@ -330,7 +342,8 @@ class Foundry(FoundryMetadata):
             publication_year=publication_year,
         )
         self.connect_client.add_organization("Foundry")
-        self.connect_client.set_project_block("foundry", foundry_metadata)
+        self.connect_client.set_project_block(
+            self.config.metadata_key, foundry_metadata)
         self.connect_client.add_data_source(data_source)
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
@@ -668,6 +681,14 @@ class Foundry(FoundryMetadata):
         -------
         (Foundry): self: for chaining
         """
+        if as_object:
+            return [key for key in self.dataset.keys if key.type == type]
+        else:
+            keys = [key.key for key in self.dataset.keys if key.type == type]
+            key_list = []
+            for k in keys:
+                key_list = key_list + k
+            return key_list
 
         print("Building Data Package")
         num_cores = multiprocessing.cpu_count()
