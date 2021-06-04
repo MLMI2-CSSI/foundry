@@ -2,6 +2,8 @@ from typing import List, Dict, Optional, Any
 from pydantic import BaseModel, AnyHttpUrl
 from enum import Enum
 import pandas as pd
+from json2table import convert
+import json
 
 # class FoundryMetric(BaseModel):
 #     pass
@@ -31,22 +33,27 @@ class FoundrySpecification(BaseModel):
     version: str = ""
     description: str = ""
     private: bool = False
-    dependencies: List[FoundrySpecificationDataset]
+    dependencies: Any  # List[FoundrySpecificationDataset]
 
-    def add_dependency(self, name, version, provider="MDF"):
-        ds = FoundrySpecificationDataset(
-            name=name, provider=provider, version=version)
-        self.dependencies.append(ds)
+    def add_dependency(self, name, version):
+        self.dependencies[name] = version
 
     def remove_duplicate_dependencies(self):
-        df = pd.DataFrame(self.dict()["dependencies"])
 
+        deps = [{"name": key, "version": self.dependencies[key]}
+                for key in self.dependencies]
+        df = pd.DataFrame.from_records(deps)
         self.clear_dependencies()
         for i, row in df.drop_duplicates().iterrows():
             self.add_dependency(name=row["name"], version=row["version"])
 
     def clear_dependencies(self):
-        self.dependencies = []
+        self.dependencies = {}
+
+    def _repr_html_(self):
+        buf = f'<h3>Data Requirements - {self.name}</h3>'
+        buf = buf + convert(json.loads(self.json()))
+        return buf
 
 
 # END Classes for Foundry Data Package Specification
@@ -73,7 +80,6 @@ class FoundryKey(BaseModel):
     filter: Optional[str] = ""
     units: Optional[str] = ""
     description: Optional[str] = ""
-    labels: Optional[List[str]] = []
     classes: Optional[List[FoundryKeyClass]]
 
 
@@ -81,18 +87,6 @@ class FoundrySplit(BaseModel):
     type: str = ""
     path: Optional[str] = ""
     label: Optional[str] = ""
-
-
-class FoundryLink(BaseModel):
-    link: Optional[AnyHttpUrl]
-    doi: Optional[str]
-
-
-class FoundryLinks(BaseModel):
-    papers: List[FoundryLink]
-    code: List[AnyHttpUrl]
-    homepage: List[AnyHttpUrl]
-    models: List[AnyHttpUrl]
 
 
 class FoundryDataset(BaseModel):
@@ -103,11 +97,11 @@ class FoundryDataset(BaseModel):
     keys: List[FoundryKey] = None
     splits: Optional[List[FoundrySplit]] = None
     type: FoundryDatasetType = None
-    version: Optional[str] = ""
+    # version: Optional[str] = ""
     short_name: Optional[str] = ""
     dataframe: Optional[Any] = None
-    links: Optional[FoundryLinks]
-    citations: Optional[List[str]] = []
+    # links: Optional[FoundryLinks]
+    # citations: Optional[List[str]] = []
 
     class Config:
         arbitrary_types_allowed = True
@@ -131,6 +125,10 @@ class FoundryConfig(BaseModel):
     local: Optional[bool] = False
     local_cache_dir = "./data"
     metadata_key: Optional[str] = "foundry"
+    organization: Optional[str] = "foundry"
+
+    def _repr_html_(self):
+        return convert(json.loads(self.json()))
 
 
 class FoundryMetadata(BaseModel):
