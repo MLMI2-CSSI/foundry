@@ -15,6 +15,7 @@ import multiprocessing
 from typing import Any
 from datetime import date
 import pandas as pd
+from json2table import convert
 import mdf_toolbox
 import requests
 import json
@@ -111,7 +112,7 @@ class Foundry(FoundryMetadata):
         # MDF specific logic
         if not metadata:
             res = self.forge_client.match_field(
-                "mdf.organizations", 'foundry'
+                "mdf.organizations", self.config.organization
             ).match_resource_types("dataset")
             res = res.match_field("mdf.source_id", name).search()
         else:
@@ -121,7 +122,7 @@ class Foundry(FoundryMetadata):
         res = res[0]
         res["dataset"] = res["projects"][self.config.metadata_key]
         res["dataset"]["type"] = res["dataset"]["data_type"]
-        del res["projects"]["foundry"]
+        del res["projects"][self.config.metadata_key]
 
         self = Foundry(**res)
 
@@ -141,12 +142,12 @@ class Foundry(FoundryMetadata):
         """
         res = (
             self.forge_client.match_field(
-                "mdf.organizations", 'foundry')
+                "mdf.organizations", self.config.organization)
             .match_resource_types("dataset")
             .search()
         )
 
-        print(self.config.metadata_key)
+        print(self.config.organization)
 
         return pd.DataFrame(
             [
@@ -244,16 +245,23 @@ class Foundry(FoundryMetadata):
         # Handle splits if they exist. Return as a labeled dictionary of tuples
         if self.dataset.splits:
             for split in self.dataset.splits:
-                print(split)
                 data[split.label] = self._load_data(file=split.path,
                                                     source_id=source_id, globus=globus)
             return data
         else:
             return {"data": self._load_data(source_id=source_id, globus=globus)}
 
-    def describe(self):
-        print("DC:{}".format(self.dc))
-        print("Dataset:{}".format(self.dataset.json(exclude={"dataframe"})))
+    def _repr_html_(self) -> str:
+        title = self.dc['titles'][0]['title']
+        authors = [creator['creatorName'] for creator in self.dc['creators']]
+        authors = '; '.join(authors)
+
+        buf = f'<h2>{title}</h2>{authors}'
+
+        buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
+        # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
+        # buf = f'{buf}<h3>DataCite</h3>{convert(self.dc)}'
+        return buf
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False, publication_year=None, **kwargs):
         """Submit a data package for publication
