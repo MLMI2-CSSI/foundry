@@ -3,7 +3,7 @@
 Foundry is a Python package that simplifies the discovery and usage of machine-learning ready datasets in materials science and chemistry. Foundry provides software tools that make it easy to load these datasets and work with them in local or cloud environments. Further, Foundry provides a dataset specification, and defined curation flows, that allow users to create new datasets for the community to use through this same interface.
 
 
-[Documentation](https://app.gitbook.com/@ai-materials-and-chemistry/s/foundry/)
+[Documentation](https://app.gitbook.com/@ai-materials-and-chemistry/s/foundry/v/docs)
 
 
 # Installation
@@ -84,4 +84,4 @@ This work was performed under financial assistance award 70NANB14H012 from U.S. 
 https://www.materialsdatafacility.org
 
 # Documentation
-Formal documentation is under active development. Documentation is hosted via Gitbook [here](https://app.gitbook.com/@ai-materials-and-chemistry/s/foundry/).
+Formal documentation is under active development. Documentation is hosted via Gitbook [here](https://app.gitbook.com/@ai-materials-and-chemistry/s/foundry/v/docs).
