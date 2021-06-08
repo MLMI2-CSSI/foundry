@@ -300,7 +300,7 @@ class Foundry(FoundryMetadata):
             publisher=kwargs.get("publisher", ""),
             publication_year=publication_year,
         )
-        self.connect_client.add_organization("Foundry")
+        self.connect_client.add_organization(self.config.organization)
         self.connect_client.set_project_block(
             self.config.metadata_key, foundry_metadata)
         self.connect_client.add_data_source(data_source)
