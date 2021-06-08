@@ -22,7 +22,8 @@ setuptools.setup(
         "scikit-learn>=0.24.1",
         "mdf_connect_client>=0.3.8",
         "h5py>=3.2.1",
-        "funcx==0.0.5"
+        "funcx==0.0.5",
+        "json2table"
     ],
     python_requires=">=3.6",
     classifiers=[
