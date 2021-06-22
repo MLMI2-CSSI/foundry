@@ -113,6 +113,11 @@ class Foundry(FoundryMetadata):
         -------
             self
         """
+        # handle empty dataset name (was returning all the datasets)
+        if not name:
+            print("load: No dataset name is given")
+            exit()
+
         # MDF specific logic
         if not metadata:
             res = self.forge_client.match_field(
@@ -126,30 +131,30 @@ class Foundry(FoundryMetadata):
         # if res is an empty list. (we also see that res will always be an empty list,
         # never None or not a list)
         try:
-            res = res[0]
+            res = res[0] # if search returns multiple results, this automatically uses first result
         except IndexError:
-            print("No metadata found for given dataset")
+            print("load: No metadata found for given dataset")
             exit()
         except:
-            print("An unknown error occurred")
+            print("load: An unknown error occurred")
             exit()
 
         try:
             res["dataset"] = res["projects"][self.config.metadata_key]
         except KeyError:
-            print("Problem with projects field")
+            print("load: Problem with projects field")
             exit()
         except:
-            print("An unknown error occurred")
+            print("load: An unknown error occurred")
             exit()
 
         try:
             res["dataset"]["type"] = res["dataset"]["data_type"]
         except KeyError:
-            print("dataset field does not have data_type")
+            print("load: dataset field does not have data_type")
             exit()
         except:
-            print("An unknown error occurred")
+            print("load: An unknown error occurred")
             exit()
 
         del res["projects"][self.config.metadata_key]
