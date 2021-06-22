@@ -2,13 +2,11 @@
 
 * [Introduction](README.md)
 
-## Usage
+## Basic Usage <a id="usage"></a>
 
 ---
 
 * [Getting Started with Python](examples.md)
-* [Publishing Datasets](publishing-datasets.md)
-* [Publishing Models](publishing-models.md)
 * [Command Line Interface \(CLI\)](command-line-interface.md)
 
 ## Key Concepts <a id="concepts"></a>
@@ -18,6 +16,11 @@
 * [Foundry Data Packages](concepts/foundry-data-packages.md)
 * [Foundry Models and Functions](concepts/foundry-models-and-functions.md)
 * [Foundry Benchmarks](concepts/foundry-benchmarks.md)
+
+## Publishing
+
+* [Publishing Models](publishing/publishing-models.md)
+* [Publishing Datasets](publishing/publishing-datasets.md)
 
 ## How to contribute
 
