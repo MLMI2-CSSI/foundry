@@ -39,10 +39,11 @@ f = f.load("_test_foundry_fashion_mnist_v1.1")
 
 This will remotely load the metadata \(e.g., data location, data keys, etc.\) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine.
 
-Once the data are accessible locally, access the data with the `load_data()` method.
+Once the data are accessible locally, access the data with the `load_data()` method. Load data allows you to load data from a specific split that is defined for the dataset, here we use `train`.
 
 ```python
-X, y = f.load_data()
+res = f.load_data()
+X,y = res['train']
 ```
 
 The data are then usable within the `X` and `y` variables. This full example can be found in [`/examples/fashion-mnist/`](https://github.com/MLMI2-CSSI/foundry/tree/master/examples/fashion-mnist).
