@@ -122,10 +122,36 @@ class Foundry(FoundryMetadata):
         else:
             res = metadata
 
-        # TODO: if object empty, handle
-        res = res[0]
-        res["dataset"] = res["projects"][self.config.metadata_key]
-        res["dataset"]["type"] = res["dataset"]["data_type"]
+        # we figured from our tests that at each of these three lines there could be an error
+        # if res is an empty list. (we also see that res will always be an empty list,
+        # never None or not a list)
+        try:
+            res = res[0]
+        except IndexError:
+            print("No metadata found for given dataset")
+            exit()
+        except:
+            print("An unknown error occurred")
+            exit()
+
+        try:
+            res["dataset"] = res["projects"][self.config.metadata_key]
+        except KeyError:
+            print("Problem with projects field")
+            exit()
+        except:
+            print("An unknown error occurred")
+            exit()
+
+        try:
+            res["dataset"]["type"] = res["dataset"]["data_type"]
+        except KeyError:
+            print("dataset field does not have data_type")
+            exit()
+        except:
+            print("An unknown error occurred")
+            exit()
+
         del res["projects"][self.config.metadata_key]
 
         self = Foundry(**res)
