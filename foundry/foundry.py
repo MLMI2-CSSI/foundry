@@ -115,8 +115,7 @@ class Foundry(FoundryMetadata):
         """
         # handle empty dataset name (was returning all the datasets)
         if not name:
-            print("load: No dataset name is given")
-            exit()
+            raise ValueError("load: No dataset name is given")
 
         # MDF specific logic
         if not metadata:
@@ -132,30 +131,24 @@ class Foundry(FoundryMetadata):
         # never None or not a list)
         try:
             res = res[0] # if search returns multiple results, this automatically uses first result
-        except IndexError:
-            print("load: No metadata found for given dataset")
-            exit()
-        except:
-            print("load: An unknown error occurred")
-            exit()
+        except IndexError as e:
+            raise Exception("load: No metadata found for given dataset") from e
+        except BaseException as e:
+            raise Exception("load: An unknown error occurred") from e
 
         try:
             res["dataset"] = res["projects"][self.config.metadata_key]
-        except KeyError:
-            print("load: Problem with projects field")
-            exit()
-        except:
-            print("load: An unknown error occurred")
-            exit()
+        except KeyError as e:
+            raise Exception("load: Problem with projects field") from e
+        except BaseException as e:
+            raise Exception("load: An unknown error occurred") from e
 
         try:
             res["dataset"]["type"] = res["dataset"]["data_type"]
-        except KeyError:
-            print("load: dataset field does not have data_type")
-            exit()
-        except:
-            print("load: An unknown error occurred")
-            exit()
+        except KeyError as e:
+            raise Exception("load: dataset field does not have data_type") from e
+        except BaseException as e:
+            raise Exception("load: An unknown error occurred") from e
 
         del res["projects"][self.config.metadata_key]
 
