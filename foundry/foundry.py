@@ -133,22 +133,16 @@ class Foundry(FoundryMetadata):
             res = res[0] # if search returns multiple results, this automatically uses first result
         except IndexError as e:
             raise Exception("load: No metadata found for given dataset") from e
-        except BaseException as e:
-            raise Exception("load: An unknown error occurred") from e
 
         try:
             res["dataset"] = res["projects"][self.config.metadata_key]
         except KeyError as e:
-            raise Exception("load: Problem with projects field") from e
-        except BaseException as e:
-            raise Exception("load: An unknown error occurred") from e
+            raise Exception("load: not able to index with metadata key {}".format(self.config.metadata_key)) from e
 
         try:
             res["dataset"]["type"] = res["dataset"]["data_type"]
         except KeyError as e:
             raise Exception("load: dataset field does not have data_type") from e
-        except BaseException as e:
-            raise Exception("load: An unknown error occurred") from e
 
         del res["projects"][self.config.metadata_key]
 
