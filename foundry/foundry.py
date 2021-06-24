@@ -139,11 +139,6 @@ class Foundry(FoundryMetadata):
         except KeyError as e:
             raise Exception("load: not able to index with metadata key {}".format(self.config.metadata_key)) from e
 
-        try:
-            res["dataset"]["type"] = res["dataset"]["data_type"]
-        except KeyError as e:
-            raise Exception("load: dataset field does not have data_type") from e
-
         del res["projects"][self.config.metadata_key]
 
         self = Foundry(**res)
@@ -639,8 +634,11 @@ class Foundry(FoundryMetadata):
                 )
                 response = requests.get(url, verify=False)
 
-                with open(destination, "wb") as f:
-                    f.write(response.content)
+                try:
+                    with open(destination, "wb") as f:
+                        f.write(response.content)
+                except IOError as e:
+                    raise Exception("download: could not write to {}".format(destination)) from e
 
                 return {file["path"] + " status": True}
 
