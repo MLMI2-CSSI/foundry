@@ -725,9 +725,16 @@ class Foundry(FoundryMetadata):
                 )
             except:
                 # Try to read individual lines instead
-                self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, file), lines=True
-                )
+                try:
+                    self.dataset.dataframe = pd.read_json(
+                        os.path.join(path, file), lines=True
+                    )
+                    # If reading individual lines does not work
+                    # Try to read file as csv instead
+                except:
+                    self.dataset.dataframe = pd.read_csv(
+                        os.path.join(path, file)
+                    )
 
             return (
                 self.dataset.dataframe[self.get_keys("input")],
