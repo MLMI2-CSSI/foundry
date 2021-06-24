@@ -104,7 +104,7 @@ class Foundry(FoundryMetadata):
             download (bool): If True, download the data associated with the package (default is True)
             globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
-            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata. 
+            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
 
         Keyword Args:
             interval (int): How often to poll Globus to check if transfers are complete
@@ -139,10 +139,7 @@ class Foundry(FoundryMetadata):
         except KeyError as e:
             raise Exception("load: not able to index with metadata key {}".format(self.config.metadata_key)) from e
 
-        try:
-            res["dataset"]["type"] = res["dataset"]["data_type"]
-        except KeyError as e:
-            raise Exception("load: dataset field does not have data_type") from e
+        res["dataset"]["type"] = res["dataset"]["data_type"]
 
         del res["projects"][self.config.metadata_key]
 
@@ -245,12 +242,12 @@ class Foundry(FoundryMetadata):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
-        stored in self.dataframe_file. The contents are read, and 
+        stored in self.dataframe_file. The contents are read, and
 
         File Data Type: <<Add desc>>
 
         For more complicated data structures, users should
-        subclass Foundry and override the load_data function 
+        subclass Foundry and override the load_data function
 
         Args:
            inputs (list): List of strings for input columns
@@ -702,11 +699,11 @@ class Foundry(FoundryMetadata):
         """Get keys for a Foundry dataset
 
         Arguments:
-            type (str): The type of key to be returned e.g., "input", "target" 
+            type (str): The type of key to be returned e.g., "input", "target"
             as_object (bool): When ``False``, will return a list of keys in as strings
                     When ``True``, will return the full key objects
                     **Default:** ``False``
-        Returns: (list) String representations of keys or if ``as_object`` 
+        Returns: (list) String representations of keys or if ``as_object``
                     is False otherwise returns the full key objects.
 
         """
@@ -743,9 +740,16 @@ class Foundry(FoundryMetadata):
                 )
             except:
                 # Try to read individual lines instead
-                self.dataset.dataframe = pd.read_json(
+                try:
+                    self.dataset.dataframe = pd.read_json(
                     os.path.join(path, file), lines=True
-                )
+                    )
+                    #If reading individual lines does not work
+                    #Try to read file as csv instead 
+                except:
+                    self.dataset.dataframe = pd.read_csv(os.path.join(path, file)
+                    )
+
 
             return (
                 self.dataset.dataframe[self.get_keys("input")],
