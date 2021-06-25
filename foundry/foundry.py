@@ -524,7 +524,14 @@ class Foundry(FoundryMetadata):
                 download_datasets=True,
             )
         else:
-            xtract_https_download(self, verbose=verbose)
+            # kwargs to pass in for xtract download
+            downloadConfig = {"xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
+                 "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
+                 "base_url": "https://data.materialsdatafacility.org",
+                 "folder_to_crawl": f"/foundry/{source_id}/",
+                 "grouper": "matio"
+                }
+            xtract_https_download(self, verbose=verbose, **downloadConfig)
 
         return self
 
