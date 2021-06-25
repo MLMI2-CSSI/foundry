@@ -732,10 +732,12 @@ class Foundry(FoundryMetadata):
                     # If reading individual lines does not work
                     # Try to read file as csv instead
                 except:
-                    self.dataset.dataframe = pd.read_csv(
-                        os.path.join(path, file)
-                    )
-
+                    try:
+                        self.dataset.dataframe = pd.read_csv(
+                            os.path.join(path, file)
+                        )
+                    except:
+                        raise FileNotFoundError("_load_data: could not read dataframe file")
             return (
                 self.dataset.dataframe[self.get_keys("input")],
                 self.dataset.dataframe[self.get_keys("target")],
