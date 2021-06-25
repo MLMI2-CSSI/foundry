@@ -11,7 +11,7 @@ from collections import namedtuple
 from dlhub_sdk import DLHubClient
 # TODO: do imports nicer
 from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
-# from dlhub_sdk.models.servables.keras import KerasModel
+from dlhub_sdk.models.servables.keras import KerasModel
 from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
 from mdf_forge import Forge
 from mdf_connect_client import MDFConnectClient
@@ -20,6 +20,7 @@ from typing import Any
 from datetime import date
 import multiprocessing
 import pandas as pd
+from json2table import convert
 import mdf_toolbox
 import requests
 import json
@@ -97,12 +98,15 @@ class Foundry(FoundryMetadata):
             ].access_token,
         }
 
-    def load(self, name, version="1.1", provider="MDF", download=True, globus=True, verbose=False, **kwargs,):
+    def load(self, name, download=True, globus=True, verbose=False, metadata=None, **kwargs):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
             download (bool): If True, download the data associated with the package (default is True)
-    
+            globus (bool): If True, download using Globus, otherwise https
+            verbose (bool): If True print additional debug information
+            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata. 
+
         Keyword Args:
             interval (int): How often to poll Globus to check if transfers are complete
 
@@ -110,42 +114,22 @@ class Foundry(FoundryMetadata):
         -------
             self
         """
-        res = []
         # MDF specific logic
-        # Handle DOI inputs
-        if name.startswith("10.") and provider == "MDF":
-            print("Loading by DOI")
-            res = (
-                self.forge_client.match_dois(name)
-                .match_resource_types("dataset")
-                .match_field("mdf.organizations", "foundry")
-                .search()
-            )
-
-        # Handle MDF source_ids
+        if not metadata:
+            res = self.forge_client.match_field(
+                "mdf.organizations", self.config.organization
+            ).match_resource_types("dataset")
+            res = res.match_field("mdf.source_id", name).search()
         else:
-            print("Loading by source_id")
-            res = (
-                self.forge_client.match_field("mdf.organizations", "foundry")
-                .match_resource_types("dataset")
-                .match_field("mdf.source_id", name)
-                .search()
-            )
+            res = metadata
 
-        if not res:
-            return self
-        else:
-            # res is list of all matches in Forge
-            # TODO: handle if there are multiple matches
-            res = res[0]
-            
-            # map result to FoundryMetadata Pydantic structure (see models.py)
-            res["dataset"] = res["projects"]["foundry"]
-            res["dataset"]["type"] = res["dataset"]["package_type"]
-            del res["projects"]["foundry"]
+        # TODO: if object empty, handle
+        res = res[0]
+        res["dataset"] = res["projects"][self.config.metadata_key]
+        res["dataset"]["type"] = res["dataset"]["data_type"]
+        del res["projects"][self.config.metadata_key]
 
-            # TODO: reassign values to self in a safer way
-            self = Foundry(**res)
+        self = Foundry(**res)
 
         if download is True:  # Add check for package existence
             self.download(
@@ -162,7 +146,8 @@ class Foundry(FoundryMetadata):
             (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, and publication year
         """
         res = (
-            self.forge_client.match_field("mdf.organizations", "foundry")
+            self.forge_client.match_field(
+                "mdf.organizations", self.config.organization)
             .match_resource_types("dataset")
             .search()
         )
@@ -252,48 +237,34 @@ class Foundry(FoundryMetadata):
 
         Args:
            inputs (list): List of strings for input columns
-           outputs (list): List of strings for output columns
+           targets (list): List of strings for output columns
 
         Returns
-        -------
+        -------s
              (tuple): Tuple of X, y values
         """
+        data = {}
 
-        if source_id:
-            path = os.path.join(self.config.local_cache_dir, source_id)
-            print("Here")
+        # Handle splits if they exist. Return as a labeled dictionary of tuples
+        if self.dataset.splits:
+            for split in self.dataset.splits:
+                data[split.label] = self._load_data(file=split.path,
+                                                    source_id=source_id, globus=globus)
+            return data
         else:
-            path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
-        # Handle Foundry-defined types.
-        if self.dataset.type.value == "tabular":
-            # If the file is not local, fetch the contents with Globus
-            # Check if the contents are local
-            # TODO: Add hashes and versioning to metadata and checking to the file
-            try:
-                self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, self.config.dataframe_file)
-                )
-            except:
-                # Try to read individual lines instead
-                self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, self.config.dataframe_file), lines=True
-                )
+            return {"data": self._load_data(source_id=source_id, globus=globus)}
 
-            return (
-                self.dataset.dataframe[self.dataset.inputs],
-                self.dataset.dataframe[self.dataset.outputs],
-            )
-        elif self.dataset.type.value == "hdf5":
-            f = h5py.File(os.path.join(path, self.config.data_file), "r")
-            inputs = [f[i[0:]] for i in self.dataset.inputs]
-            outputs = [f[i[0:]] for i in self.dataset.outputs]
-            return (inputs, outputs)
-        else:
-            raise NotImplementedError
+    def _repr_html_(self) -> str:
+        title = self.dc['titles'][0]['title']
+        authors = [creator['creatorName'] for creator in self.dc['creators']]
+        authors = '; '.join(authors)
 
-    def describe(self):
-        print("DC:{}".format(self.dc))
-        print("Dataset:{}".format(self.dataset.json(exclude={"dataframe"})))
+        buf = f'<h2>{title}</h2>{authors}'
+
+        buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
+        # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
+        # buf = f'{buf}<h3>DataCite</h3>{convert(self.dc)}'
+        return buf
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
                 publication_year=None, **kwargs,):
@@ -330,8 +301,9 @@ class Foundry(FoundryMetadata):
             publisher=kwargs.get("publisher", ""),
             publication_year=publication_year,
         )
-        self.connect_client.add_organization("Foundry")
-        self.connect_client.set_project_block("foundry", foundry_metadata)
+        self.connect_client.add_organization(self.config.organization)
+        self.connect_client.set_project_block(
+            self.config.metadata_key, foundry_metadata)
         self.connect_client.add_data_source(data_source)
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
@@ -384,16 +356,21 @@ class Foundry(FoundryMetadata):
         if options["servable"]["type"] == "sklearn":
             model_info = ScikitLearnModel.create_model(options["servable"]["filepath"],
                                                        options["servable"]["n_input_columns"],
-                                                       options["servable"].get("classes", None),
-                                                       options["servable"].get("serialization_method", "pickle")
+                                                       options["servable"].get(
+                                                           "classes", None),
+                                                       options["servable"].get(
+                                                           "serialization_method", "pickle")
                                                        )
         # TODO: fix weird M1 error with TF
-        # elif options["servable"]['type'] == "keras":
-        #     model_info = KerasModel.create_model(options["servable"]["filepath"],
-        #                                          options["servable"].get("output_names", None),
-        #                                          options["servable"].get("arch_path", None),
-        #                                          options["servable"].get("custom_objects", None)
-        #                                          )
+        elif options["servable"]['type'] == "keras":
+            model_info = KerasModel.create_model(options["servable"]["model_path"],
+                                                 options["servable"].get(
+                                                     "output_names", None),
+                                                 options["servable"].get(
+                                                     "arch_path", None),
+                                                 options["servable"].get(
+                                                     "custom_objects", None)
+                                                 )
         else:
             raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
                              "'sklearn'\n"
@@ -407,8 +384,12 @@ class Foundry(FoundryMetadata):
         model_info.set_name(options["short_name"])
         model_info.set_title(options["title"])
         # TODO: fix bug where if you put in name without comma, get list index out of range error
-        model_info.set_authors(options["authors"], options.get("affiliations", []))
-        model_info.add_requirements(options.get("requirements", {}))
+        model_info.set_authors(
+            options["authors"], options.get("affiliations", []))
+        # TODO: dont pass in {} as default, overwrites everything -- should def document this
+        # TODO: consider whether that's desired functionality (should users be able to specify 1 or 2 requirements, but
+        #   the container still has other pre-loaded dependencies?
+        # model_info.add_requirements(options.get("requirements", {}))
         model_info.set_domains(options.get("domains", []))
         # TODO: can't default to empty strings, handle
         # model_info.set_abstract(options.get("abstract", ""))
@@ -525,14 +506,14 @@ class Foundry(FoundryMetadata):
             )
         else:
             # kwargs to pass in for xtract download
-            downloadConfig = {"xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
+            xtract_config = {
+                 "xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
                  "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
                  "base_url": "https://data.materialsdatafacility.org",
                  "folder_to_crawl": f"/foundry/{source_id}/",
                  "grouper": "matio"
                 }
-            xtract_https_download(self, verbose=verbose, **downloadConfig)
-
+            xtract_https_download(self, verbose=verbose, **xtract_config)
         return self
 
     def build(self, spec, globus=False, interval=3, file=False):
@@ -547,6 +528,14 @@ class Foundry(FoundryMetadata):
         -------
         (Foundry): self: for chaining
         """
+        if as_object:
+            return [key for key in self.dataset.keys if key.type == type]
+        else:
+            keys = [key.key for key in self.dataset.keys if key.type == type]
+            key_list = []
+            for k in keys:
+                key_list = key_list + k
+            return key_list
 
         print("Building Data Package")
         num_cores = multiprocessing.cpu_count()
@@ -571,3 +560,66 @@ class Foundry(FoundryMetadata):
         )
 
         return self
+
+    def get_keys(self, type, as_object=False):
+        """Get keys for a Foundry dataset
+
+        Arguments:
+            type (str): The type of key to be returned e.g., "input", "target" 
+            as_object (bool): When ``False``, will return a list of keys in as strings
+                    When ``True``, will return the full key objects
+                    **Default:** ``False``
+        Returns: (list) String representations of keys or if ``as_object`` 
+                    is False otherwise returns the full key objects.
+
+        """
+        if as_object:
+            return [key for key in self.dataset.keys if key.type == type]
+        else:
+            keys = [key.key for key in self.dataset.keys if key.type == type]
+            key_list = []
+            for k in keys:
+                key_list = key_list + k
+            return key_list
+
+    def _load_data(self, file=None, source_id=None, globus=True):
+
+        # Build the path to access the cached data
+        if source_id:
+            path = os.path.join(self.config.local_cache_dir, source_id)
+        else:
+            path = os.path.join(self.config.local_cache_dir,
+                                self.mdf["source_id"])
+
+        # Handle Foundry-defined types.
+        if self.dataset.type.value == "tabular":
+            # Determine which file to load, defaults to config.dataframe_file
+            if not file:
+                file = self.config.dataframe_file
+
+            # If the file is not local, fetch the contents with Globus
+            # Check if the contents are local
+            # TODO: Add hashes and versioning to metadata and checking to the file
+            try:
+                self.dataset.dataframe = pd.read_json(
+                    os.path.join(path, file)
+                )
+            except:
+                # Try to read individual lines instead
+                self.dataset.dataframe = pd.read_json(
+                    os.path.join(path, file), lines=True
+                )
+
+            return (
+                self.dataset.dataframe[self.get_keys("input")],
+                self.dataset.dataframe[self.get_keys("target")],
+            )
+        elif self.dataset.type.value == "hdf5":
+            if not file:
+                file = self.config.data_file
+            f = h5py.File(os.path.join(path, file), "r")
+            inputs = [f[i[0:]] for i in self.get_keys("input")]
+            targets = [f[i[0:]] for i in self.get_keys("target")]
+            return (inputs, targets)
+        else:
+            raise NotImplementedError
