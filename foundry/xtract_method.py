@@ -4,19 +4,17 @@ import time
 import os
 import multiprocessing
 
-def xtract_https_download(foundryObj, verbose=False):
+def xtract_https_download(foundryObj, verbose=False, **kwargs):
     source_id = foundryObj.mdf["source_id"]
-    xtract_base_url = (
-        "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com"
-    )
+    xtract_base_url = kwargs.get("xtract_base_url")
 
     # MDF Materials Data at NCSA
-    source_ep_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"
-    base_url = "https://data.materialsdatafacility.org"
-    folder_to_crawl = f"/foundry/{source_id}/"
+    source_ep_id = kwargs.get("source_ep_id")
+    base_url = kwargs.get("base_url")
+    folder_to_crawl = kwargs.get("folder_to_crawl")
 
     # This only matters if you want files grouped together.
-    grouper = "matio"
+    grouper = kwargs.get("grouper")
 
     auth_token = foundryObj.xtract_tokens["auth_token"]
     transfer_token = foundryObj.xtract_tokens["transfer_token"]
