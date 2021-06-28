@@ -114,6 +114,10 @@ class Foundry(FoundryMetadata):
         -------
             self
         """
+        # handle empty dataset name (was returning all the datasets)
+        if not name:
+            raise ValueError("load: No dataset name is given")
+
         # MDF specific logic
         if not metadata:
             res = self.forge_client.match_field(
@@ -123,10 +127,19 @@ class Foundry(FoundryMetadata):
         else:
             res = metadata
 
-        # TODO: if object empty, handle
-        res = res[0]
-        res["dataset"] = res["projects"][self.config.metadata_key]
-        res["dataset"]["type"] = res["dataset"]["data_type"]
+        # we figured from our tests that at each of these three lines there could be an error
+        # if res is an empty list. (we also see that res will always be an empty list,
+        # never None or not a list)
+        try:
+            res = res[0] # if search returns multiple results, this automatically uses first result
+        except IndexError as e:
+            raise Exception("load: No metadata found for given dataset") from e
+
+        try:
+            res["dataset"] = res["projects"][self.config.metadata_key]
+        except KeyError as e:
+            raise Exception("load: not able to index with metadata key {}".format(self.config.metadata_key)) from e
+
         del res["projects"][self.config.metadata_key]
 
         self = Foundry(**res)
