@@ -105,7 +105,7 @@ class Foundry(FoundryMetadata):
             download (bool): If True, download the data associated with the package (default is True)
             globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
-            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata. 
+            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
 
         Keyword Args:
             interval (int): How often to poll Globus to check if transfers are complete
@@ -114,6 +114,10 @@ class Foundry(FoundryMetadata):
         -------
             self
         """
+        # handle empty dataset name (was returning all the datasets)
+        if not name:
+            raise ValueError("load: No dataset name is given")
+
         # MDF specific logic
         if not metadata:
             res = self.forge_client.match_field(
@@ -123,10 +127,19 @@ class Foundry(FoundryMetadata):
         else:
             res = metadata
 
-        # TODO: if object empty, handle
-        res = res[0]
-        res["dataset"] = res["projects"][self.config.metadata_key]
-        res["dataset"]["type"] = res["dataset"]["data_type"]
+        # we figured from our tests that at each of these three lines there could be an error
+        # if res is an empty list. (we also see that res will always be an empty list,
+        # never None or not a list)
+        try:
+            res = res[0] # if search returns multiple results, this automatically uses first result
+        except IndexError as e:
+            raise Exception("load: No metadata found for given dataset") from e
+
+        try:
+            res["dataset"] = res["projects"][self.config.metadata_key]
+        except KeyError as e:
+            raise Exception("load: not able to index with metadata key {}".format(self.config.metadata_key)) from e
+
         del res["projects"][self.config.metadata_key]
 
         self = Foundry(**res)
@@ -228,12 +241,12 @@ class Foundry(FoundryMetadata):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
-        stored in self.dataframe_file. The contents are read, and 
+        stored in self.dataframe_file. The contents are read, and
 
         File Data Type: <<Add desc>>
 
         For more complicated data structures, users should
-        subclass Foundry and override the load_data function 
+        subclass Foundry and override the load_data function
 
         Args:
            inputs (list): List of strings for input columns
@@ -506,6 +519,7 @@ class Foundry(FoundryMetadata):
             )
         else:
             # kwargs to pass in for xtract download
+            source_id = self.mdf["source_id"]
             xtract_config = {
                  "xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
                  "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
@@ -565,11 +579,11 @@ class Foundry(FoundryMetadata):
         """Get keys for a Foundry dataset
 
         Arguments:
-            type (str): The type of key to be returned e.g., "input", "target" 
+            type (str): The type of key to be returned e.g., "input", "target"
             as_object (bool): When ``False``, will return a list of keys in as strings
                     When ``True``, will return the full key objects
                     **Default:** ``False``
-        Returns: (list) String representations of keys or if ``as_object`` 
+        Returns: (list) String representations of keys or if ``as_object``
                     is False otherwise returns the full key objects.
 
         """
