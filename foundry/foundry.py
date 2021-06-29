@@ -105,7 +105,7 @@ class Foundry(FoundryMetadata):
             download (bool): If True, download the data associated with the package (default is True)
             globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
-            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata. 
+            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
 
         Keyword Args:
             interval (int): How often to poll Globus to check if transfers are complete
@@ -139,6 +139,7 @@ class Foundry(FoundryMetadata):
             res["dataset"] = res["projects"][self.config.metadata_key]
         except KeyError as e:
             raise Exception("load: not able to index with metadata key {}".format(self.config.metadata_key)) from e
+
 
         del res["projects"][self.config.metadata_key]
 
@@ -241,12 +242,12 @@ class Foundry(FoundryMetadata):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
-        stored in self.dataframe_file. The contents are read, and 
+        stored in self.dataframe_file. The contents are read, and
 
         File Data Type: <<Add desc>>
 
         For more complicated data structures, users should
-        subclass Foundry and override the load_data function 
+        subclass Foundry and override the load_data function
 
         Args:
            inputs (list): List of strings for input columns
@@ -519,6 +520,7 @@ class Foundry(FoundryMetadata):
             )
         else:
             # kwargs to pass in for xtract download
+            source_id = self.mdf["source_id"]
             xtract_config = {
                  "xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
                  "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
@@ -578,11 +580,11 @@ class Foundry(FoundryMetadata):
         """Get keys for a Foundry dataset
 
         Arguments:
-            type (str): The type of key to be returned e.g., "input", "target" 
+            type (str): The type of key to be returned e.g., "input", "target"
             as_object (bool): When ``False``, will return a list of keys in as strings
                     When ``True``, will return the full key objects
                     **Default:** ``False``
-        Returns: (list) String representations of keys or if ``as_object`` 
+        Returns: (list) String representations of keys or if ``as_object``
                     is False otherwise returns the full key objects.
 
         """
@@ -605,7 +607,7 @@ class Foundry(FoundryMetadata):
                                 self.mdf["source_id"])
 
         # Handle Foundry-defined types.
-        if self.dataset.type.value == "tabular":
+        if self.dataset.data_type.value == "tabular":
             # Determine which file to load, defaults to config.dataframe_file
             if not file:
                 file = self.config.dataframe_file
@@ -627,7 +629,7 @@ class Foundry(FoundryMetadata):
                 self.dataset.dataframe[self.get_keys("input")],
                 self.dataset.dataframe[self.get_keys("target")],
             )
-        elif self.dataset.type.value == "hdf5":
+        elif self.dataset.data_type == "hdf5":
             if not file:
                 file = self.config.data_file
             f = h5py.File(os.path.join(path, file), "r")
