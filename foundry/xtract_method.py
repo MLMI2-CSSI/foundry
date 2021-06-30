@@ -4,6 +4,7 @@ import time
 import os
 import multiprocessing
 from joblib import Parallel, delayed
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 def xtract_https_download(foundryObj, verbose=False, **kwargs):
     source_id = foundryObj.mdf["source_id"]
