@@ -140,7 +140,6 @@ class Foundry(FoundryMetadata):
         except KeyError as e:
             raise Exception("load: not able to index with metadata key {}".format(self.config.metadata_key)) from e
 
-
         del res["projects"][self.config.metadata_key]
 
         self = Foundry(**res)

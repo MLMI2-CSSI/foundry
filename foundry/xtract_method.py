@@ -3,6 +3,7 @@ import json
 import time
 import os
 import multiprocessing
+from joblib import Parallel, delayed
 
 def xtract_https_download(foundryObj, verbose=False, **kwargs):
     source_id = foundryObj.mdf["source_id"]
