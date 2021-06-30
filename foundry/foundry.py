@@ -28,7 +28,6 @@ import glob
 import h5py
 import time
 import os
-from foundry.xtract_method import *
 
 
 class Foundry(FoundryMetadata):
@@ -105,7 +104,7 @@ class Foundry(FoundryMetadata):
             download (bool): If True, download the data associated with the package (default is True)
             globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
-            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
+            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata. 
 
         Keyword Args:
             interval (int): How often to poll Globus to check if transfers are complete
@@ -114,10 +113,6 @@ class Foundry(FoundryMetadata):
         -------
             self
         """
-        # handle empty dataset name (was returning all the datasets)
-        if not name:
-            raise ValueError("load: No dataset name is given")
-
         # MDF specific logic
         if not metadata:
             res = self.forge_client.match_field(
@@ -127,20 +122,10 @@ class Foundry(FoundryMetadata):
         else:
             res = metadata
 
-        # we figured from our tests that at each of these three lines there could be an error
-        # if res is an empty list. (we also see that res will always be an empty list,
-        # never None or not a list)
-        try:
-            res = res[0] # if search returns multiple results, this automatically uses first result
-        except IndexError as e:
-            raise Exception("load: No metadata found for given dataset") from e
-
-        try:
-            res["dataset"] = res["projects"][self.config.metadata_key]
-        except KeyError as e:
-            raise Exception("load: not able to index with metadata key {}".format(self.config.metadata_key)) from e
-
-
+        # TODO: if object empty, handle
+        res = res[0]
+        res["dataset"] = res["projects"][self.config.metadata_key]
+        res["dataset"]["type"] = res["dataset"]["data_type"]
         del res["projects"][self.config.metadata_key]
 
         self = Foundry(**res)
@@ -242,12 +227,12 @@ class Foundry(FoundryMetadata):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
-        stored in self.dataframe_file. The contents are read, and
+        stored in self.dataframe_file. The contents are read, and 
 
         File Data Type: <<Add desc>>
 
         For more complicated data structures, users should
-        subclass Foundry and override the load_data function
+        subclass Foundry and override the load_data function 
 
         Args:
            inputs (list): List of strings for input columns
@@ -519,16 +504,135 @@ class Foundry(FoundryMetadata):
                 download_datasets=True,
             )
         else:
-            # kwargs to pass in for xtract download
             source_id = self.mdf["source_id"]
-            xtract_config = {
-                 "xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
-                 "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
-                 "base_url": "https://data.materialsdatafacility.org",
-                 "folder_to_crawl": f"/foundry/{source_id}/",
-                 "grouper": "matio"
-                }
-            xtract_https_download(self, verbose=verbose, **xtract_config)
+            xtract_base_url = (
+                "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com"
+            )
+
+            # MDF Materials Data at NCSA
+            source_ep_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"
+            base_url = "https://data.materialsdatafacility.org"
+            folder_to_crawl = f"/foundry/{source_id}/"
+
+            # This only matters if you want files grouped together.
+            grouper = "matio"
+
+            auth_token = self.xtract_tokens["auth_token"]
+            transfer_token = self.xtract_tokens["transfer_token"]
+            funcx_token = self.xtract_tokens["funcx_token"]
+
+            headers = {
+                "Authorization": auth_token,
+                "Transfer": transfer_token,
+                "FuncX": funcx_token,
+                "Petrel": auth_token,
+            }
+            if verbose:
+                print(f"Headers: {headers}")
+
+            # Initialize the crawl. This kicks off the Globus EP crawling service on the backend.
+            crawl_url = f"{xtract_base_url}/crawl"
+            if verbose:
+                print(f"Crawl URL is : {crawl_url}")
+
+            first_ep_dict = {
+                "repo_type": "GLOBUS",
+                "eid": source_ep_id,
+                "dir_paths": [folder_to_crawl],
+                "grouper": grouper,
+            }
+            tokens = {"Transfer": transfer_token, "Authorization": funcx_token}
+            crawl_req = requests.post(
+                f"{xtract_base_url}/crawl",
+                json={"endpoints": [first_ep_dict], "tokens": tokens},
+            )
+
+            if verbose:
+                print("Crawl response:", crawl_req)
+            crawl_id = json.loads(crawl_req.content)["crawl_id"]
+            if verbose:
+                print(f"Crawl ID: {crawl_id}")
+
+            # Wait for the crawl to finish before we can start fetching our metadata.
+            while True:
+                crawl_status = requests.get(
+                    f"{xtract_base_url}/get_crawl_status", json={"crawl_id": crawl_id}
+                )
+                if verbose:
+                    print(crawl_status)
+                crawl_content = json.loads(crawl_status.content)
+                if verbose:
+                    print(f"Crawl Status: {crawl_content}")
+
+                if crawl_content["crawl_status"] == "complete":
+                    files_crawled = crawl_content["files_crawled"]
+                    if verbose:
+                        print("Our crawl has succeeded!")
+                    break
+                else:
+                    if verbose:
+                        print("Sleeping before re-polling...")
+                    time.sleep(2)
+
+            # Now we fetch our metadata. Here you can configure n to be maximum number of
+            # messages you want at once.
+
+            file_ls = []
+            fetched_files = 0
+            while fetched_files < files_crawled:
+                fetch_mdata = requests.get(
+                    f"{xtract_base_url}/fetch_crawl_mdata",
+                    json={"crawl_id": crawl_id, "n": 2},
+                )
+                fetch_content = json.loads(fetch_mdata.content)
+
+                for file_path in fetch_content["file_ls"]:
+                    file_ls.append(file_path)
+                    fetched_files += 1
+
+                if fetch_content["queue_empty"]:
+                    if verbose:
+                        print("Queue is empty! Continuing...")
+                    time.sleep(2)
+
+            source_path = os.path.join(
+                self.config.local_cache_dir, self.mdf["source_id"]
+            )
+
+            if not os.path.exists(self.config.local_cache_dir):
+                os.mkdir(self.config.local_cache_dir)
+                os.mkdir(source_path)
+
+            elif not os.path.exists(source_path):
+                os.mkdir(source_path)
+
+            num_cores = multiprocessing.cpu_count()
+
+            def download_file(file):
+                requests.packages.urllib3.disable_warnings(
+                    InsecureRequestWarning)
+
+                url = "https://data.materialsdatafacility.org" + file["path"]
+                destination = (
+                    "data/"
+                    + source_id
+                    + "/"
+                    + file["path"][file["path"].rindex("/") + 1:]
+                )
+                response = requests.get(url, verify=False)
+
+                with open(destination, "wb") as f:
+                    f.write(response.content)
+
+                return {file["path"] + " status": True}
+
+            results = Parallel(n_jobs=num_cores)(
+                delayed(download_file)(file) for file in file_ls
+            )
+
+            print("Done curling.")
+            print(results)
+
         return self
 
     def build(self, spec, globus=False, interval=3, file=False):
@@ -580,11 +684,11 @@ class Foundry(FoundryMetadata):
         """Get keys for a Foundry dataset
 
         Arguments:
-            type (str): The type of key to be returned e.g., "input", "target"
+            type (str): The type of key to be returned e.g., "input", "target" 
             as_object (bool): When ``False``, will return a list of keys in as strings
                     When ``True``, will return the full key objects
                     **Default:** ``False``
-        Returns: (list) String representations of keys or if ``as_object``
+        Returns: (list) String representations of keys or if ``as_object`` 
                     is False otherwise returns the full key objects.
 
         """
@@ -607,7 +711,7 @@ class Foundry(FoundryMetadata):
                                 self.mdf["source_id"])
 
         # Handle Foundry-defined types.
-        if self.dataset.data_type.value == "tabular":
+        if self.dataset.type.value == "tabular":
             # Determine which file to load, defaults to config.dataframe_file
             if not file:
                 file = self.config.dataframe_file
@@ -629,7 +733,7 @@ class Foundry(FoundryMetadata):
                 self.dataset.dataframe[self.get_keys("input")],
                 self.dataset.dataframe[self.get_keys("target")],
             )
-        elif self.dataset.data_type == "hdf5":
+        elif self.dataset.type.value == "hdf5":
             if not file:
                 file = self.config.data_file
             f = h5py.File(os.path.join(path, file), "r")
