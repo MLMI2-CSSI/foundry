@@ -130,7 +130,29 @@ Foundry also supports data from hierarchical data formats \(e.g., [HDF5](https:/
 Before continuing, be sure that you have 1\) signed up for a [free Globus account](https://app.globus.org) and 2\) [joined this Globus group](https://app.globus.org/groups/cc192dca-3751-11e8-90c1-0a7c735d220a/about).
 {% endhint %}
 
-Once your dataset is in the proper shape, and you have created the associated metadata structure, you can publish to Foundry!
+Once your dataset is in the proper shape, and you have created the associated metadata structure, you can publish to Foundry! An example is shown below.
+
+```text
+"foundry": {
+	"dc": {},
+	"keys": [{
+			"type": "input",
+			"name": "feature_1",
+			"units": "",
+			"description": "This is an input"
+		},
+		{
+			"type": "target",
+			"name": "band_gap",
+			"units": "eV",
+			"description": "blah blah",
+			"labels": []
+		}
+	],
+	"short_name": "my_short_name",
+	"data_type": "tabular"
+}
+```
 
 Currently, you can publish any dataset you have stored on a Globus endpoint or Google Drive. In the following, assume your [previously defined metadata](publishing-datasets.md#describing-datasets) are stored in `metadata` :
 

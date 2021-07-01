@@ -13,9 +13,11 @@
 
 * [Overview](concepts/overview.md)
 * [Foundry Datasets](concepts/foundry-datasets.md)
-* [Foundry Data Packages](concepts/foundry-data-packages.md)
 * [Foundry Models and Functions](concepts/foundry-models-and-functions.md)
+* [Foundry Data Packages](concepts/foundry-data-packages.md)
 * [Foundry Benchmarks](concepts/foundry-benchmarks.md)
+
+## Publishing Datasets and Models
 
 ## Publishing
 
