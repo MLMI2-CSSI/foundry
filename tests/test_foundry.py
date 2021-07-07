@@ -75,11 +75,10 @@ test_metadata = {
 # Globus endpoint for '_iris_dev'
 test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2F"
 
-#Quick function to delete any downloaded test data 
+#Quick function to delete any downloaded test data
 def delete_test_data(f):
     path = os.path.join(f.config.local_cache_dir, test_dataset)
     if os.path.isdir(path):
-        print("successful delete")
         shutil.rmtree(path)
 
 
@@ -209,51 +208,51 @@ def test_check_status():
     pass
 
 
-# Helper
-# Return codes:
-#  -1: No match, the value was never found
-#   0: Exclusive match, no values other than argument found
-#   1: Inclusive match, some values other than argument found
-#   2: Partial match, value is found in some but not all results
-# def check_field(res, field, regex):
-#     dict_path = ""
-#     for key in field.split("."):
-#         if key == "[]":
-#             dict_path += "[0]"
-#         else:
-#             dict_path += ".get('{}', {})".format(key, "{}")
-#     # If no results, set matches to false
-#     all_match = len(res) > 0
-#     only_match = len(res) > 0
-#     some_match = False
-#     for r in res:
-#         vals = eval("r" + dict_path)
-#         if vals == {}:
-#             vals = []
-#         elif type(vals) is not list:
-#             vals = [vals]
-#         # If a result does not contain the value, no match
-#         if regex not in vals and not any(
-#             [re.search(str(regex), str(value)) for value in vals]
-#         ):
-#             all_match = False
-#             only_match = False
-#         # If a result contains other values, inclusive match
-#         elif len(vals) != 1:
-#             only_match = False
-#             some_match = True
-#         else:
-#             some_match = True
-
-#     if only_match:
-#         # Exclusive match
-#         return 0
-#     elif all_match:
-#         # Inclusive match
-#         return 1
-#     elif some_match:
-#         # Partial match
-#         return 2
-#     else:
-#         # No match
-#         return -1
+# # Helper
+# # Return codes:
+# #  -1: No match, the value was never found
+# #   0: Exclusive match, no values other than argument found
+# #   1: Inclusive match, some values other than argument found
+# #   2: Partial match, value is found in some but not all results
+# # def check_field(res, field, regex):
+# #     dict_path = ""
+# #     for key in field.split("."):
+# #         if key == "[]":
+# #             dict_path += "[0]"
+# #         else:
+# #             dict_path += ".get('{}', {})".format(key, "{}")
+# #     # If no results, set matches to false
+# #     all_match = len(res) > 0
+# #     only_match = len(res) > 0
+# #     some_match = False
+# #     for r in res:
+# #         vals = eval("r" + dict_path)
+# #         if vals == {}:
+# #             vals = []
+# #         elif type(vals) is not list:
+# #             vals = [vals]
+# #         # If a result does not contain the value, no match
+# #         if regex not in vals and not any(
+# #             [re.search(str(regex), str(value)) for value in vals]
+# #         ):
+# #             all_match = False
+# #             only_match = False
+# #         # If a result contains other values, inclusive match
+# #         elif len(vals) != 1:
+# #             only_match = False
+# #             some_match = True
+# #         else:
+# #             some_match = True
+#
+# #     if only_match:
+# #         # Exclusive match
+# #         return 0
+# #     elif all_match:
+# #         # Inclusive match
+# #         return 1
+# #     elif some_match:
+# #         # Partial match
+# #         return 2
+# #     else:
+# #         # No match
+# #         return -1
