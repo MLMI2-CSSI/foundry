@@ -76,8 +76,8 @@ test_metadata = {
 test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2F"
 
 #Quick function to delete any downloaded test data
-def delete_test_data(f):
-    path = os.path.join(f.config.local_cache_dir, test_dataset)
+def _delete_test_data(foundry_obj):
+    path = os.path.join(foundry_obj.config.local_cache_dir, test_dataset)
     if os.path.isdir(path):
         shutil.rmtree(path)
 
@@ -128,12 +128,12 @@ def test_download_globus():
 
     f = Foundry(no_browser=True, no_local_server=True)
 
-    delete_test_data(f)
+    _delete_test_data(f)
 
     f = f .load(test_dataset, download=True)
     assert f.dc["titles"][0]["title"] == expected_title
 
-    delete_test_data(f)
+    _delete_test_data(f)
 
 
 
@@ -141,19 +141,19 @@ def test_download_https():
 
     f = Foundry(no_browser=True, no_local_server=True)
 
-    delete_test_data(f)
+    _delete_test_data(f)
 
     f = f.load(test_dataset, download=True, globus=False)
     assert f.dc["titles"][0]["title"] == expected_title
 
-    delete_test_data(f)
+    _delete_test_data(f)
 
 
 def test_dataframe_load():
 
     f = Foundry(no_browser=True, no_local_server=True)
 
-    delete_test_data(f)
+    _delete_test_data(f)
 
     f = f.load(test_dataset, download=True, globus=False)
     res = f.load_data()
@@ -164,48 +164,48 @@ def test_dataframe_load():
     assert len(y) > 1
     assert isinstance(y, pd.DataFrame)
 
-    delete_test_data(f)
+    _delete_test_data(f)
 
-
-def test_publish():
-    # TODO: automate dealing with curation and cleaning after tests
-
-    f = Foundry(no_browser=True, no_local_server=True)
-
-    timestamp = datetime.now().timestamp()
-    title = "scourtas_example_iris_test_publish_{:.0f}".format(timestamp)
-    short_name = "example_AS_iris_test_{:.0f}".format(timestamp)
-    authors = ["A Scourtas"]
-
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
-
-    # publish with short name
-    assert res['success']
-    assert res['source_id'] == "_test_example_iris_{:.0f}_v1.1".format(timestamp)
-
-    # TODO: publish with long title -- for some reason even when I change the title, it still says it's already pub'd
-    # title += "long"
-    # res = f.publish(test_metadata, test_data_source, title, authors)
-    # assert res['success']
-    # assert res['source_id'] == "_test_scourtas_example_iris_publish_{:.0f}_v1.1".format(timestamp)
-
-    # check that pushing same dataset without update flag fails
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
-    assert not res['success']
-
-    # check that using update flag allows us to update dataset
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name, update=True)
-    assert res['success']
-
-    # check that using update flag for new dataset fails
-    new_short_name = short_name + "_update"
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=new_short_name, update=True)
-    assert not res['success']
-
-
-def test_check_status():
-    # TODO: the 'active messages' in MDF CC's check_status() don't appear to do anything? need to determine how to test
-    pass
+#
+# def test_publish():
+#     # TODO: automate dealing with curation and cleaning after tests
+#
+#     f = Foundry(no_browser=True, no_local_server=True)
+#
+#     timestamp = datetime.now().timestamp()
+#     title = "scourtas_example_iris_test_publish_{:.0f}".format(timestamp)
+#     short_name = "example_AS_iris_test_{:.0f}".format(timestamp)
+#     authors = ["A Scourtas"]
+#
+#     res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
+#
+#     # publish with short name
+#     assert res['success']
+#     assert res['source_id'] == "_test_example_iris_{:.0f}_v1.1".format(timestamp)
+#
+#     # TODO: publish with long title -- for some reason even when I change the title, it still says it's already pub'd
+#     # title += "long"
+#     # res = f.publish(test_metadata, test_data_source, title, authors)
+#     # assert res['success']
+#     # assert res['source_id'] == "_test_scourtas_example_iris_publish_{:.0f}_v1.1".format(timestamp)
+#
+#     # check that pushing same dataset without update flag fails
+#     res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
+#     assert not res['success']
+#
+#     # check that using update flag allows us to update dataset
+#     res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name, update=True)
+#     assert res['success']
+#
+#     # check that using update flag for new dataset fails
+#     new_short_name = short_name + "_update"
+#     res = f.publish(test_metadata, test_data_source, title, authors, short_name=new_short_name, update=True)
+#     assert not res['success']
+#
+#
+# def test_check_status():
+#     # TODO: the 'active messages' in MDF CC's check_status() don't appear to do anything? need to determine how to test
+#     pass
 
 
 # # Helper

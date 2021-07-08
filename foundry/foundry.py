@@ -618,8 +618,8 @@ class Foundry(FoundryMetadata):
                 self.dataset.dataframe = pd.read_json(
                     os.path.join(path, file)
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                print("Reading {} as JSON failed: {} \n".format(file, e), "Now attempting to read as JSONL")
 
             if (self.dataset.dataframe is None):
                 try:
@@ -627,15 +627,16 @@ class Foundry(FoundryMetadata):
                     self.dataset.dataframe = pd.read_json(
                         os.path.join(path, file), lines=True
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    print("Reading {} as JSONL failed: {} \n".format(file, e), "Now attempting to read as CSV")
             if (self.dataset.dataframe is None):
                 try:
+                    #Try to read as CSV instead
                     self.dataset.dataframe = pd.read_csv(
                         os.path.join(path, file)
                     )
                 except Exception as e:
-                    print("Failed to load data properly: {}".format(e))
+                    print("Reading {} as CSV failed, unable to load data properly: {}".format(file, e))
                     raise e
             return (
                 self.dataset.dataframe[self.get_keys("input")],
