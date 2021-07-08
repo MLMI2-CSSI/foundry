@@ -618,12 +618,25 @@ class Foundry(FoundryMetadata):
                 self.dataset.dataframe = pd.read_json(
                     os.path.join(path, file)
                 )
-            except:
-                # Try to read individual lines instead
-                self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, file), lines=True
-                )
+            except Exception:
+                pass
 
+            if (self.dataset.dataframe is None):
+                try:
+                    # Try to read individual lines instead
+                    self.dataset.dataframe = pd.read_json(
+                        os.path.join(path, file), lines=True
+                    )
+                except Exception:
+                    pass
+            if (self.dataset.dataframe is None):
+                try:
+                    self.dataset.dataframe = pd.read_csv(
+                        os.path.join(path, file)
+                    )
+                except Exception as e:
+                    print("Failed to load data properly: {}".format(e))
+                    raise e
             return (
                 self.dataset.dataframe[self.get_keys("input")],
                 self.dataset.dataframe[self.get_keys("target")],
