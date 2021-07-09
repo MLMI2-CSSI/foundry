@@ -36,7 +36,6 @@ class Foundry(FoundryMetadata):
     TODO:
     -------
     Add Docstring
-
     """
 
     # transfer_client: Any
@@ -106,10 +105,8 @@ class Foundry(FoundryMetadata):
             globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
             metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
-
         Keyword Args:
             interval (int): How often to poll Globus to check if transfers are complete
-
         Returns
         -------
             self
@@ -153,7 +150,6 @@ class Foundry(FoundryMetadata):
 
     def list(self):
         """List available Foundry data packages
-
         Returns
         -------
             (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, and publication year
@@ -178,10 +174,8 @@ class Foundry(FoundryMetadata):
 
     def get_packages(self, paths=False):
         """Get available local data packages
-
         Args:
            paths (bool): If True return paths in addition to package, if False return package name only
-
         Returns
         -------
             (list): List describing local Foundry packages
@@ -198,7 +192,6 @@ class Foundry(FoundryMetadata):
         """Collect dataframes of local data packages
         Args:
            packages (list): List of packages to collect, defaults to all
-
         Returns
         -------
             (tuple): Tuple of X(pandas.DataFrame), y(pandas.DataFrame)
@@ -222,15 +215,12 @@ class Foundry(FoundryMetadata):
 
     def run(self, name, inputs, **kwargs):
         """Run a model on data
-
         Args:
            name (str): DLHub model name
            inputs: Data to send to DLHub as inputs (should be JSON serializable)
-
         Returns
         -------
              Returns results after invocation via the DLHub service
-
         TODO:
         -------
         - Pass **kwargs through to DLHub client and document kwargs
@@ -239,19 +229,14 @@ class Foundry(FoundryMetadata):
 
     def load_data(self, source_id=None, globus=True):
         """Load in the data associated with the prescribed dataset
-
         Tabular Data Type: Data are arranged in a standard data frame
         stored in self.dataframe_file. The contents are read, and
-
         File Data Type: <<Add desc>>
-
         For more complicated data structures, users should
         subclass Foundry and override the load_data function
-
         Args:
            inputs (list): List of strings for input columns
            targets (list): List of strings for output columns
-
         Returns
         -------s
              (tuple): Tuple of X, y values
@@ -298,7 +283,6 @@ class Foundry(FoundryMetadata):
             tags (list): List of tags to apply to the data package
             short_name (string): Shortened/abbreviated name of the data package
             publisher (string): Data publishing entity (e.g. MDF, Zenodo, etc.)
-
         Returns
         -------
         (dict) MDF Connect Response: Response from MDF Connect to allow tracking
@@ -352,13 +336,11 @@ class Foundry(FoundryMetadata):
             visibility (dict of users and groups, each a list)
             funding reference
             rights
-
             TODO:
             alternate identifier (to add an identifier of this artifact in another service)
             add file
             add directory
             add files
-
         """
         # TODO: pick nicer way of handling defaults for things besides get (since if the DLHub default changes, we'd be
         #   overwriting it
@@ -446,7 +428,6 @@ class Foundry(FoundryMetadata):
 
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
-
         Arguments:
             source_id (str): The ``source_id`` (``source_name`` + version information) of the
                     submission to check. Returned in the ``res`` result from ``publish()`` via MDF Connect Client.
@@ -459,7 +440,6 @@ class Foundry(FoundryMetadata):
                     When ``True``, will return the full status result.
                     For direct human consumption, ``False`` is recommended.
                     **Default:** ``False``
-
         Returns:
             If ``raw`` is ``True``, *dict*: The full status result.
         """
@@ -467,7 +447,6 @@ class Foundry(FoundryMetadata):
 
     def check_model_status(self, res):
         """Check status of model or function publication to DLHub
-
         TODO: currently broken on DLHub side of things
         """
         # return self.dlhub_client.get_task_status(res)
@@ -478,12 +457,10 @@ class Foundry(FoundryMetadata):
         Keyword Args:
             file (str): Path to the file containing
             (default: self.config.metadata_file)
-
         dataframe_file (str): filename for the dataframe file default:"foundry_dataframe.json"
         data_file (str): : filename for the data file default:"foundry.hdf5"
         destination_endpoint (str): Globus endpoint UUID where Foundry data should move
         local_cache_dir (str): Where to place collected data default:"./data"
-
         Returns
         -------
         (Foundry): self: for chaining
@@ -496,7 +473,6 @@ class Foundry(FoundryMetadata):
         Args:
             globus (bool): if True, use Globus to download the data else try HTTPS
             verbose (bool): if True print out debug information during the download
-
         Returns
         -------
         (Foundry): self: for chaining
@@ -537,7 +513,6 @@ class Foundry(FoundryMetadata):
             globus (bool): if True use Globus to fetch datasets
             interval (int): Polling interval on checking task status in seconds.
             type (str): One of "file" or None
-
         Returns
         -------
         (Foundry): self: for chaining
@@ -577,7 +552,6 @@ class Foundry(FoundryMetadata):
 
     def get_keys(self, type, as_object=False):
         """Get keys for a Foundry dataset
-
         Arguments:
             type (str): The type of key to be returned e.g., "input", "target"
             as_object (bool): When ``False``, will return a list of keys in as strings
@@ -585,7 +559,6 @@ class Foundry(FoundryMetadata):
                     **Default:** ``False``
         Returns: (list) String representations of keys or if ``as_object``
                     is False otherwise returns the full key objects.
-
         """
         if as_object:
             return [key for key in self.dataset.keys if key.type == type]
@@ -620,24 +593,22 @@ class Foundry(FoundryMetadata):
                 )
             except Exception as e:
                 print("Reading {} as JSON failed: {} \n".format(file, e), "Now attempting to read as JSONL")
-
-            if (self.dataset.dataframe is None):
                 try:
                     # Try to read individual lines instead
                     self.dataset.dataframe = pd.read_json(
                         os.path.join(path, file), lines=True
                     )
-                except Exception as e:
-                    print("Reading {} as JSONL failed: {} \n".format(file, e), "Now attempting to read as CSV")
-            if (self.dataset.dataframe is None):
-                try:
-                    #Try to read as CSV instead
-                    self.dataset.dataframe = pd.read_csv(
-                        os.path.join(path, file)
-                    )
-                except Exception as e:
-                    print("Reading {} as CSV failed, unable to load data properly: {}".format(file, e))
-                    raise e
+                except Exception as f:
+                    print("Reading {} as JSONL failed: {} \n".format(file, f), "Now attempting to read as CSV")
+                    try:
+                        #Try to read as CSV instead
+                        self.dataset.dataframe = pd.read_csv(
+                            os.path.join(path, file)
+                        )
+                    except Exception as g:
+                        print("Reading {} as CSV failed, unable to load data properly: {}".format(file, g))
+                        raise e
+
             return (
                 self.dataset.dataframe[self.get_keys("input")],
                 self.dataset.dataframe[self.get_keys("target")],
