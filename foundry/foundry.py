@@ -293,6 +293,7 @@ class Foundry(FoundryMetadata):
             publication_year (int): Year of dataset publication. If None, will
                 be set to the current calendar year by MDF Connect Client.
                 (default: $current_year)
+
         Keyword Args:
             affiliations (list): List of author affiliations
             tags (list): List of tags to apply to the data package
@@ -585,7 +586,7 @@ class Foundry(FoundryMetadata):
                     **Default:** ``False``
         Returns: (list) String representations of keys or if ``as_object``
                     is False otherwise returns the full key objects.
-
+                    
         """
         if as_object:
             return [key for key in self.dataset.keys if key.type == type]
@@ -618,11 +619,23 @@ class Foundry(FoundryMetadata):
                 self.dataset.dataframe = pd.read_json(
                     os.path.join(path, file)
                 )
-            except:
-                # Try to read individual lines instead
-                self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, file), lines=True
-                )
+            except Exception as e:
+                print("Reading {} as JSON failed: {} \n".format(file, e), "Now attempting to read as JSONL")
+                try:
+                    # Try to read individual lines instead
+                    self.dataset.dataframe = pd.read_json(
+                        os.path.join(path, file), lines=True
+                    )
+                except Exception as f:
+                    print("Reading {} as JSONL failed: {} \n".format(file, f), "Now attempting to read as CSV")
+                    try:
+                        #Try to read as CSV instead
+                        self.dataset.dataframe = pd.read_csv(
+                            os.path.join(path, file)
+                        )
+                    except Exception as g:
+                        print("Reading {} as CSV failed, unable to load data properly: {}".format(file, g))
+                        raise e
 
             return (
                 self.dataset.dataframe[self.get_keys("input")],

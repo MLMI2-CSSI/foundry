@@ -1,4 +1,4 @@
-import os
+import os, shutil
 import re
 import types
 import pytest
@@ -10,9 +10,12 @@ from foundry import Foundry
 from dlhub_sdk import DLHubClient
 from mdf_connect_client import MDFConnectClient
 
-test_dataset = "_test_blaiszik_foundry_iris_v2.1"
-expected_title = "Foundry - Iris Dataset"
-test_metadata = {
+#updated test dataset
+test_dataset = "_test_foundry_iris_dev_v2.1"
+expected_title = "Iris Dataset"
+
+#Kept the Old metadata format in case we ever want to refer back
+old_test_metadata = {
     "inputs": ["sepal length (cm)", "sepal width (cm)", "petal length (cm)", "petal width (cm)"],
     "input_descriptions": ["sepal length in unit(cm)", "sepal width in unit(cm)", "petal length in unit(cm)",
                            "petal width in unit(cm)"],
@@ -24,8 +27,60 @@ test_metadata = {
     "short_name": "iris_example",
     "package_type": "tabular"
 }
-# Globus endpoint for '_test_blaiszik_foundry_iris_v2.1'
-test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry%2F"
+
+
+test_metadata = {
+    "keys":[
+        {
+            "key": ["sepal length (cm)"],
+            "type": "input",
+            "units": "cm",
+            "description": "sepal length in unit(cm)"
+        },
+        {
+            "key": ["sepal width (cm)"],
+            "type": "input",
+            "units": "cm",
+            "description": "sepal width in unit(cm)"
+        },
+        {
+            "key": ["petal length (cm)"],
+            "type": "input",
+            "units": "cm",
+            "description": "petal length in unit(cm)"
+        },
+        {
+            "key": ["petal width (cm)"],
+            "type": "input",
+            "units": "cm",
+            "description": "petal width in unit(cm)"
+        },
+        {
+            "key": ["flower type"],
+            "type": "output",
+            "units": "",
+            "description": "flower type"
+        }
+    ],
+    'splits': [
+        {'label': 'train', 'path': 'train.json', 'type': 'train'},
+        {'label': 'test', 'path': 'test.json', 'type': 'test'}
+    ],
+    #"short_name": "example_AS_iris_test_{:.0f}".format(timestamp),
+    "data_type": "tabular",
+    'task_type': ['unsupervised', 'generative'],
+    'domain': ['materials science', 'chemistry'],
+    'n_items': 1000
+}
+# Globus endpoint for '_iris_dev'
+test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2F"
+
+#Quick function to delete any downloaded test data
+def _delete_test_data(foundry_obj):
+    path = os.path.join(foundry_obj.config.local_cache_dir, test_dataset)
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+
 
 
 def test_foundry_init_cloud():
@@ -61,6 +116,7 @@ def test_list():
 
 
 def test_metadata_pull():
+
     f = Foundry(no_browser=True, no_local_server=True)
     f = f.load(test_dataset, download=False)
     assert f.dc["titles"][0]["title"] == expected_title
@@ -68,31 +124,47 @@ def test_metadata_pull():
 
 @pytest.mark.xfail(reason="Test should have a local endpoint, will fail cloud CI")
 def test_download_globus():
-    f = Foundry(no_browser=True, no_local_server=True)
-    f = f.load(test_dataset, download=True)
-    assert f.dc["titles"][0]["title"] == expected_title
 
 
-def test_data_pull():
     f = Foundry(no_browser=True, no_local_server=True)
-    f = f.load(test_dataset, download=True, globus=False)
+
+    _delete_test_data(f)
+
+    f = f .load(test_dataset, download=True)
     assert f.dc["titles"][0]["title"] == expected_title
+
+    _delete_test_data(f)
+
 
 
 def test_download_https():
+
     f = Foundry(no_browser=True, no_local_server=True)
-    f = f.load(test_dataset, download=True)
+
+    _delete_test_data(f)
+
+    f = f.load(test_dataset, download=True, globus=False)
     assert f.dc["titles"][0]["title"] == expected_title
+
+    _delete_test_data(f)
 
 
 def test_dataframe_load():
+
     f = Foundry(no_browser=True, no_local_server=True)
-    f = f.load(test_dataset, download=True)
-    X, y = f.load_data()
+
+    _delete_test_data(f)
+
+    f = f.load(test_dataset, download=True, globus=False)
+    res = f.load_data()
+    X, y = res['train']
+
     assert len(X) > 1
     assert isinstance(X, pd.DataFrame)
     assert len(y) > 1
     assert isinstance(y, pd.DataFrame)
+
+    _delete_test_data(f)
 
 
 def test_publish():
@@ -136,51 +208,51 @@ def test_check_status():
     pass
 
 
-# Helper
-# Return codes:
-#  -1: No match, the value was never found
-#   0: Exclusive match, no values other than argument found
-#   1: Inclusive match, some values other than argument found
-#   2: Partial match, value is found in some but not all results
-# def check_field(res, field, regex):
-#     dict_path = ""
-#     for key in field.split("."):
-#         if key == "[]":
-#             dict_path += "[0]"
-#         else:
-#             dict_path += ".get('{}', {})".format(key, "{}")
-#     # If no results, set matches to false
-#     all_match = len(res) > 0
-#     only_match = len(res) > 0
-#     some_match = False
-#     for r in res:
-#         vals = eval("r" + dict_path)
-#         if vals == {}:
-#             vals = []
-#         elif type(vals) is not list:
-#             vals = [vals]
-#         # If a result does not contain the value, no match
-#         if regex not in vals and not any(
-#             [re.search(str(regex), str(value)) for value in vals]
-#         ):
-#             all_match = False
-#             only_match = False
-#         # If a result contains other values, inclusive match
-#         elif len(vals) != 1:
-#             only_match = False
-#             some_match = True
-#         else:
-#             some_match = True
-
-#     if only_match:
-#         # Exclusive match
-#         return 0
-#     elif all_match:
-#         # Inclusive match
-#         return 1
-#     elif some_match:
-#         # Partial match
-#         return 2
-#     else:
-#         # No match
-#         return -1
+# # Helper
+# # Return codes:
+# #  -1: No match, the value was never found
+# #   0: Exclusive match, no values other than argument found
+# #   1: Inclusive match, some values other than argument found
+# #   2: Partial match, value is found in some but not all results
+# # def check_field(res, field, regex):
+# #     dict_path = ""
+# #     for key in field.split("."):
+# #         if key == "[]":
+# #             dict_path += "[0]"
+# #         else:
+# #             dict_path += ".get('{}', {})".format(key, "{}")
+# #     # If no results, set matches to false
+# #     all_match = len(res) > 0
+# #     only_match = len(res) > 0
+# #     some_match = False
+# #     for r in res:
+# #         vals = eval("r" + dict_path)
+# #         if vals == {}:
+# #             vals = []
+# #         elif type(vals) is not list:
+# #             vals = [vals]
+# #         # If a result does not contain the value, no match
+# #         if regex not in vals and not any(
+# #             [re.search(str(regex), str(value)) for value in vals]
+# #         ):
+# #             all_match = False
+# #             only_match = False
+# #         # If a result contains other values, inclusive match
+# #         elif len(vals) != 1:
+# #             only_match = False
+# #             some_match = True
+# #         else:
+# #             some_match = True
+#
+# #     if only_match:
+# #         # Exclusive match
+# #         return 0
+# #     elif all_match:
+# #         # Inclusive match
+# #         return 1
+# #     elif some_match:
+# #         # Partial match
+# #         return 2
+# #     else:
+# #         # No match
+# #         return -1
