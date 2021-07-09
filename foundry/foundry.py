@@ -46,25 +46,29 @@ class Foundry(FoundryMetadata):
     xtract_tokens: Any
 
     def __init__(
-        self, no_browser=False, no_local_server=False, search_index="mdf-test", **data
+        self, no_browser=False, no_local_server=False, search_index="mdf-test", authorizers=None, **data
     ):
         super().__init__(**data)
-        auths = mdf_toolbox.login(
-            services=[
-                "data_mdf",
-                "mdf_connect",
-                "search",
-                "petrel",
-                "transfer",
-                "dlhub",
-                "openid",
-                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
-            ],
-            app_name="Foundry",
-            make_clients=True,
-            no_browser=no_browser,
-            no_local_server=no_local_server,
-        )
+
+        if authorizers:
+            auths = authorizers
+        else:
+            auths = mdf_toolbox.login(
+                services=[
+                    "data_mdf",
+                    "mdf_connect",
+                    "search",
+                    "petrel",
+                    "transfer",
+                    "dlhub",
+                    "openid",
+                    "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
+                ],
+                app_name="Foundry",
+                make_clients=True,
+                no_browser=no_browser,
+                no_local_server=no_local_server,
+            )
 
         self.forge_client = Forge(
             index=search_index,
