@@ -259,13 +259,16 @@ class Foundry(FoundryMetadata):
         data = {}
 
         # Handle splits if they exist. Return as a labeled dictionary of tuples
-        if self.dataset.splits:
-            for split in self.dataset.splits:
-                data[split.label] = self._load_data(file=split.path,
-                                                    source_id=source_id, globus=globus)
-            return data
-        else:
-            return {"data": self._load_data(source_id=source_id, globus=globus)}
+        try:
+            if self.dataset.splits:
+                for split in self.dataset.splits:
+                    data[split.label] = self._load_data(file=split.path,
+                                                        source_id=source_id, globus=globus)
+                return data
+            else:
+                return {"data": self._load_data(source_id=source_id, globus=globus)}
+        except Exception as e:
+            raise Exception("Metadata not loaded into Foundry object, make sure to call load()") from e
 
     def _repr_html_(self) -> str:
         if not self.dc:
@@ -664,6 +667,7 @@ class Foundry(FoundryMetadata):
                         self.dataset.dataframe = pd.read_csv(
                             os.path.join(path, file)
                         )
+
                     except Exception as g:
                         print("Reading {} as CSV failed, unable to load data properly: {}".format(file, g))
                         raise e
