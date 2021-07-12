@@ -506,15 +506,20 @@ class Foundry(FoundryMetadata):
         path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
 
         if os.path.isdir(path):
+            #if directory is present, but doesn't have the correct number of files inside, dataset will attempt to redownload
             dir_length = len(os.listdir(path))
             if self.dataset.splits:
                 # if metadata indicates splits, check that the directory has as many files as there are splits
                 if(dir_length == len(self.dataset.splits)):
                     return self
+                else:
+                    print("Unexpected number of files in directory -- dataset will be redownloaded.")
             else:
                 # in the case of no splits, ensure the directory contains the data file
                 if(dir_length == 1):
                     return self
+                else:
+                    print("Unexpected number of files in directory -- dataset will be redownloaded.")
 
         res = self.forge_client.search(
             "mdf.source_id:{name}".format(name=self.mdf["source_id"]), advanced=True
@@ -545,15 +550,12 @@ class Foundry(FoundryMetadata):
             dir_length = len(os.listdir(path))
             if self.dataset.splits:
                 if(dir_length != len(self.dataset.splits)):
-                    print("Error: Incorrect number of files in directory")
-                    raise FileNotFoundError
+                    raise FileNotFoundError("Incorrect number of files in download directory")
             else:
                 if(dir_length != 1):
-                    print("Error: Incorrect number of files in directory")
-                    raise FileNotFoundError
+                    raise FileNotFoundError("Incorrect number of files in download directory")
         else:
-            print("Error in creating directory to download data")
-            raise NotADirectoryError
+            raise NotADirectoryError("Unable to create directory to download data")
 
         return self
 
