@@ -268,7 +268,7 @@ class Foundry(FoundryMetadata):
             return {"data": self._load_data(source_id=source_id, globus=globus)}
 
     def _repr_html_(self) -> str:
-        if not dc:
+        if not self.dc:
             buf = str(self)
         else:
             title = self.dc['titles'][0]['title']
