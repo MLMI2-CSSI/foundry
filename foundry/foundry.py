@@ -268,13 +268,16 @@ class Foundry(FoundryMetadata):
             return {"data": self._load_data(source_id=source_id, globus=globus)}
 
     def _repr_html_(self) -> str:
-        title = self.dc['titles'][0]['title']
-        authors = [creator['creatorName'] for creator in self.dc['creators']]
-        authors = '; '.join(authors)
+        if not dc:
+            buf = str(self)
+        else:
+            title = self.dc['titles'][0]['title']
+            authors = [creator['creatorName'] for creator in self.dc['creators']]
+            authors = '; '.join(authors)
 
-        buf = f'<h2>{title}</h2>{authors}'
+            buf = f'<h2>{title}</h2>{authors}'
 
-        buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
+            buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
         # buf = f'{buf}<h3>DataCite</h3>{convert(self.dc)}'
         return buf
