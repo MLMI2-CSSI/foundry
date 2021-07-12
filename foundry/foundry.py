@@ -27,7 +27,7 @@ import json
 import glob
 import h5py
 import time
-import os
+import os, shutil
 from foundry.xtract_method import *
 
 
@@ -504,8 +504,17 @@ class Foundry(FoundryMetadata):
         """
         # Check if the dir already exists
         path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
+
         if os.path.isdir(path):
-            return self
+            dir_length = len(os.listdir(path))
+            if self.dataset.splits:
+                # if metadata indicates splits, check that the directory has as many files as there are splits
+                if(dir_length == len(self.dataset.splits)):
+                    return self
+            else:
+                # in the case of no splits, ensure the directory contains the data file
+                if(dir_length == 1):
+                    return self
 
         res = self.forge_client.search(
             "mdf.source_id:{name}".format(name=self.mdf["source_id"]), advanced=True
@@ -529,6 +538,23 @@ class Foundry(FoundryMetadata):
                  "grouper": "matio"
                 }
             xtract_https_download(self, verbose=verbose, **xtract_config)
+
+        # after download check making sure directory exists, contains proper amount of files
+        if os.path.isdir(path):
+            #checking for proper number of files downloaded
+            dir_length = len(os.listdir(path))
+            if self.dataset.splits:
+                if(dir_length != len(self.dataset.splits)):
+                    print("Error: Incorrect number of files in directory")
+                    raise FileNotFoundError
+            else:
+                if(dir_length != 1):
+                    print("Error: Incorrect number of files in directory")
+                    raise FileNotFoundError
+        else:
+            print("Error in creating directory to download data")
+            raise NotADirectoryError
+
         return self
 
     def build(self, spec, globus=False, interval=3, file=False):
@@ -586,7 +612,7 @@ class Foundry(FoundryMetadata):
                     **Default:** ``False``
         Returns: (list) String representations of keys or if ``as_object``
                     is False otherwise returns the full key objects.
-                    
+
         """
         if as_object:
             return [key for key in self.dataset.keys if key.type == type]
