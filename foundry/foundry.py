@@ -678,3 +678,5 @@ class Foundry(FoundryMetadata):
             return (inputs, targets)
         else:
             raise NotImplementedError
+
+    # comment
