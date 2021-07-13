@@ -510,13 +510,13 @@ class Foundry(FoundryMetadata):
             dir_length = len(os.listdir(path))
             if self.dataset.splits:
                 # if metadata indicates splits, check that the directory has as many files as there are splits
-                if(dir_length == len(self.dataset.splits)):
+                if(dir_length >= len(self.dataset.splits)):
                     return self
                 else:
                     print("Unexpected number of files in directory -- dataset will be redownloaded.")
             else:
                 # in the case of no splits, ensure the directory contains the data file
-                if(dir_length == 1):
+                if(dir_length >= 1):
                     return self
                 else:
                     print("Unexpected number of files in directory -- dataset will be redownloaded.")
@@ -549,10 +549,10 @@ class Foundry(FoundryMetadata):
             #checking for proper number of files downloaded
             dir_length = len(os.listdir(path))
             if self.dataset.splits:
-                if(dir_length != len(self.dataset.splits)):
+                if(dir_length < len(self.dataset.splits)):
                     raise FileNotFoundError("Incorrect number of files in download directory")
             else:
-                if(dir_length != 1):
+                if(dir_length < 1):
                     raise FileNotFoundError("Incorrect number of files in download directory")
         else:
             raise NotADirectoryError("Unable to create directory to download data")
