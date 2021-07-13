@@ -640,26 +640,37 @@ class Foundry(FoundryMetadata):
             if not file:
                 file = self.config.dataframe_file
 
+
+            # Check to make sure the path can be created
+            try:
+                path_to_file = os.path.join(path,file)
+            except Exception as e:
+                print("Unable to find path to file for download: {}".format(e))
+                raise e
+
+            # Check to see whether file exists at path
+            if not os.path.isfile(path_to_file):
+                raise FileNotFoundError("No file found at expected path: {}".format(path_to_file))
             # If the file is not local, fetch the contents with Globus
             # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
             try:
                 self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, file)
+                    path_to_file
                 )
             except Exception as e:
                 print("Reading {} as JSON failed: {} \n".format(file, e), "Now attempting to read as JSONL")
                 try:
                     # Try to read individual lines instead
                     self.dataset.dataframe = pd.read_json(
-                        os.path.join(path, file), lines=True
+                        path_to_file, lines=True
                     )
                 except Exception as f:
                     print("Reading {} as JSONL failed: {} \n".format(file, f), "Now attempting to read as CSV")
                     try:
                         #Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
-                            os.path.join(path, file)
+                            path_to_file
                         )
                     except Exception as g:
                         print("Reading {} as CSV failed, unable to load data properly: {}".format(file, g))
