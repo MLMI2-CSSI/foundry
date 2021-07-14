@@ -127,9 +127,7 @@ class Foundry(FoundryMetadata):
         else:
             res = metadata
 
-        # we figured from our tests that at each of these three lines there could be an error
-        # if res is an empty list. (we also see that res will always be an empty list,
-        # never None or not a list)
+        # unpack res, handle if empty
         try:
             res = res[0] # if search returns multiple results, this automatically uses first result
         except IndexError as e:
@@ -212,7 +210,7 @@ class Foundry(FoundryMetadata):
 
         for package in packages:
             self = self.load(package)
-            X, y = self.load_data()
+            X, y = self.load_data()  # TODO: update how this is unpacked, out of date
             X["source"] = package
             y["source"] = package
             X_frames.append(X)
@@ -389,7 +387,9 @@ class Foundry(FoundryMetadata):
                                                  options["servable"].get(
                                                      "arch_path", None),
                                                  options["servable"].get(
-                                                     "custom_objects", None)
+                                                     "custom_objects", None),
+                                                 options["servable"].get(
+                                                     "force_tf_keras", False)
                                                  )
         else:
             raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
