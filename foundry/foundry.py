@@ -515,7 +515,7 @@ class Foundry(FoundryMetadata):
                         missing_files.append(split.path)
                 #if number of missing files is greater than zero, redownload with informative message
                 if len(missing_files) > 0:
-                    print("Dataset will be redownloaded, following files are missing: {}".format(missing_files))
+                    print(f"Dataset will be redownloaded, following files are missing: {missing_files}")
                 else:
                     return self
             else:
@@ -558,7 +558,7 @@ class Foundry(FoundryMetadata):
                         #keeping track of all files not downloaded
                         missing_files.append(split.path)
                 if len(missing_files) > 0:
-                    raise FileNotFoundError("Downloaded directory does not contain the following files: {}".format(missing_files))
+                    raise FileNotFoundError(f"Downloaded directory does not contain the following files: {missing_files}")
 
             else:
                 if(len(os.listdir(path)) < 1):
@@ -654,12 +654,12 @@ class Foundry(FoundryMetadata):
             try:
                 path_to_file = os.path.join(path,file)
             except Exception as e:
-                print("Unable to find path to file for download: {}".format(e))
+                print(f"Unable to find path to file for download: {e}")
                 raise e
 
             # Check to see whether file exists at path
             if not os.path.isfile(path_to_file):
-                raise FileNotFoundError("No file found at expected path: {}".format(path_to_file))
+                raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
             # If the file is not local, fetch the contents with Globus
             # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
@@ -668,21 +668,21 @@ class Foundry(FoundryMetadata):
                     path_to_file
                 )
             except Exception as e:
-                print("Reading {} as JSON failed: {} \n".format(file, e), "Now attempting to read as JSONL")
+                print(f"Reading {file} as JSON failed: {e} \n", "Now attempting to read as JSONL")
                 try:
                     # Try to read individual lines instead
                     self.dataset.dataframe = pd.read_json(
                         path_to_file, lines=True
                     )
                 except Exception as f:
-                    print("Reading {} as JSONL failed: {} \n".format(file, f), "Now attempting to read as CSV")
+                    print(f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
                     try:
                         #Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
                             path_to_file
                         )
                     except Exception as g:
-                        print("Reading {} as CSV failed, unable to load data properly: {}".format(file, g))
+                        print(f"Reading {file} as CSV failed, unable to load data properly: {g}")
                         raise e
 
             return (
