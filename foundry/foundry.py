@@ -507,19 +507,23 @@ class Foundry(FoundryMetadata):
 
         if os.path.isdir(path):
             #if directory is present, but doesn't have the correct number of files inside, dataset will attempt to redownload
-            dir_length = len(os.listdir(path))
             if self.dataset.splits:
-                # if metadata indicates splits, check that the directory has as many files as there are splits
-                if(dir_length >= len(self.dataset.splits)):
-                    return self
+                #array to keep track of missing files
+                missing_files = []
+                for split in self.dataset.splits:
+                    if not os.path.isfile(os.path.join(path, split.path)):
+                        missing_files.append(split.path)
+                #if number of missing files is greater than zero, redownload with informative message
+                if len(missing_files) > 0:
+                    print("Dataset will be redownloaded, following files are missing: {}".format(missing_files))
                 else:
-                    print("Unexpected number of files in directory -- dataset will be redownloaded.")
+                    return self
             else:
-                # in the case of no splits, ensure the directory contains the data file
-                if(dir_length >= 1):
+                # in the case of no splits, ensure the directory contains at least one file
+                if(len(os.listdir(path)) >= 1):
                     return self
                 else:
-                    print("Unexpected number of files in directory -- dataset will be redownloaded.")
+                    print("Dataset will be redownloaded, expected file is missing")
 
         res = self.forge_client.search(
             "mdf.source_id:{name}".format(name=self.mdf["source_id"]), advanced=True
@@ -544,16 +548,21 @@ class Foundry(FoundryMetadata):
                 }
             xtract_https_download(self, verbose=verbose, **xtract_config)
 
-        # after download check making sure directory exists, contains proper amount of files
+        # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
-            #checking for proper number of files downloaded
-            dir_length = len(os.listdir(path))
+            #checking all necessary files are present
             if self.dataset.splits:
-                if(dir_length < len(self.dataset.splits)):
-                    raise FileNotFoundError("Incorrect number of files in download directory")
+                missing_files = []
+                for split in self.dataset.splits:
+                    if not os.path.isfile(os.path.join(path, split.path)):
+                        #keeping track of all files not downloaded
+                        missing_files.append(split.path)
+                if len(missing_files) > 0:
+                    raise FileNotFoundError("Downloaded directory does not contain the following files: {}".format(missing_files))
+
             else:
-                if(dir_length < 1):
-                    raise FileNotFoundError("Incorrect number of files in download directory")
+                if(len(os.listdir(path)) < 1):
+                    raise FileNotFoundError("Downloaded directory does not contain the expected file")
         else:
             raise NotADirectoryError("Unable to create directory to download data")
 
