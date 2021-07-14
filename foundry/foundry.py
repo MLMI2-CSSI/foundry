@@ -687,7 +687,7 @@ class Foundry(FoundryMetadata):
                 self.dataset.dataframe[self.get_keys("input")],
                 self.dataset.dataframe[self.get_keys("target")],
             )
-        elif self.dataset.data_type == "hdf5":
+        elif self.dataset.data_type.value == "hdf5":
             if not file:
                 file = self.config.data_file
             f = h5py.File(os.path.join(path, file), "r")
