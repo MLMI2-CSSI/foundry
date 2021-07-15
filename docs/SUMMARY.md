@@ -29,3 +29,7 @@
 * [Contribution Process](how-to-contribute/contributing.md)
 * [Contributor Covenant](how-to-contribute/code_of_conduct.md)
 
+## Support
+
+* [Troubleshooting](support/troubleshooting.md)
+
