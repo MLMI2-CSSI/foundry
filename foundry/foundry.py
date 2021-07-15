@@ -1,4 +1,5 @@
 
+from foundry.xtract_method import *
 import time
 import h5py
 import glob
@@ -28,6 +29,7 @@ from foundry.models import (
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
 import os
+import shutil
 logging.disable(logging.INFO)
 
 
@@ -116,7 +118,7 @@ class Foundry(FoundryMetadata):
             download (bool): If True, download the data associated with the package (default is True)
             globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
-            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata. 
+            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
 
         Keyword Args:
             interval (int): How often to poll Globus to check if transfers are complete
@@ -140,10 +142,19 @@ class Foundry(FoundryMetadata):
             ).match_resource_types("dataset")
             res = res.match_field("mdf.source_id", name).search()
 
-        # TODO: if object empty, handle
-        res = res[0]
-        res["dataset"] = res["projects"][self.config.metadata_key]
-        res["dataset"]["type"] = res["dataset"]["data_type"]
+        # unpack res, handle if empty
+        try:
+            # if search returns multiple results, this automatically uses first result
+            res = res[0]
+        except IndexError as e:
+            raise Exception("load: No metadata found for given dataset") from e
+
+        try:
+            res["dataset"] = res["projects"][self.config.metadata_key]
+        except KeyError as e:
+            raise Exception("load: not able to index with metadata key {}".format(
+                self.config.metadata_key)) from e
+
         del res["projects"][self.config.metadata_key]
 
         self = Foundry(**res)
@@ -216,7 +227,7 @@ class Foundry(FoundryMetadata):
 
         for package in packages:
             self = self.load(package)
-            X, y = self.load_data()
+            X, y = self.load_data()  # TODO: update how this is unpacked, out of date
             X["source"] = package
             y["source"] = package
             X_frames.append(X)
@@ -245,12 +256,12 @@ class Foundry(FoundryMetadata):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
-        stored in self.dataframe_file. The contents are read, and 
+        stored in self.dataframe_file. The contents are read, and
 
         File Data Type: <<Add desc>>
 
         For more complicated data structures, users should
-        subclass Foundry and override the load_data function 
+        subclass Foundry and override the load_data function
 
         Args:
            inputs (list): List of strings for input columns
@@ -263,22 +274,30 @@ class Foundry(FoundryMetadata):
         data = {}
 
         # Handle splits if they exist. Return as a labeled dictionary of tuples
-        if self.dataset.splits:
-            for split in self.dataset.splits:
-                data[split.label] = self._load_data(file=split.path,
-                                                    source_id=source_id, globus=globus)
-            return data
-        else:
-            return {"data": self._load_data(source_id=source_id, globus=globus)}
+        try:
+            if self.dataset.splits:
+                for split in self.dataset.splits:
+                    data[split.label] = self._load_data(file=split.path,
+                                                        source_id=source_id, globus=globus)
+                return data
+            else:
+                return {"data": self._load_data(source_id=source_id, globus=globus)}
+        except Exception as e:
+            raise Exception(
+                "Metadata not loaded into Foundry object, make sure to call load()") from e
 
     def _repr_html_(self) -> str:
-        title = self.dc['titles'][0]['title']
-        authors = [creator['creatorName'] for creator in self.dc['creators']]
-        authors = '; '.join(authors)
+        if not self.dc:
+            buf = str(self)
+        else:
+            title = self.dc['titles'][0]['title']
+            authors = [creator['creatorName']
+                       for creator in self.dc['creators']]
+            authors = '; '.join(authors)
 
-        buf = f'<h2>{title}</h2>{authors}'
+            buf = f'<h2>{title}</h2>{authors}'
 
-        buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
+            buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
         # buf = f'{buf}<h3>DataCite</h3>{convert(self.dc)}'
         return buf
@@ -297,6 +316,7 @@ class Foundry(FoundryMetadata):
             publication_year (int): Year of dataset publication. If None, will
                 be set to the current calendar year by MDF Connect Client.
                 (default: $current_year)
+
         Keyword Args:
             affiliations (list): List of author affiliations
             tags (list): List of tags to apply to the data package
@@ -339,7 +359,8 @@ class Foundry(FoundryMetadata):
             title (req)
             authors (req)
             short_name (req)
-            servable_type (req) ("static method", "class method", "keras", "pytorch", "tensorflow", "sklearn")
+            servable_type (req) ("static method", "class method",
+                           "keras", "pytorch", "tensorflow", "sklearn")
             affiliations
             domains
             abstract
@@ -386,7 +407,9 @@ class Foundry(FoundryMetadata):
                                                  options["servable"].get(
                                                      "arch_path", None),
                                                  options["servable"].get(
-                                                     "custom_objects", None)
+                                                     "custom_objects", None),
+                                                 options["servable"].get(
+                                                     "force_tf_keras", False)
                                                  )
         else:
             raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
@@ -507,8 +530,24 @@ class Foundry(FoundryMetadata):
         """
         # Check if the dir already exists
         path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
+
         if os.path.isdir(path):
-            return self
+            # if directory is present, but doesn't have the correct number of files inside, dataset will attempt to redownload
+            dir_length = len(os.listdir(path))
+            if self.dataset.splits:
+                # if metadata indicates splits, check that the directory has as many files as there are splits
+                if(dir_length == len(self.dataset.splits)):
+                    return self
+                else:
+                    print(
+                        "Unexpected number of files in directory -- dataset will be redownloaded.")
+            else:
+                # in the case of no splits, ensure the directory contains the data file
+                if(dir_length == 1):
+                    return self
+                else:
+                    print(
+                        "Unexpected number of files in directory -- dataset will be redownloaded.")
 
         res = self.forge_client.search(
             "mdf.source_id:{name}".format(name=self.mdf["source_id"]), advanced=True
@@ -523,133 +562,30 @@ class Foundry(FoundryMetadata):
             )
         else:
             source_id = self.mdf["source_id"]
-            xtract_base_url = (
-                "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com"
-            )
-
-            # MDF Materials Data at NCSA
-            source_ep_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"
-            base_url = "https://data.materialsdatafacility.org"
-            folder_to_crawl = f"/foundry/{source_id}/"
-
-            # This only matters if you want files grouped together.
-            grouper = "matio"
-
-            auth_token = self.xtract_tokens["auth_token"]
-            transfer_token = self.xtract_tokens["transfer_token"]
-            funcx_token = self.xtract_tokens["funcx_token"]
-
-            headers = {
-                "Authorization": auth_token,
-                "Transfer": transfer_token,
-                "FuncX": funcx_token,
-                "Petrel": auth_token,
+            xtract_config = {
+                "xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
+                "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
+                "base_url": "https://data.materialsdatafacility.org",
+                "folder_to_crawl": f"/foundry/{source_id}/",
+                "grouper": "matio"
             }
-            if verbose:
-                print(f"Headers: {headers}")
+            xtract_https_download(self, verbose=verbose, **xtract_config)
 
-            # Initialize the crawl. This kicks off the Globus EP crawling service on the backend.
-            crawl_url = f"{xtract_base_url}/crawl"
-            if verbose:
-                print(f"Crawl URL is : {crawl_url}")
-
-            first_ep_dict = {
-                "repo_type": "GLOBUS",
-                "eid": source_ep_id,
-                "dir_paths": [folder_to_crawl],
-                "grouper": grouper,
-            }
-            tokens = {"Transfer": transfer_token, "Authorization": funcx_token}
-            crawl_req = requests.post(
-                f"{xtract_base_url}/crawl",
-                json={"endpoints": [first_ep_dict], "tokens": tokens},
-            )
-
-            if verbose:
-                print("Crawl response:", crawl_req)
-            crawl_id = json.loads(crawl_req.content)["crawl_id"]
-            if verbose:
-                print(f"Crawl ID: {crawl_id}")
-
-            # Wait for the crawl to finish before we can start fetching our metadata.
-            while True:
-                crawl_status = requests.get(
-                    f"{xtract_base_url}/get_crawl_status", json={"crawl_id": crawl_id}
-                )
-                if verbose:
-                    print(crawl_status)
-                crawl_content = json.loads(crawl_status.content)
-                if verbose:
-                    print(f"Crawl Status: {crawl_content}")
-
-                if crawl_content["crawl_status"] == "complete":
-                    files_crawled = crawl_content["files_crawled"]
-                    if verbose:
-                        print("Our crawl has succeeded!")
-                    break
-                else:
-                    if verbose:
-                        print("Sleeping before re-polling...")
-                    time.sleep(2)
-
-            # Now we fetch our metadata. Here you can configure n to be maximum number of
-            # messages you want at once.
-
-            file_ls = []
-            fetched_files = 0
-            while fetched_files < files_crawled:
-                fetch_mdata = requests.get(
-                    f"{xtract_base_url}/fetch_crawl_mdata",
-                    json={"crawl_id": crawl_id, "n": 2},
-                )
-                fetch_content = json.loads(fetch_mdata.content)
-
-                for file_path in fetch_content["file_ls"]:
-                    file_ls.append(file_path)
-                    fetched_files += 1
-
-                if fetch_content["queue_empty"]:
-                    if verbose:
-                        print("Queue is empty! Continuing...")
-                    time.sleep(2)
-
-            source_path = os.path.join(
-                self.config.local_cache_dir, self.mdf["source_id"]
-            )
-
-            if not os.path.exists(self.config.local_cache_dir):
-                os.mkdir(self.config.local_cache_dir)
-                os.mkdir(source_path)
-
-            elif not os.path.exists(source_path):
-                os.mkdir(source_path)
-
-            num_cores = multiprocessing.cpu_count()
-
-            def download_file(file):
-                requests.packages.urllib3.disable_warnings(
-                    InsecureRequestWarning)
-
-                url = "https://data.materialsdatafacility.org" + file["path"]
-                destination = (
-                    "data/"
-                    + source_id
-                    + "/"
-                    + file["path"][file["path"].rindex("/") + 1:]
-                )
-                response = requests.get(url, verify=False)
-
-                with open(destination, "wb") as f:
-                    f.write(response.content)
-
-                return {file["path"] + " status": True}
-
-            results = Parallel(n_jobs=num_cores)(
-                delayed(download_file)(file) for file in file_ls
-            )
-
-            print("Done curling.")
-            print(results)
+        # after download check making sure directory exists, contains proper amount of files
+        if os.path.isdir(path):
+            # checking for proper number of files downloaded
+            dir_length = len(os.listdir(path))
+            if self.dataset.splits:
+                if(dir_length != len(self.dataset.splits)):
+                    raise FileNotFoundError(
+                        "Incorrect number of files in download directory")
+            else:
+                if(dir_length != 1):
+                    raise FileNotFoundError(
+                        "Incorrect number of files in download directory")
+        else:
+            raise NotADirectoryError(
+                "Unable to create directory to download data")
 
         return self
 
@@ -702,11 +638,11 @@ class Foundry(FoundryMetadata):
         """Get keys for a Foundry dataset
 
         Arguments:
-            type (str): The type of key to be returned e.g., "input", "target" 
+            type (str): The type of key to be returned e.g., "input", "target"
             as_object (bool): When ``False``, will return a list of keys in as strings
                     When ``True``, will return the full key objects
                     **Default:** ``False``
-        Returns: (list) String representations of keys or if ``as_object`` 
+        Returns: (list) String representations of keys or if ``as_object``
                     is False otherwise returns the full key objects.
 
         """
@@ -743,23 +679,51 @@ class Foundry(FoundryMetadata):
             if not file:
                 file = self.config.dataframe_file
 
+            # Check to make sure the path can be created
+            try:
+                path_to_file = os.path.join(path, file)
+            except Exception as e:
+                print("Unable to find path to file for download: {}".format(e))
+                raise e
+
+            # Check to see whether file exists at path
+            if not os.path.isfile(path_to_file):
+                raise FileNotFoundError(
+                    "No file found at expected path: {}".format(path_to_file))
             # If the file is not local, fetch the contents with Globus
             # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
             try:
                 self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, file)
+                    path_to_file
                 )
-            except:
-                # Try to read individual lines instead
-                self.dataset.dataframe = pd.read_json(
-                    os.path.join(path, file), lines=True
-                )
+            except Exception as e:
+                print("Reading {} as JSON failed: {} \n".format(
+                    file, e), "Now attempting to read as JSONL")
+                try:
+                    # Try to read individual lines instead
+                    self.dataset.dataframe = pd.read_json(
+                        path_to_file, lines=True
+                    )
+                except Exception as f:
+                    print("Reading {} as JSONL failed: {} \n".format(
+                        file, f), "Now attempting to read as CSV")
+                    try:
+                        # Try to read as CSV instead
+                        self.dataset.dataframe = pd.read_csv(
+                            path_to_file
+                        )
+
+                    except Exception as g:
+                        print(
+                            "Reading {} as CSV failed, unable to load data properly: {}".format(file, g))
+                        raise e
 
             return (
                 self.dataset.dataframe[self.get_keys("input")],
                 self.dataset.dataframe[self.get_keys("target")],
             )
+
         elif self.dataset.type.value == "hdf5":
             if not file:
                 file = self.config.data_file
@@ -780,10 +744,6 @@ class Foundry(FoundryMetadata):
             return tmp_data
         else:
             raise NotImplementedError
-
-
-# def handle_h5(key):
-#     if
 
 
 def is_pandas_pytable(group):
