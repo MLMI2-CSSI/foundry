@@ -1,33 +1,37 @@
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+import time
+import h5py
+import glob
+import json
+import requests
+import mdf_toolbox
+from json2table import convert
+import pandas as pd
+from datetime import date
+from typing import Any
+import multiprocessing
+from mdf_connect_client import MDFConnectClient
+from mdf_forge import Forge
+from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
+from dlhub_sdk.models.servables.keras import KerasModel
+from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
+from dlhub_sdk import DLHubClient
+from collections import namedtuple
+from joblib import Parallel, delayed
+from pydantic import AnyUrl, ValidationError
 from foundry.models import (
     FoundryMetadata,
     FoundryConfig,
     FoundrySpecificationDataset,
     FoundrySpecification,
 )
-from pydantic import AnyUrl, ValidationError
-from joblib import Parallel, delayed
-from collections import namedtuple
-from dlhub_sdk import DLHubClient
-# TODO: do imports nicer
-from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
-from dlhub_sdk.models.servables.keras import KerasModel
-from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
-from mdf_forge import Forge
-from mdf_connect_client import MDFConnectClient
-import multiprocessing
-from typing import Any
-from datetime import date
-import multiprocessing
-import pandas as pd
-from json2table import convert
-import mdf_toolbox
-import requests
-import json
-import glob
-import h5py
-import time
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import logging
 import os
+logging.disable(logging.INFO)
+
+
+# TODO: do imports nicer
 
 
 class Foundry(FoundryMetadata):
@@ -46,7 +50,7 @@ class Foundry(FoundryMetadata):
     xtract_tokens: Any
 
     def __init__(
-        self, no_browser=False, no_local_server=False, search_index="mdf-test", authorizers=None, **data
+        self, no_browser=False, no_local_server=False, index="mdf", authorizers=None, **data
     ):
         super().__init__(**data)
 
@@ -71,7 +75,7 @@ class Foundry(FoundryMetadata):
             )
 
         self.forge_client = Forge(
-            index=search_index,
+            index=index,
             services=None,
             search_client=auths["search"],
             transfer_client=auths["transfer"],
@@ -79,9 +83,13 @@ class Foundry(FoundryMetadata):
             petrel_authorizer=auths["petrel"],
         )
 
+        if index == "mdf":
+            test = False
+        else:
+            test = True
         # TODO: when release-ready, remove test=True
         self.connect_client = MDFConnectClient(
-            authorizer=auths["mdf_connect"], test=True
+            authorizer=auths["mdf_connect"], test=test
         )
 
         self.dlhub_client = DLHubClient(
@@ -117,14 +125,20 @@ class Foundry(FoundryMetadata):
         -------
             self
         """
+
+        if metadata:
+            res = metadata
+
         # MDF specific logic
-        if not metadata:
+        if is_doi(name) and not metadata:
+            res = self.forge_client.match_resource_types("dataset")
+            res = res.match_dois(name).search()
+
+        else:
             res = self.forge_client.match_field(
                 "mdf.organizations", self.config.organization
             ).match_resource_types("dataset")
             res = res.match_field("mdf.source_id", name).search()
-        else:
-            res = metadata
 
         # TODO: if object empty, handle
         res = res[0]
@@ -684,7 +698,7 @@ class Foundry(FoundryMetadata):
 
         return self
 
-    def get_keys(self, type, as_object=False):
+    def get_keys(self, type=None, as_object=False):
         """Get keys for a Foundry dataset
 
         Arguments:
@@ -696,10 +710,19 @@ class Foundry(FoundryMetadata):
                     is False otherwise returns the full key objects.
 
         """
+
         if as_object:
-            return [key for key in self.dataset.keys if key.type == type]
+            if type:
+                return [key for key in self.dataset.keys if key.type == type]
+            else:
+                return [key for key in self.dataset.keys]
+
         else:
-            keys = [key.key for key in self.dataset.keys if key.type == type]
+            if type:
+                keys = [key.key for key in self.dataset.keys if key.type == type]
+            else:
+                keys = [key.key for key in self.dataset.keys]
+
             key_list = []
             for k in keys:
                 key_list = key_list + k
@@ -741,8 +764,37 @@ class Foundry(FoundryMetadata):
             if not file:
                 file = self.config.data_file
             f = h5py.File(os.path.join(path, file), "r")
-            inputs = [f[i[0:]] for i in self.get_keys("input")]
-            targets = [f[i[0:]] for i in self.get_keys("target")]
-            return (inputs, targets)
+
+            special_types = ["input", "target"]
+            tmp_data = {s: {} for s in special_types}
+            for s in special_types:
+                for key in self.get_keys(s):
+                    if isinstance(f[key], h5py.Group):
+                        if is_pandas_pytable(f[key]):
+                            df = pd.read_hdf(file, key)
+                            tmp_data[s][key] = df
+                        else:
+                            tmp_data[s][key] = f[key]
+                    elif isinstance(f[key], h5py.Dataset):
+                        tmp_data[s][key] = f[key][0:]
+            return tmp_data
         else:
             raise NotImplementedError
+
+
+# def handle_h5(key):
+#     if
+
+
+def is_pandas_pytable(group):
+    if 'axis0' in group.keys() and 'axis1' in group.keys():
+        return True
+    else:
+        return False
+
+
+def is_doi(string: str):
+    if string.startswith('10.') or string.startswith('https://doi.org/'):
+        return True
+    else:
+        return False
