@@ -57,7 +57,7 @@ class Foundry(FoundryMetadata):
 
             client_id = os.getenv('CLIENT_ID')
             client_secret = os.getenv('CLIENT_SECRET')
-            
+
             services= [
             "data_mdf",
             "mdf_connect",
@@ -68,11 +68,9 @@ class Foundry(FoundryMetadata):
             "openid",
             "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",]
 
-            res = mdf_toolbox.login(client_id=client_id,
+            auths = mdf_toolbox.login(client_id=client_id,
                                         client_secret=client_secret,
-                                        services=services, make_clients=True))
-
-            self = Foundry(authorizers=res)
+                                        services=services, make_clients=True)
 
 
         self.forge_client = Forge(
