@@ -54,22 +54,26 @@ class Foundry(FoundryMetadata):
         if authorizers:
             auths = authorizers
         else:
-            auths = mdf_toolbox.login(
-                services=[
-                    "data_mdf",
-                    "mdf_connect",
-                    "search",
-                    "petrel",
-                    "transfer",
-                    "dlhub",
-                    "openid",
-                    "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
-                ],
-                app_name="Foundry",
-                make_clients=True,
-                no_browser=no_browser,
-                no_local_server=no_local_server,
-            )
+
+            client_id = os.getenv('CLIENT_ID')
+            client_secret = os.getenv('CLIENT_SECRET')
+            
+            services= [
+            "data_mdf",
+            "mdf_connect",
+            "search",
+            "petrel",
+            "transfer",
+            "dlhub",
+            "openid",
+            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",]
+
+            res = mdf_toolbox.login(client_id=client_id,
+                                        client_secret=client_secret,
+                                        services=services, make_clients=True))
+
+            self = Foundry(authorizers=res)
+
 
         self.forge_client = Forge(
             index=index,
