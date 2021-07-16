@@ -50,9 +50,12 @@ class Foundry(FoundryMetadata):
         self, no_browser=False, no_local_server=False, authorizers=None, search_index="mdf-test", **data
     ):
         super().__init__(**data)
+
         if authorizers:
+            print("inside authorizers if")
             auths = authorizers
         else:
+            print("not in authorizers if, authorizers = ", authorizers)
             auths = mdf_toolbox.login(
                 services=[
                     "data_mdf",
