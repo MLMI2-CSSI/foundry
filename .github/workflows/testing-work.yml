@@ -19,6 +19,10 @@ jobs:
       matrix:
         python-version: [3.7, 3.8]
 
+    env:
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -46,6 +50,3 @@ jobs:
     - name: Test with pytest
       run: |
         pytest tests/test_foundry_gha.py -k "metadata"
-      env:
-        CLIENT_ID: ${{ secrets.CLIENT_ID }}
-        CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
