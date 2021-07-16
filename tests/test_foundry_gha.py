@@ -24,7 +24,7 @@ services= [
             "openid",
             "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",]
 
-res = mdf_toolbox.confidential_login(client_id=client_id,
+res_cred = mdf_toolbox.confidential_login(client_id=client_id,
                                         client_secret=client_secret,
                                         services=services, make_clients=True)
 
@@ -118,7 +118,7 @@ def _delete_test_data(foundry_obj):
 
 
 def test_foundry_init_cloud():
-    f1 = Foundry(no_browser=True, no_local_server=True, authorizers=res)
+    f1 = Foundry(no_browser=True, no_local_server=True, authorizers=res_cred)
     assert isinstance(f1.dlhub_client, DLHubClient)
     assert isinstance(f1.forge_client, Forge)
     assert isinstance(f1.connect_client, MDFConnectClient)
@@ -126,31 +126,31 @@ def test_foundry_init_cloud():
 
 @pytest.mark.xfail(reason="Tests will fail in cloud")
 def test_foundry_init_cloud():
-    f = Foundry(authorizers=res)
+    f = Foundry(authorizers=res_cred)
     assert isinstance(f.dlhub_client, DLHubClient)
     assert isinstance(f.forge_client, Forge)
     assert isinstance(f.connect_client, MDFConnectClient)
 
-    f2 = Foundry(no_browser=False, no_local_server=True, authorizers=res)
+    f2 = Foundry(no_browser=False, no_local_server=True, authorizers=res_cred)
     assert isinstance(f2.dlhub_client, DLHubClient)
     assert isinstance(f2.forge_client, Forge)
     assert isinstance(f2.connect_client, MDFConnectClient)
 
-    f3 = Foundry(no_browser=True, no_local_server=False, authorizers=res)
+    f3 = Foundry(no_browser=True, no_local_server=False, authorizers=res_cred)
     assert isinstance(f3.dlhub_client, DLHubClient)
     assert isinstance(f3.forge_client, Forge)
     assert isinstance(f3.connect_client, MDFConnectClient)
 
 
 def test_list():
-    f = Foundry(no_browser=True, no_local_server=True, authorizers=res)
+    f = Foundry(no_browser=True, no_local_server=True, authorizers=res_cred)
     ds = f.list()
     assert isinstance(ds, pd.DataFrame)
     assert len(ds) > 0
 
 
 def test_metadata_pull():
-    f = Foundry(authorizers=res)
+    f = Foundry(authorizers=res_cred)
     f = f.load(test_dataset, download=False)
     assert f.dc["titles"][0]["title"] == expected_title
 
@@ -159,7 +159,7 @@ def test_metadata_pull():
 def test_download_globus():
 
 
-    f = Foundry(no_browser=True, no_local_server=True, authorizers=res)
+    f = Foundry(no_browser=True, no_local_server=True, authorizers=res_cred)
 
     _delete_test_data(f)
 
@@ -172,7 +172,7 @@ def test_download_globus():
 
 def test_download_https():
 
-    f = Foundry(no_browser=True, no_local_server=True, authorizers=res)
+    f = Foundry(no_browser=True, no_local_server=True, authorizers=res_cred)
 
     _delete_test_data(f)
 
@@ -184,7 +184,7 @@ def test_download_https():
 
 def test_dataframe_load():
 
-    f = Foundry(no_browser=True, no_local_server=True, authorizers=res)
+    f = Foundry(no_browser=True, no_local_server=True, authorizers=res_cred)
 
     _delete_test_data(f)
 
@@ -203,7 +203,7 @@ def test_dataframe_load():
 def test_publish():
     # TODO: automate dealing with curation and cleaning after tests
 
-    f = Foundry(no_browser=True, no_local_server=True, authorizers=res)
+    f = Foundry(no_browser=True, no_local_server=True, authorizers=res_cred)
 
     timestamp = datetime.now().timestamp()
     title = "scourtas_example_iris_test_publish_{:.0f}".format(timestamp)
