@@ -52,7 +52,7 @@ class Foundry(FoundryMetadata):
         super().__init__(**data)
 
         if authorizers:
-            print("inside authorizers if")
+            print("inside authorizers if, authorizers = ", authorizers)
             auths = authorizers
         else:
             print("not in authorizers if, authorizers = ", authorizers)
