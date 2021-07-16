@@ -150,7 +150,7 @@ def test_list():
 
 
 def test_metadata_pull():
-    f = Foundry(authorizers=res_cred)
+    f = Foundry(no_browser=True, no_local_server=True, authorizers=res_cred)
     f = f.load(test_dataset, download=False)
     assert f.dc["titles"][0]["title"] == expected_title
 
