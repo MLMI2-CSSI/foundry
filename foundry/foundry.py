@@ -87,14 +87,17 @@ class Foundry(FoundryMetadata):
             authorizer=auths["mdf_connect"], test=True
         )
 
-        # self.dlhub_client = DLHubClient(
-        #     dlh_authorizer=auths["dlhub"],
-        #     search_client=auths["search"],
-        #     fx_authorizer=auths[
-        #         "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
-        #     ],
-        #     force_login=False,
-        # )
+        self.dlhub_client = DLHubClient(
+            dlh_authorizer=auths["dlhub"],
+            search_client=auths["search"],
+            fx_authorizer=auths[
+                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
+            ],
+            openid_authorizer=auths['openid'],
+            force_login=False,
+        )
+
+
 
         self.xtract_tokens = {
             "auth_token": auths["petrel"].access_token,
