@@ -12,8 +12,8 @@ from mdf_connect_client import MDFConnectClient
 
 
 #github specific declarations
-client_id = os.getenv(CLIENT_ID)
-client_secret = os.getenv(CLIENT_SECRET)
+client_id = os.getenv('CLIENT_ID')
+client_secret = os.getenv('CLIENT_SECRET')
 
 services= [
             "data_mdf",
