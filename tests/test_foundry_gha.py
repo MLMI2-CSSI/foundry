@@ -23,7 +23,9 @@ services= [
             "transfer",
             "dlhub",
             "openid",
-            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",]
+            "groups"
+            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
+            ]
 
 res_cred = mdf_toolbox.confidential_login(client_id=client_id,
                                         client_secret=client_secret,
@@ -112,10 +114,8 @@ test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-
 
 def test_metadata_pull():
     f = Foundry(authorizers=res_cred)
-    print("initial foundry obj: ", f)
     assert f.dc == {}
-    f = f.load(test_dataset, download=False)
-    print("after load call: ", f)
+    f = f.load(test_dataset, download=False, authorizers=res_cred)
     assert f.dc["titles"][0]["title"] == expected_title
     #f = f.load(test_dataset, download=False)
     #assert f.dc["titles"][0]["title"] == expected_title

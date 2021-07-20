@@ -107,7 +107,7 @@ class Foundry(FoundryMetadata):
             ].access_token,
         }
 
-    def load(self, name, download=True, globus=True, verbose=False, metadata=None, **kwargs):
+    def load(self, name, download=True, globus=True, verbose=False, metadata=None, authorizers=None, **kwargs):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
@@ -148,8 +148,7 @@ class Foundry(FoundryMetadata):
             raise Exception("load: not able to index with metadata key {}".format(self.config.metadata_key)) from e
 
         del res["projects"][self.config.metadata_key]
-
-        self = Foundry(**res)
+        self = Foundry(**res, authorizers=authorizers)
 
         if download is True:  # Add check for package existence
             self.download(
