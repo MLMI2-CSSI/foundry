@@ -23,9 +23,7 @@ services= [
             "transfer",
             "dlhub",
             "openid",
-            "groups"
-            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
-            ]
+            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",]
 
 res_cred = mdf_toolbox.confidential_login(client_id=client_id,
                                         client_secret=client_secret,
