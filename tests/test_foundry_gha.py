@@ -110,10 +110,93 @@ test_metadata = {
 # Globus endpoint for '_iris_dev'
 test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2Firis-dev%2F"
 
+
+#Quick function to delete any downloaded test data
+def _delete_test_data(foundry_obj):
+    path = os.path.join(foundry_obj.config.local_cache_dir, test_dataset)
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+
+
+def test_foundry_init_cloud():
+    f1 = Foundry(authorizers=res_cred)
+    assert isinstance(f1.dlhub_client, DLHubClient)
+    assert isinstance(f1.forge_client, Forge)
+    assert isinstance(f1.connect_client, MDFConnectClient)
+
+
+@pytest.mark.xfail(reason="Tests will fail in cloud")
+def test_foundry_init_cloud():
+    f = Foundry(authorizers=res_cred)
+    assert isinstance(f.dlhub_client, DLHubClient)
+    assert isinstance(f.forge_client, Forge)
+    assert isinstance(f.connect_client, MDFConnectClient)
+
+    f2 = Foundry(authorizers=res_cred)
+    assert isinstance(f2.dlhub_client, DLHubClient)
+    assert isinstance(f2.forge_client, Forge)
+    assert isinstance(f2.connect_client, MDFConnectClient)
+
+    f3 = Foundry(authorizers=res_cred)
+    assert isinstance(f3.dlhub_client, DLHubClient)
+    assert isinstance(f3.forge_client, Forge)
+    assert isinstance(f3.connect_client, MDFConnectClient)
+
+
+def test_list():
+    f = Foundry(authorizers=res_cred)
+    ds = f.list()
+    assert isinstance(ds, pd.DataFrame)
+    assert len(ds) > 0
+
 def test_metadata_pull():
     f = Foundry(authorizers=res_cred)
+    #print("initial foundry obj: ", f)
     assert f.dc == {}
     f = f.load(test_dataset, download=False, authorizers=res_cred)
+    #print("after load call: ", f)
     assert f.dc["titles"][0]["title"] == expected_title
-    #f = f.load(test_dataset, download=False)
-    #assert f.dc["titles"][0]["title"] == expected_title
+
+
+@pytest.mark.xfail(reason="Test should have a local endpoint, will fail cloud CI")
+def test_download_globus():
+
+
+    f = Foundry(no_browser=True, no_local_server=True)
+
+    _delete_test_data(f)
+
+    f = f .load(test_dataset, download=True)
+    assert f.dc["titles"][0]["title"] == expected_title
+
+    _delete_test_data(f)
+
+
+def test_download_https():
+
+    f = Foundry(authorizers=res_cred)
+
+    _delete_test_data(f)
+
+    f = f.load(test_dataset, download=True, globus=False, authorizers=res_cred)
+    assert f.dc["titles"][0]["title"] == expected_title
+
+    _delete_test_data(f)
+
+
+def test_dataframe_load():
+
+    f = Foundry(authorizers=res_cred)
+
+    _delete_test_data(f)
+
+    f = f.load(test_dataset, download=True, globus=False, authorizers=res_cred)
+    res = f.load_data()
+    X, y = res['train']
+
+    assert len(X) > 1
+    assert isinstance(X, pd.DataFrame)
+    assert len(y) > 1
+    assert isinstance(y, pd.DataFrame)
+
+    _delete_test_data(f)
