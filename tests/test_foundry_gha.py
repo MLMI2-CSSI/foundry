@@ -114,8 +114,8 @@ def test_metadata_pull():
     f = Foundry(authorizers=res_cred)
     print("initial foundry obj: ", f)
     assert f.dc == {}
-    f = f.load(test_dataset, download=False)
-    print("after load call: ", f)
-    assert f.dc["titles"][0]["title"] == expected_title
+    # f = f.load(test_dataset, download=False)
+    # print("after load call: ", f)
+    # assert f.dc["titles"][0]["title"] == expected_title
     #f = f.load(test_dataset, download=False)
     #assert f.dc["titles"][0]["title"] == expected_title
