@@ -11,29 +11,11 @@ from dlhub_sdk import DLHubClient
 from mdf_connect_client import MDFConnectClient
 
 
-#github specific declarations
-client_id = os.getenv('CLIENT_ID')
-client_secret = os.getenv('CLIENT_SECRET')
-
-services= [
-            "data_mdf",
-            "mdf_connect",
-            "search",
-            "petrel",
-            "transfer",
-            "dlhub",
-            "openid",
-            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",]
-
-res_cred = mdf_toolbox.confidential_login(client_id=client_id,
-                                        client_secret=client_secret,
-                                        services=services, make_clients=True)
-
-
 
 #updated test dataset
 test_dataset = "_test_foundry_iris_dev_v2.1"
 expected_title = "Iris Dataset"
+
 
 #Kept the Old metadata format in case we ever want to refer back
 old_test_metadata = {
@@ -118,63 +100,45 @@ def _delete_test_data(foundry_obj):
         shutil.rmtree(path)
 
 
-def test_foundry_init_cloud():
-    f1 = Foundry(authorizers=res_cred)
-    assert isinstance(f1.dlhub_client, DLHubClient)
-    assert isinstance(f1.forge_client, Forge)
-    assert isinstance(f1.connect_client, MDFConnectClient)
-
-
 @pytest.mark.xfail(reason="Tests will fail in cloud")
 def test_foundry_init_cloud():
-    f = Foundry(authorizers=res_cred)
+    f = Foundry()
     assert isinstance(f.dlhub_client, DLHubClient)
     assert isinstance(f.forge_client, Forge)
     assert isinstance(f.connect_client, MDFConnectClient)
 
-    f2 = Foundry(authorizers=res_cred)
+    f2 = Foundry(no_browser=False, no_local_server=True)
     assert isinstance(f2.dlhub_client, DLHubClient)
     assert isinstance(f2.forge_client, Forge)
     assert isinstance(f2.connect_client, MDFConnectClient)
 
-    f3 = Foundry(authorizers=res_cred)
+    f3 = Foundry(no_browser=True, no_local_server=False)
     assert isinstance(f3.dlhub_client, DLHubClient)
     assert isinstance(f3.forge_client, Forge)
     assert isinstance(f3.connect_client, MDFConnectClient)
 
 
-def test_list():
-    f = Foundry(authorizers=res_cred)
-    ds = f.list()
-    assert isinstance(ds, pd.DataFrame)
-    assert len(ds) > 0
-
-def test_metadata_pull():
-    f = Foundry(authorizers=res_cred)
-    assert f.dc == {}
-    f = f.load(test_dataset, download=False, authorizers=res_cred)
-    assert f.dc["titles"][0]["title"] == expected_title
+@pytest.mark.xfail(reason="Test should have a local endpoint, will fail cloud CI")
+def test_download_globus():
 
 
-def test_download_https():
-
-    f = Foundry(authorizers=res_cred)
+    f = Foundry(no_browser=True, no_local_server=True)
 
     _delete_test_data(f)
 
-    f = f.load(test_dataset, download=True, globus=False, authorizers=res_cred)
+    f = f .load(test_dataset, download=True)
     assert f.dc["titles"][0]["title"] == expected_title
 
     _delete_test_data(f)
 
 
-def test_dataframe_load():
+def test_globus_dataframe_load():
 
-    f = Foundry(authorizers=res_cred)
+    f = Foundry(no_browser=True, no_local_server=True)
 
     _delete_test_data(f)
 
-    f = f.load(test_dataset, download=True, globus=False, authorizers=res_cred)
+    f = f.load(test_dataset, download=True)
     res = f.load_data()
     X, y = res['train']
 
@@ -184,3 +148,45 @@ def test_dataframe_load():
     assert isinstance(y, pd.DataFrame)
 
     _delete_test_data(f)
+
+
+
+def test_publish():
+    # TODO: automate dealing with curation and cleaning after tests
+
+    f = Foundry(no_browser=True, no_local_server=True)
+
+    timestamp = datetime.now().timestamp()
+    title = "scourtas_example_iris_test_publish_{:.0f}".format(timestamp)
+    short_name = "example_AS_iris_test_{:.0f}".format(timestamp)
+    authors = ["A Scourtas"]
+
+    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
+
+    # publish with short name
+    assert res['success']
+    assert res['source_id'] == "_test_example_iris_{:.0f}_v1.1".format(timestamp)
+
+    # TODO: publish with long title -- for some reason even when I change the title, it still says it's already pub'd
+    # title += "long"
+    # res = f.publish(test_metadata, test_data_source, title, authors)
+    # assert res['success']
+    # assert res['source_id'] == "_test_scourtas_example_iris_publish_{:.0f}_v1.1".format(timestamp)
+
+    # check that pushing same dataset without update flag fails
+    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
+    assert not res['success']
+
+    # check that using update flag allows us to update dataset
+    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name, update=True)
+    assert res['success']
+
+    # check that using update flag for new dataset fails
+    new_short_name = short_name + "_update"
+    res = f.publish(test_metadata, test_data_source, title, authors, short_name=new_short_name, update=True)
+    assert not res['success']
+
+
+def test_check_status():
+    # TODO: the 'active messages' in MDF CC's check_status() don't appear to do anything? need to determine how to test
+    pass
