@@ -738,8 +738,6 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
-
-
 def is_pandas_pytable(group):
     if 'axis0' in group.keys() and 'axis1' in group.keys():
         return True
