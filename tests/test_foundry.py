@@ -137,7 +137,7 @@ def test_metadata_pull():
     assert f.dc["titles"][0]["title"] == expected_title
 
 
-# @pytest.mark.xfail(reason="Test should have a local endpoint, will fail cloud CI")
+@pytest.mark.xfail(reason="Test should have a local endpoint, will fail cloud CI")
 def test_download_globus():
 
 
