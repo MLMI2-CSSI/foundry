@@ -56,24 +56,39 @@ test_metadata = {
             "description": "petal width in unit(cm)"
         },
         {
-            "key": ["flower type"],
+            "key": ["y"],
             "type": "output",
             "units": "",
-            "description": "flower type"
+            "description": "flower type",
+            "classes": [
+                {
+                    "label": "0",
+                    "name": "setosa"
+                },
+                {
+                    "label": "1",
+                    "name": "versicolor"
+                },
+                {
+                    "label": "2",
+                    "name": "virginica"
+                }
+            ]
         }
     ],
     'splits': [
         {'label': 'train', 'path': 'train.json', 'type': 'train'},
         {'label': 'test', 'path': 'test.json', 'type': 'test'}
     ],
-    #"short_name": "example_AS_iris_test_{:.0f}".format(timestamp),
+    "short_name": "example_AS_iris_test_{:.0f}".format(datetime.now().timestamp()),
     "data_type": "tabular",
     'task_type': ['unsupervised', 'generative'],
     'domain': ['materials science', 'chemistry'],
     'n_items': 1000
 }
 # Globus endpoint for '_iris_dev'
-test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2F"
+test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2Firis-dev%2F"
+
 
 #Quick function to delete any downloaded test data
 def _delete_test_data(foundry_obj):
