@@ -33,7 +33,6 @@ import shutil
 logging.disable(logging.INFO)
 
 
-
 class Foundry(FoundryMetadata):
     """Foundry Client Base Class
     TODO:
@@ -50,7 +49,7 @@ class Foundry(FoundryMetadata):
     xtract_tokens: Any
 
     def __init__(
-        self, no_browser=False, no_local_server=False, authorizers=None, index="mdf-test", **data
+        self, no_browser=False, no_local_server=False, index="mdf-test", authorizers=None, **data
     ):
         super().__init__(**data)
 
@@ -129,9 +128,9 @@ class Foundry(FoundryMetadata):
         -------
             self
         """
-        # handle empty dataset name (was returning all the datasets)
-        if not name:
-            raise ValueError("load: No dataset name is given")
+
+        if metadata:
+            res = metadata
 
         if metadata:
             res = metadata
@@ -288,14 +287,16 @@ class Foundry(FoundryMetadata):
             else:
                 return {"data": self._load_data(source_id=source_id, globus=globus)}
         except Exception as e:
-            raise Exception("Metadata not loaded into Foundry object, make sure to call load()") from e
+            raise Exception(
+                "Metadata not loaded into Foundry object, make sure to call load()") from e
 
     def _repr_html_(self) -> str:
         if not self.dc:
             buf = str(self)
         else:
             title = self.dc['titles'][0]['title']
-            authors = [creator['creatorName'] for creator in self.dc['creators']]
+            authors = [creator['creatorName']
+                       for creator in self.dc['creators']]
             authors = '; '.join(authors)
 
             buf = f'<h2>{title}</h2>{authors}'
@@ -361,7 +362,8 @@ class Foundry(FoundryMetadata):
             title (req)
             authors (req)
             short_name (req)
-            servable_type (req) ("static method", "class method", "keras", "pytorch", "tensorflow", "sklearn")
+            servable_type (req) ("static method", "class method",
+                           "keras", "pytorch", "tensorflow", "sklearn")
             affiliations
             domains
             abstract
@@ -533,20 +535,22 @@ class Foundry(FoundryMetadata):
         path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
 
         if os.path.isdir(path):
-            #if directory is present, but doesn't have the correct number of files inside, dataset will attempt to redownload
+            # if directory is present, but doesn't have the correct number of files inside, dataset will attempt to redownload
             dir_length = len(os.listdir(path))
             if self.dataset.splits:
                 # if metadata indicates splits, check that the directory has as many files as there are splits
                 if(dir_length == len(self.dataset.splits)):
                     return self
                 else:
-                    print("Unexpected number of files in directory -- dataset will be redownloaded.")
+                    print(
+                        "Unexpected number of files in directory -- dataset will be redownloaded.")
             else:
                 # in the case of no splits, ensure the directory contains the data file
                 if(dir_length == 1):
                     return self
                 else:
-                    print("Unexpected number of files in directory -- dataset will be redownloaded.")
+                    print(
+                        "Unexpected number of files in directory -- dataset will be redownloaded.")
 
         res = self.forge_client.search(
             "mdf.source_id:{name}".format(name=self.mdf["source_id"]), advanced=True
@@ -560,29 +564,31 @@ class Foundry(FoundryMetadata):
                 download_datasets=True,
             )
         else:
-            # kwargs to pass in for xtract download
             source_id = self.mdf["source_id"]
             xtract_config = {
-                 "xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
-                 "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
-                 "base_url": "https://data.materialsdatafacility.org",
-                 "folder_to_crawl": f"/foundry/{source_id}/",
-                 "grouper": "matio"
-                }
+                "xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
+                "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
+                "base_url": "https://data.materialsdatafacility.org",
+                "folder_to_crawl": f"/foundry/{source_id}/",
+                "grouper": "matio"
+            }
             xtract_https_download(self, verbose=verbose, **xtract_config)
 
         # after download check making sure directory exists, contains proper amount of files
         if os.path.isdir(path):
-            #checking for proper number of files downloaded
+            # checking for proper number of files downloaded
             dir_length = len(os.listdir(path))
             if self.dataset.splits:
                 if(dir_length != len(self.dataset.splits)):
-                    raise FileNotFoundError("Incorrect number of files in download directory")
+                    raise FileNotFoundError(
+                        "Incorrect number of files in download directory")
             else:
                 if(dir_length != 1):
-                    raise FileNotFoundError("Incorrect number of files in download directory")
+                    raise FileNotFoundError(
+                        "Incorrect number of files in download directory")
         else:
-            raise NotADirectoryError("Unable to create directory to download data")
+            raise NotADirectoryError(
+                "Unable to create directory to download data")
 
         return self
 
@@ -631,7 +637,7 @@ class Foundry(FoundryMetadata):
 
         return self
 
-    def get_keys(self, type, as_object=False):
+    def get_keys(self, type=None, as_object=False):
         """Get keys for a Foundry dataset
 
         Arguments:
@@ -643,6 +649,7 @@ class Foundry(FoundryMetadata):
                     is False otherwise returns the full key objects.
 
         """
+
         if as_object:
             if type:
                 return [key for key in self.dataset.keys if key.type == type]
@@ -671,22 +678,22 @@ class Foundry(FoundryMetadata):
                                 self.mdf["source_id"])
 
         # Handle Foundry-defined types.
-        if self.dataset.data_type.value == "tabular":
+        if self.dataset.type.value == "tabular":
             # Determine which file to load, defaults to config.dataframe_file
             if not file:
                 file = self.config.dataframe_file
 
-
             # Check to make sure the path can be created
             try:
-                path_to_file = os.path.join(path,file)
+                path_to_file = os.path.join(path, file)
             except Exception as e:
                 print("Unable to find path to file for download: {}".format(e))
                 raise e
 
             # Check to see whether file exists at path
             if not os.path.isfile(path_to_file):
-                raise FileNotFoundError("No file found at expected path: {}".format(path_to_file))
+                raise FileNotFoundError(
+                    "No file found at expected path: {}".format(path_to_file))
             # If the file is not local, fetch the contents with Globus
             # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
@@ -695,29 +702,33 @@ class Foundry(FoundryMetadata):
                     path_to_file
                 )
             except Exception as e:
-                print("Reading {} as JSON failed: {} \n".format(file, e), "Now attempting to read as JSONL")
+                print("Reading {} as JSON failed: {} \n".format(
+                    file, e), "Now attempting to read as JSONL")
                 try:
                     # Try to read individual lines instead
                     self.dataset.dataframe = pd.read_json(
                         path_to_file, lines=True
                     )
                 except Exception as f:
-                    print("Reading {} as JSONL failed: {} \n".format(file, f), "Now attempting to read as CSV")
+                    print("Reading {} as JSONL failed: {} \n".format(
+                        file, f), "Now attempting to read as CSV")
                     try:
-                        #Try to read as CSV instead
+                        # Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
                             path_to_file
                         )
 
                     except Exception as g:
-                        print("Reading {} as CSV failed, unable to load data properly: {}".format(file, g))
+                        print(
+                            "Reading {} as CSV failed, unable to load data properly: {}".format(file, g))
                         raise e
 
             return (
                 self.dataset.dataframe[self.get_keys("input")],
                 self.dataset.dataframe[self.get_keys("target")],
             )
-        elif self.dataset.data_type.value == "hdf5":
+
+        elif self.dataset.type.value == "hdf5":
             if not file:
                 file = self.config.data_file
             f = h5py.File(os.path.join(path, file), "r")
@@ -737,6 +748,7 @@ class Foundry(FoundryMetadata):
             return tmp_data
         else:
             raise NotImplementedError
+
 
 def is_pandas_pytable(group):
     if 'axis0' in group.keys() and 'axis1' in group.keys():
