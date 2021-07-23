@@ -33,9 +33,6 @@ import shutil
 logging.disable(logging.INFO)
 
 
-# TODO: do imports nicer
-
-
 class Foundry(FoundryMetadata):
     """Foundry Client Base Class
     TODO:
@@ -52,7 +49,7 @@ class Foundry(FoundryMetadata):
     xtract_tokens: Any
 
     def __init__(
-        self, no_browser=False, no_local_server=False, index="mdf", authorizers=None, **data
+        self, no_browser=False, no_local_server=False, index="mdf-test", authorizers=None, **data
     ):
         super().__init__(**data)
 
@@ -90,6 +87,7 @@ class Foundry(FoundryMetadata):
         else:
             test = True
         # TODO: when release-ready, remove test=True
+
         self.connect_client = MDFConnectClient(
             authorizer=auths["mdf_connect"], test=test
         )
@@ -100,8 +98,11 @@ class Foundry(FoundryMetadata):
             fx_authorizer=auths[
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
             ],
+            openid_authorizer=auths['openid'],
             force_login=False,
         )
+
+
 
         self.xtract_tokens = {
             "auth_token": auths["petrel"].access_token,
@@ -111,7 +112,7 @@ class Foundry(FoundryMetadata):
             ].access_token,
         }
 
-    def load(self, name, download=True, globus=True, verbose=False, metadata=None, **kwargs):
+    def load(self, name, download=True, globus=True, verbose=False, metadata=None, authorizers=None, **kwargs):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
@@ -127,6 +128,13 @@ class Foundry(FoundryMetadata):
         -------
             self
         """
+
+        # handle empty dataset name (was returning all the datasets)
+        if not name:
+            raise ValueError("load: No dataset name is given")
+            
+        if metadata:
+            res = metadata
 
         if metadata:
             res = metadata
@@ -157,7 +165,7 @@ class Foundry(FoundryMetadata):
 
         del res["projects"][self.config.metadata_key]
 
-        self = Foundry(**res)
+        self = Foundry(**res, authorizers=authorizers)
 
         if download is True:  # Add check for package existence
             self.download(
@@ -329,7 +337,6 @@ class Foundry(FoundryMetadata):
             of dataset. Contains `source_id`, which can be used to check the
             status of the submission
         """
-
         self.connect_client.create_dc_block(
             title=title,
             authors=authors,
@@ -664,6 +671,7 @@ class Foundry(FoundryMetadata):
                 key_list = key_list + k
             return key_list
 
+
     def _load_data(self, file=None, source_id=None, globus=True):
 
         # Build the path to access the cached data
@@ -674,7 +682,7 @@ class Foundry(FoundryMetadata):
                                 self.mdf["source_id"])
 
         # Handle Foundry-defined types.
-        if self.dataset.type.value == "tabular":
+        if self.dataset.data_type.value == "tabular":
             # Determine which file to load, defaults to config.dataframe_file
             if not file:
                 file = self.config.dataframe_file
@@ -724,7 +732,7 @@ class Foundry(FoundryMetadata):
                 self.dataset.dataframe[self.get_keys("target")],
             )
 
-        elif self.dataset.type.value == "hdf5":
+        elif self.dataset.data_type.value == "hdf5":
             if not file:
                 file = self.config.data_file
             f = h5py.File(os.path.join(path, file), "r")
