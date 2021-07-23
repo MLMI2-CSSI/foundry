@@ -129,6 +129,10 @@ class Foundry(FoundryMetadata):
             self
         """
 
+        # handle empty dataset name (was returning all the datasets)
+        if not name:
+            raise ValueError("load: No dataset name is given")
+            
         if metadata:
             res = metadata
 
@@ -678,7 +682,7 @@ class Foundry(FoundryMetadata):
                                 self.mdf["source_id"])
 
         # Handle Foundry-defined types.
-        if self.dataset.type.value == "tabular":
+        if self.dataset.data_type.value == "tabular":
             # Determine which file to load, defaults to config.dataframe_file
             if not file:
                 file = self.config.dataframe_file
@@ -728,7 +732,7 @@ class Foundry(FoundryMetadata):
                 self.dataset.dataframe[self.get_keys("target")],
             )
 
-        elif self.dataset.type.value == "hdf5":
+        elif self.dataset.data_type.value == "hdf5":
             if not file:
                 file = self.config.data_file
             f = h5py.File(os.path.join(path, file), "r")
