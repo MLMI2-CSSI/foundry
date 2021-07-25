@@ -45,6 +45,7 @@ class Foundry(FoundryMetadata):
     dlhub_client: Any
     forge_client: Any
     connect_client: Any
+    index = ""
 
     xtract_tokens: Any
 
@@ -52,6 +53,7 @@ class Foundry(FoundryMetadata):
         self, no_browser=False, no_local_server=False, index="mdf-test", authorizers=None, **data
     ):
         super().__init__(**data)
+        self.index = index
 
         if authorizers:
             auths = authorizers
@@ -165,7 +167,9 @@ class Foundry(FoundryMetadata):
 
         del res["projects"][self.config.metadata_key]
 
-        self = Foundry(**res, authorizers=authorizers)
+        # Creating a new Foundry instance is a problematic way to update the metadata,
+        # we should find a way to abstract this.
+        self = Foundry(**res, index=self.index, authorizers=authorizers)
 
         if download is True:  # Add check for package existence
             self.download(
@@ -557,8 +561,9 @@ class Foundry(FoundryMetadata):
                         "Unexpected number of files in directory -- dataset will be redownloaded.")
 
         res = self.forge_client.search(
-            "mdf.source_id:{name}".format(name=self.mdf["source_id"]), advanced=True
+            f'mdf.source_id: {self.mdf["source_id"]}', advanced=True
         )
+
         if globus:
             self.forge_client.globus_download(
                 res,
