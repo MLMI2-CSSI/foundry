@@ -1,7 +1,9 @@
 from typing import List, Dict, Optional, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, AnyHttpUrl
 from enum import Enum
 import pandas as pd
+from json2table import convert
+import json
 
 # class FoundryMetric(BaseModel):
 #     pass
@@ -13,7 +15,7 @@ import pandas as pd
 #     description: str = ""
 
 
-### Classes for Foundry Data Package Specification
+# Classes for Foundry Data Package Specification
 class FoundrySpecificationDataset(BaseModel):
     """Pydantic base class for datasets within the Foundry data package specification"""
 
@@ -31,25 +33,30 @@ class FoundrySpecification(BaseModel):
     version: str = ""
     description: str = ""
     private: bool = False
-    dependencies: List[FoundrySpecificationDataset]
+    dependencies: Any  # List[FoundrySpecificationDataset]
 
-    def add_dependency(self, name, version, provider="MDF"):
-        ds = FoundrySpecificationDataset(name=name, provider=provider, version=version)
-        self.dependencies.append(ds)
+    def add_dependency(self, name, version):
+        self.dependencies[name] = version
 
     def remove_duplicate_dependencies(self):
-        df = pd.DataFrame(self.dict()["dependencies"])
 
+        deps = [{"name": key, "version": self.dependencies[key]}
+                for key in self.dependencies]
+        df = pd.DataFrame.from_records(deps)
         self.clear_dependencies()
         for i, row in df.drop_duplicates().iterrows():
             self.add_dependency(name=row["name"], version=row["version"])
 
     def clear_dependencies(self):
-        self.dependencies = []
+        self.dependencies = {}
+
+    def _repr_html_(self):
+        buf = f'<h3>Data Requirements - {self.name}</h3>'
+        buf = buf + convert(json.loads(self.json()))
+        return buf
 
 
-### END Classes for Foundry Data Package Specification
-
+# END Classes for Foundry Data Package Specification
 
 class FoundryDatasetType(Enum):
     """Foundry Dataset Types
@@ -62,22 +69,42 @@ class FoundryDatasetType(Enum):
     other = "other"
 
 
+class FoundryKeyClass(BaseModel):
+    label: str = ""
+    name: str = ""
+
+
+class FoundryKey(BaseModel):
+    key: List[str] = []
+    type: str = ""
+    filter: Optional[str] = ""
+    units: Optional[str] = ""
+    description: Optional[str] = ""
+    classes: Optional[List[FoundryKeyClass]]
+
+
+class FoundrySplit(BaseModel):
+    type: str = ""
+    path: Optional[str] = ""
+    label: Optional[str] = ""
+
+
 class FoundryDataset(BaseModel):
     """Foundry Dataset
     Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
     """
 
-    inputs: List = []
-    outputs: List = []
-    input_descriptions: Optional[List] = []
-    output_descriptions: Optional[List] = []
-    type: FoundryDatasetType = None
-    # hash: Optional[str] = []
-    version: Optional[str] = ""
+    keys: List[FoundryKey] = None
+    splits: Optional[List[FoundrySplit]] = None
+    data_type: FoundryDatasetType = None
+    # version: Optional[str] = ""
     short_name: Optional[str] = ""
-    # references: Optional[List[str]] = []
     dataframe: Optional[Any] = None
-    # sources: Optional[List[AnyUrl]] = []
+    # links: Optional[FoundryLinks]
+    # citations: Optional[List[str]] = []
+    task_type: Optional[List[str]] = []
+    domain: Optional[List[str]] = []
+    n_items: Optional[int] = 0
 
     class Config:
         arbitrary_types_allowed = True
@@ -100,6 +127,11 @@ class FoundryConfig(BaseModel):
     destination_endpoint: Optional[str] = None
     local: Optional[bool] = False
     local_cache_dir = "./data"
+    metadata_key: Optional[str] = "foundry"
+    organization: Optional[str] = "foundry"
+
+    def _repr_html_(self):
+        return convert(json.loads(self.json()))
 
 
 class FoundryMetadata(BaseModel):
