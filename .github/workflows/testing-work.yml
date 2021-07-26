@@ -1,4 +1,4 @@
-name: testing-work
+pythname: testing-work
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.7, 3.8, 3.9]
 
     env:
       CLIENT_ID: ${{ secrets.CLIENT_ID }}
@@ -49,4 +49,4 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest -s tests/test_foundry_gha.py 
+        pytest -s tests/test_foundry_gha.py
