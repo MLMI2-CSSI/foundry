@@ -6,7 +6,7 @@ packages = (setuptools.find_packages(),)
 # TODO: change dependencies to be looser
 setuptools.setup(
     name="foundry_ml",
-    version="0.0.13",
+    version="0.0.14",
     author="Ben Blaiszik",
     author_email="blaiszik@uchicago.edu",
     packages=setuptools.find_packages(),
