@@ -1,4 +1,4 @@
-pythname: testing-work
+name: testing-work
 
 on:
   pull_request:
