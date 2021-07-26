@@ -52,6 +52,20 @@ class Foundry(FoundryMetadata):
     def __init__(
         self, no_browser=False, no_local_server=False, index="mdf-test", authorizers=None, **data
     ):
+        """Initialize a Foundry client
+        Args:
+            no_browser (bool):  Whether to open the browser for the Globus Auth URL.
+            no_local_server (bool): Whether a local server is available.
+                    This should be `False` when on remote server (e.g., Google Colab ).
+            index (str): Index to use for search and data publication. Choices `mdf` or `mdf-test`
+            authorizers (dict): A dictionary of authorizers to use, following the `mdf_toolbox` format
+            data (dict): Other arguments, e.g., results from an MDF search result that are used
+                    to populate Foundry metadata fields
+
+        Returns
+        -------
+            an initialized and authenticated Foundry client
+        """
         super().__init__(**data)
         self.index = index
 
@@ -103,7 +117,6 @@ class Foundry(FoundryMetadata):
             openid_authorizer=auths['openid'],
             force_login=False,
         )
-
 
 
         self.xtract_tokens = {
@@ -167,7 +180,7 @@ class Foundry(FoundryMetadata):
 
         del res["projects"][self.config.metadata_key]
 
-        # Creating a new Foundry instance is a problematic way to update the metadata,
+        # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
         self = Foundry(**res, index=self.index, authorizers=authorizers)
 
