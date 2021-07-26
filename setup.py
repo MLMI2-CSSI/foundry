@@ -3,9 +3,10 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 packages = (setuptools.find_packages(),)
+# TODO: change dependencies to be looser
 setuptools.setup(
     name="foundry_ml",
-    version="0.0.12",
+    version="0.0.13",
     author="Ben Blaiszik",
     author_email="blaiszik@uchicago.edu",
     packages=setuptools.find_packages(),
@@ -21,8 +22,9 @@ setuptools.setup(
         "pydantic>=1.4",
         "scikit-learn>=0.24.1",
         "mdf_connect_client>=0.3.8",
-        "h5py>=3.2.1",
+        "h5py>=2.10.0",
         "funcx==0.0.5",
+        "tensorflow>=2.4.1",
         "json2table"
     ],
     python_requires=">=3.6",
