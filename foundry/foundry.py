@@ -52,7 +52,7 @@ class Foundry(FoundryMetadata):
     def __init__(
         self, no_browser=False, no_local_server=False, index="mdf-test", authorizers=None, **data
     ):
-     """Initialize a Foundry client
+        """Initialize a Foundry client
         Args:
             no_browser (bool):  Whether to open the browser for the Globus Auth URL.
             no_local_server (bool): Whether a local server is available.
