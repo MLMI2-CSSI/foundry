@@ -1,6 +1,6 @@
 # Introduction
 
-![](.gitbook/assets/foundry-purple%20%281%29.png)
+![](.gitbook/assets/foundry-purple%20%281%29%20%281%29.png)
 
 ## What is Foundry?
 

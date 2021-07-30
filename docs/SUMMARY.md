@@ -4,10 +4,8 @@
 
 ## Basic Usage <a id="usage"></a>
 
----
-
-* [Getting Started with Python](examples.md)
-* [Command Line Interface \(CLI\)](command-line-interface.md)
+* [Getting Started with Python](usage/examples.md)
+* [Command Line Interface \(CLI\)](usage/command-line-interface.md)
 
 ## Key Concepts <a id="concepts"></a>
 
@@ -16,8 +14,6 @@
 * [Foundry Models and Functions](concepts/foundry-models-and-functions.md)
 * [Foundry Data Packages](concepts/foundry-data-packages.md)
 * [Foundry Benchmarks](concepts/foundry-benchmarks.md)
-
-## Publishing Datasets and Models
 
 ## Publishing
 
