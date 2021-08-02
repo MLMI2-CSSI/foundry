@@ -147,7 +147,7 @@ class Foundry(FoundryMetadata):
         # handle empty dataset name (was returning all the datasets)
         if not name:
             raise ValueError("load: No dataset name is given")
-            
+
         if metadata:
             res = metadata
 
@@ -182,7 +182,14 @@ class Foundry(FoundryMetadata):
 
         # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
-        self = Foundry(**res, index=self.index, authorizers=authorizers)
+
+        f = Foundry(**res, index=self.index, authorizers=authorizers)
+
+        self.dc = f.dc
+        self.mdf = f.mdf
+        self.dataset = f.dataset
+
+        #print("Attempt 1:", self)
 
         if download is True:  # Add check for package existence
             self.download(
