@@ -6,8 +6,8 @@ packages = (setuptools.find_packages(),)
 # TODO: change dependencies to be looser
 setuptools.setup(
     name="foundry_ml",
-    version="0.0.14",
-    author="Ben Blaiszik",
+    version="0.0.16",
+    author="Aristana Scourtas, KJ Schmidt, Imogen Foster, Ribhav Bose, Zoa Katok, Ethan Truelove, Ian Foster, Ben Blaiszik",
     author_email="blaiszik@uchicago.edu",
     packages=setuptools.find_packages(),
     description="Package to support simplified application of machine learning models to datasets in materials science",
@@ -23,7 +23,7 @@ setuptools.setup(
         "scikit-learn>=0.24.1",
         "mdf_connect_client>=0.3.8",
         "h5py>=2.10.0",
-        "funcx==0.0.5",
+        "funcx==0.0.6a5",
         "tensorflow>=2.4.1",
         "json2table"
     ],
