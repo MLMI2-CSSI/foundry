@@ -753,15 +753,16 @@ class Foundry(FoundryMetadata):
         elif self.dataset.data_type.value == "hdf5":
             if not file:
                 file = self.config.data_file
-            f = h5py.File(os.path.join(path, file), "r")
-
+            
+            filepath = os.path.join(path, file)
+            f = h5py.File(filepath, "r")
             special_types = ["input", "target"]
             tmp_data = {s: {} for s in special_types}
             for s in special_types:
                 for key in self.get_keys(s):
                     if isinstance(f[key], h5py.Group):
                         if is_pandas_pytable(f[key]):
-                            df = pd.read_hdf(file, key)
+                            df = pd.read_hdf(filepath, key)
                             tmp_data[s][key] = df
                         else:
                             tmp_data[s][key] = f[key]
