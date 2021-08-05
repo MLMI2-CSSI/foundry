@@ -16,7 +16,7 @@ f = Foundry()
 ```
 
 {% hint style="success" %}
-If you are running your script on cloud resources \(e.g. Google Colab, Binder\), see [Using Foundry on Cloud Computing Resources](examples.md#using-foundry-on-cloud-computing-resources)W
+If you are running your script on cloud resources \(e.g. Google Colab, Binder\), see [Using Foundry on Cloud Computing Resources](examples.md#using-foundry-on-cloud-computing-resources)
 {% endhint %}
 
 ### Listing Datasets

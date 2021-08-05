@@ -1,6 +1,6 @@
 # Table of contents
 
-* [Introduction](README.md)
+* [Introduction and Installation](README.md)
 
 ## Basic Usage <a id="usage"></a>
 
@@ -17,8 +17,8 @@
 
 ## Publishing
 
-* [Publishing Models](publishing/publishing-models.md)
 * [Publishing Datasets](publishing/publishing-datasets.md)
+* [Publishing Models](publishing/publishing-models.md)
 
 ## How to contribute
 
@@ -28,4 +28,8 @@
 ## Support
 
 * [Troubleshooting](support/troubleshooting.md)
+
+---
+
+* [Project Support](project-support.md)
 
