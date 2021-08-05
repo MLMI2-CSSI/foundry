@@ -82,6 +82,6 @@ This method may be slow for large datasets and datasets with many files
 
 ```python
 f.load(globus=False)
-X, y = f.load_data()
+res = f.load_data()
 ```
 
