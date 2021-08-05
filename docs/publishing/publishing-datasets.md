@@ -12,11 +12,11 @@ In order to publish datasets, the datasets must 1\) adhere to specified Foundry 
 
 ## Shaping Datasets
 
-For a general dataset to be translated into a usable Foundry dataset, it should follow one of the prescribed shapes. It should also be described by a `Key` object, which provides a mapping that allows Foundry to read data from the underlying data structure into usable Python objects \([see Describing Datasets](publishing-datasets.md#describing-datasets) for more info\). 
+For a general dataset to be translated into a usable Foundry dataset, it should follow one of the prescribed shapes. It should also be described by a set of `Key` objects, which provides description of the data, and a mapping that allows Foundry to read data into usable Python objects \([see Describing Datasets](publishing-datasets.md#describing-datasets) for more info\). 
 
 ### **Tabular Data**
 
-Tabular data should include in a form where columns represent the different keys of the data and rows represent individual entries.
+Tabular data should be in a form where columns represent the different keys of the data and rows represent individual entries. For example:
 
 | **feature\_1** | **feature\_2** | **material\_type** | band\_gap |
 | :--- | :--- | :--- | :--- |
@@ -24,9 +24,9 @@ Tabular data should include in a form where columns represent the different keys
 | 0.34 | 0.910 | 0 | 0.73 |
 | ... | ... | ... |  |
 
-For this example dataset the `keys` list could be:  
+For this example dataset, the `keys` list could be:  
 
-```text
+```python
 "keys":[{
 		 	"key": "feature_1",
 			"type": "input",
@@ -42,7 +42,7 @@ For this example dataset the `keys` list could be:
 			"type": "input",
 			"units": None,
 			"description": "This is the material type",
-			"labels":["perovskite","not perovskite"]
+			"classes":["perovskite","not perovskite"]
 		}{
 			"key": "band_gap",
 			"type": "target",
@@ -53,14 +53,14 @@ For this example dataset the `keys` list could be:
 ```
 
 {% hint style="info" %}
-`Don't forget to specify the tabular data file in the submitted metadata`
+`Don't forget to specify the tabular data filename and path in the submitted metadata. This can be done in a split - see the section on` [`Describing Datasets`](publishing-datasets.md#describing-datasets)\`\`
 {% endhint %}
 
 ### Hierarchical Data
 
-Foundry also supports data from hierarchical data formats \(e.g., [HDF5](https://www.h5py.org)\). In this case features and outputs can be represented with `/` notation. For example, if the features of a dataset are located in an array stored in `/data/arr1` and `/other_data/arr2` while the outputs are in `/data/band_gaps`, the Key object would be:
+Foundry also supports data from hierarchical data formats \(e.g., [HDF5](https://www.h5py.org)\). In this case, features and outputs can be represented with `/` notation. For example, if the features of a dataset are located in an array stored in `/data/arr1` and `/other_data/arr2` while the outputs are in `/data/band_gaps`, the Key object would be:
 
-```text
+```python
 "keys":[{
 			"key": "/data/arr1",
 			"type": "input",
@@ -92,19 +92,42 @@ Foundry also supports data from hierarchical data formats \(e.g., [HDF5](https:/
 * **`description (str)[optional]`** _****_A free text description of the key. _Default: None_
 * **`labels (list) (str) [optional]`:** A list of strings mapped to integers in a key column
 
+```python
+# An example of keys object
+
+"keys":[{
+    "key": "band_gaps",
+		"type": "target",
+		"units": "eV",
+		"description": "This is the simulated band gap in eV"
+}]
+```
+
 **Splits \(list\[Split\]\):** `Split`objects provide a way for users to specify which data should be included as test, train, or other user defined splits. Individual `Split` objects have the following properties
 
-* **`type (str)`**A name mapping to a column name \(e.g., for csv files\) or key within a data structure \(e.g., for HDF5 files\)
+* **`type (str)`**A split type, e.g., the Foundry special split types of `train`, `test`,  and`validation`. These special split types may be handled differently than custom split types defined by users. 
 * **`path (str)`** The full filepath to the dataset file or directory that contains the split
 * **`label (str)`** A label to assign to this split
+
+```python
+"splits": [{
+    "type": "train",
+		"path": "g4mp2_data.json", # Specify the filename and path of the source file
+		"label": "train"           # A text label for the split
+}]
+```
 
 **short\_name \(str\):** Short name is a unique name associated with this dataset to make loading and . 
 
 **type \(str\):** The type provides a hint to Foundry on how to map the keys into loading operations. _Options \["tabular","hdf5"\]_
 
-```text
+```python
 "foundry": {
-	"dc": {},
+	"splits": [{
+    "type": "train",
+		"path": "g4mp2_data.json", 
+		"label": "train"     
+  }],
 	"keys": [{
 			"type": "input",
 			"name": "feature_1",
@@ -115,8 +138,7 @@ Foundry also supports data from hierarchical data formats \(e.g., [HDF5](https:/
 			"type": "target",
 			"name": "band_gap",
 			"units": "eV",
-			"description": "blah blah",
-			"labels": []
+			"description": "Bandgap of the material"
 		}
 	],
 	"short_name": "my_short_name",
@@ -132,7 +154,7 @@ Before continuing, be sure that you have 1\) signed up for a [free Globus accoun
 
 Once your dataset is in the proper shape, and you have created the associated metadata structure, you can publish to Foundry! An example is shown below.
 
-```text
+```python
 "foundry": {
 	"dc": {},
 	"keys": [{
@@ -188,10 +210,12 @@ res = f.publish(metadata, data_source, title, authors, short_name=short_name))
 The `publish()` method returns a result object that you can inspect for information about the state of the publication. For the above publication, `res` would have the format:
 
 ```python
-{'error': None,
+{
+ 'error': None,
  'source_id': '_test_example_iris_v1.1',
  'status_code': 202,
- 'success': True}
+ 'success': True
+}
 ```
 
 
