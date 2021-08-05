@@ -1,20 +1,22 @@
-# Foundry Data Packages
+# Foundry Data Environments
 
-Foundry Data Packages allow for a logical and portable way to specify and collect data for analyses. From a data package, a user can easily build a local data environment matching the data package.
+Foundry Data Environments allow for a logical and portable way to specify and collect data for analyses. Data Environments help users get set up locally to access groups of specified datasets. 
 
-## Data Package Specification Fields
+This is comparable to a `package.json` file in an npm environment or a `requirements.txt` file in python environment.
 
-**`name`** : \(string\) A name for the data package
+## Data Environment Specification Fields
+
+**`name`** : \(string\) A name for the data environment
 
 **`version`** : \(string\) A version of the form &lt;major&gt;.&lt;minor&gt;.&lt;sub&gt; e.g., "1.2.0"
 
-**`description`**  : \(string\) A short description of the data package and its intended use
+**`description`**  : \(string\) A short description of the data environment and its intended use
 
-**`tags`**  : \(list\) A list of tag strings associated with the data package
+**`tags`**  : \(list\) A list of tag strings associated with the data environment
 
-**`dependencies`**  : \(list\) A list of dependency objects associated with the data package
+**`dependencies`**  : \(list\) A list of dependency objects associated with the data environment
 
-**`private`**  : \(bool\) Whether the data package is to be registered in a public data package index
+**`private`**  : \(bool\) Whether the data environment is to be registered in a public data environment index
 
 ### Dependency Objects
 
