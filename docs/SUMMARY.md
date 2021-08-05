@@ -1,11 +1,7 @@
 # Table of contents
 
 * [Introduction and Installation](README.md)
-
-## Basic Usage <a id="usage"></a>
-
-* [Getting Started with Python](usage/examples.md)
-* [Command Line Interface \(CLI\)](usage/command-line-interface.md)
+* [Getting Started with Python](examples.md)
 
 ## Key Concepts <a id="concepts"></a>
 
@@ -32,4 +28,8 @@
 ---
 
 * [Project Support](project-support.md)
+
+## Under Development
+
+* [Command Line Interface \(CLI\)](under-development/command-line-interface.md)
 

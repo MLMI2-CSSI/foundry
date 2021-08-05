@@ -29,24 +29,42 @@ f.list()
 
 ### Loading Datasets
 
-The Foundry client can be used to access datasets using a `source_id`, e.g. here `"_test_foundry_fashion_mnist_v1.1"`_._ You can retrieve the `source_id` from the [`list()` method](examples.md#listing-datasets).
+The Foundry client can be used to access datasets using a `source_id` or a digital object identifier \(DOI\) e.g. here `"foundry_wei_atom_locating_benchmark"` or `"10.18126/e73h-3w6n"`_._ You can retrieve the `source_id` or the DOI from the [`list()` method](examples.md#listing-datasets).
 
 ```python
 from foundry import Foundry
-f = Foundry()
-f = f.load("_test_foundry_fashion_mnist_v1.1")
+
+f = Foundry(index="mdf")
+f = f.load("10.18126/e73h-3w6n") # Here we are now downloading and caching the data
 ```
 
 This will remotely load the metadata \(e.g., data location, data keys, etc.\) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine.
+
+![](.gitbook/assets/image.png)
 
 Once the data are accessible locally, access the data with the `load_data()` method. Load data allows you to load data from a specific split that is defined for the dataset, here we use `train`.
 
 ```python
 res = f.load_data()
-X,y = res['train']
+imgs = res['train']['input']['imgs']
+coords = res['train']['input']['coords']
+
+
+# Show some images with coordinate overlays
+import matplotlib.pyplot as plt
+
+n_images = 3
+offset = 150
+key_list = list(res['train']['input']['imgs'].keys())[0+offset:n_images+offset]
+
+fig, axs = plt.subplots(1, n_images, figsize=(20,20))
+for i in range(n_images):
+    axs[i].imshow(imgs[key_list[i]])
+    axs[i].scatter(coords[key_list[i]][:,0], 
+                   coords[key_list[i]][:,1], s = 20, c = 'r', alpha=0.5)
 ```
 
-The data are then usable within the `X` and `y` variables. This full example can be found in [`/examples/fashion-mnist/`](https://github.com/MLMI2-CSSI/foundry/tree/master/examples/fashion-mnist).
+![Overlay of a STEM image with atomic coordinate labels \(red dots\)](.gitbook/assets/image%20%281%29.png)
 
 ## Using Foundry on Cloud Computing Resources
 
