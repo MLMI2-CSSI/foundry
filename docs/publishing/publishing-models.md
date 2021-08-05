@@ -6,6 +6,12 @@ description: Information on how to publish models
 
 In addition to datasets, you can publish models \(or even individual Python methods\) to Foundry and run them in the cloud!
 
+
+
+TODO: 
+
+* add bit about environment specification
+
 ## Examples
 
 Model publication example notebook coming soon
