@@ -8,8 +8,6 @@
 * [Overview](concepts/overview.md)
 * [Foundry Datasets](concepts/foundry-datasets.md)
 * [Foundry Models and Functions](concepts/foundry-models-and-functions.md)
-* [Foundry Data Environments](concepts/foundry-data-environments.md)
-* [Foundry Benchmarks](concepts/foundry-benchmarks.md)
 
 ## Publishing
 
@@ -32,4 +30,6 @@
 ## Under Development
 
 * [Command Line Interface \(CLI\)](under-development/command-line-interface.md)
+* [Foundry Benchmarks](under-development/foundry-benchmarks.md)
+* [Foundry Data Environments](under-development/foundry-data-environments.md)
 
