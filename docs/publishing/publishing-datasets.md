@@ -205,5 +205,5 @@ The `publish()` method returns a result object that you can inspect for informat
 ## Future Work
 
 * Add support for wildcard key type specifications
-* Add link to example publication
+* Add example showing how to describe an image-containing folder
 
