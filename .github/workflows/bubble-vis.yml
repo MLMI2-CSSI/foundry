@@ -10,7 +10,6 @@ jobs:
   build:
 
   steps:
-    - name: Checkout code
-      uses: actions/checkout@master
-    - name: Update diagram
-      uses: githubocto/repo-visualizer@0.3.0
+    - uses: actions/checkout@master
+    
+    - uses: githubocto/repo-visualizer@0.3.0
