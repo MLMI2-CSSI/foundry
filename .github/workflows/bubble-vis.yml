@@ -7,7 +7,10 @@ on:
       - bubble-vis
 
 jobs:
-  - name: Checkout code
-    uses: actions/checkout@master
-  - name: Update diagram
-    uses: githubocto/repo-visualizer@0.3.0
+  build:
+
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@master
+    - name: Update diagram
+      uses: githubocto/repo-visualizer@0.3.0
