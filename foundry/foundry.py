@@ -1,34 +1,36 @@
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+from foundry.xtract_method import *
+import time
+import h5py
+import glob
+import json
+import requests
+import mdf_toolbox
+from json2table import convert
+import pandas as pd
+from datetime import date
+from typing import Any
+import multiprocessing
+from mdf_connect_client import MDFConnectClient
+from mdf_forge import Forge
+from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
+from dlhub_sdk.models.servables.keras import KerasModel
+from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
+from dlhub_sdk import DLHubClient
+from collections import namedtuple
+from joblib import Parallel, delayed
+from pydantic import AnyUrl, ValidationError
 from foundry.models import (
     FoundryMetadata,
     FoundryConfig,
     FoundrySpecificationDataset,
     FoundrySpecification,
 )
-from pydantic import AnyUrl, ValidationError
-from joblib import Parallel, delayed
-from collections import namedtuple
-from dlhub_sdk import DLHubClient
-# TODO: do imports nicer
-from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
-from dlhub_sdk.models.servables.keras import KerasModel
-from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
-from mdf_forge import Forge
-from mdf_connect_client import MDFConnectClient
-import multiprocessing
-from typing import Any
-from datetime import date
-import multiprocessing
-import pandas as pd
-from json2table import convert
-import mdf_toolbox
-import requests
-import json
-import glob
-import h5py
-import time
-import os, shutil
-from foundry.xtract_method import *
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import logging
+import os
+import shutil
+logging.disable(logging.INFO)
 
 
 class Foundry(FoundryMetadata):
@@ -43,32 +45,52 @@ class Foundry(FoundryMetadata):
     dlhub_client: Any
     forge_client: Any
     connect_client: Any
+    index = ""
 
     xtract_tokens: Any
 
     def __init__(
-        self, no_browser=False, no_local_server=False, search_index="mdf-test", **data
+        self, no_browser=False, no_local_server=False, index="mdf-test", authorizers=None, **data
     ):
+        """Initialize a Foundry client
+        Args:
+            no_browser (bool):  Whether to open the browser for the Globus Auth URL.
+            no_local_server (bool): Whether a local server is available.
+                    This should be `False` when on remote server (e.g., Google Colab ).
+            index (str): Index to use for search and data publication. Choices `mdf` or `mdf-test`
+            authorizers (dict): A dictionary of authorizers to use, following the `mdf_toolbox` format
+            data (dict): Other arguments, e.g., results from an MDF search result that are used
+                    to populate Foundry metadata fields
+
+        Returns
+        -------
+            an initialized and authenticated Foundry client
+        """
         super().__init__(**data)
-        auths = mdf_toolbox.login(
-            services=[
-                "data_mdf",
-                "mdf_connect",
-                "search",
-                "petrel",
-                "transfer",
-                "dlhub",
-                "openid",
-                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
-            ],
-            app_name="Foundry",
-            make_clients=True,
-            no_browser=no_browser,
-            no_local_server=no_local_server,
-        )
+        self.index = index
+
+        if authorizers:
+            auths = authorizers
+        else:
+            auths = mdf_toolbox.login(
+                services=[
+                    "data_mdf",
+                    "mdf_connect",
+                    "search",
+                    "petrel",
+                    "transfer",
+                    "dlhub",
+                    "openid",
+                    "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
+                ],
+                app_name="Foundry",
+                make_clients=True,
+                no_browser=no_browser,
+                no_local_server=no_local_server,
+            )
 
         self.forge_client = Forge(
-            index=search_index,
+            index=index,
             services=None,
             search_client=auths["search"],
             transfer_client=auths["transfer"],
@@ -76,9 +98,14 @@ class Foundry(FoundryMetadata):
             petrel_authorizer=auths["petrel"],
         )
 
+        if index == "mdf":
+            test = False
+        else:
+            test = True
         # TODO: when release-ready, remove test=True
+
         self.connect_client = MDFConnectClient(
-            authorizer=auths["mdf_connect"], test=True
+            authorizer=auths["mdf_connect"], test=test
         )
 
         self.dlhub_client = DLHubClient(
@@ -87,8 +114,10 @@ class Foundry(FoundryMetadata):
             fx_authorizer=auths[
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
             ],
+            openid_authorizer=auths['openid'],
             force_login=False,
         )
+
 
         self.xtract_tokens = {
             "auth_token": auths["petrel"].access_token,
@@ -98,7 +127,7 @@ class Foundry(FoundryMetadata):
             ].access_token,
         }
 
-    def load(self, name, download=True, globus=True, verbose=False, metadata=None, **kwargs):
+    def load(self, name, download=True, globus=True, verbose=False, metadata=None, authorizers=None, **kwargs):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
@@ -114,35 +143,46 @@ class Foundry(FoundryMetadata):
         -------
             self
         """
+
         # handle empty dataset name (was returning all the datasets)
         if not name:
             raise ValueError("load: No dataset name is given")
 
+        if metadata:
+            res = metadata
+
+        if metadata:
+            res = metadata
+
         # MDF specific logic
-        if not metadata:
+        if is_doi(name) and not metadata:
+            res = self.forge_client.match_resource_types("dataset")
+            res = res.match_dois(name).search()
+
+        else:
             res = self.forge_client.match_field(
                 "mdf.organizations", self.config.organization
             ).match_resource_types("dataset")
             res = res.match_field("mdf.source_id", name).search()
-        else:
-            res = metadata
 
-        # we figured from our tests that at each of these three lines there could be an error
-        # if res is an empty list. (we also see that res will always be an empty list,
-        # never None or not a list)
+        # unpack res, handle if empty
         try:
-            res = res[0] # if search returns multiple results, this automatically uses first result
+            # if search returns multiple results, this automatically uses first result
+            res = res[0]
         except IndexError as e:
             raise Exception("load: No metadata found for given dataset") from e
 
         try:
             res["dataset"] = res["projects"][self.config.metadata_key]
         except KeyError as e:
-            raise Exception("load: not able to index with metadata key {}".format(self.config.metadata_key)) from e
+            raise Exception("load: not able to index with metadata key {}".format(
+                self.config.metadata_key)) from e
 
         del res["projects"][self.config.metadata_key]
 
-        self = Foundry(**res)
+        # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
+        # we should find a way to abstract this.
+        self = Foundry(**res, index=self.index, authorizers=authorizers)
 
         if download is True:  # Add check for package existence
             self.download(
@@ -212,7 +252,7 @@ class Foundry(FoundryMetadata):
 
         for package in packages:
             self = self.load(package)
-            X, y = self.load_data()
+            X, y = self.load_data()  # TODO: update how this is unpacked, out of date
             X["source"] = package
             y["source"] = package
             X_frames.append(X)
@@ -259,22 +299,30 @@ class Foundry(FoundryMetadata):
         data = {}
 
         # Handle splits if they exist. Return as a labeled dictionary of tuples
-        if self.dataset.splits:
-            for split in self.dataset.splits:
-                data[split.label] = self._load_data(file=split.path,
-                                                    source_id=source_id, globus=globus)
-            return data
-        else:
-            return {"data": self._load_data(source_id=source_id, globus=globus)}
+        try:
+            if self.dataset.splits:
+                for split in self.dataset.splits:
+                    data[split.label] = self._load_data(file=split.path,
+                                                        source_id=source_id, globus=globus)
+                return data
+            else:
+                return {"data": self._load_data(source_id=source_id, globus=globus)}
+        except Exception as e:
+            raise Exception(
+                "Metadata not loaded into Foundry object, make sure to call load()") from e
 
     def _repr_html_(self) -> str:
-        title = self.dc['titles'][0]['title']
-        authors = [creator['creatorName'] for creator in self.dc['creators']]
-        authors = '; '.join(authors)
+        if not self.dc:
+            buf = str(self)
+        else:
+            title = self.dc['titles'][0]['title']
+            authors = [creator['creatorName']
+                       for creator in self.dc['creators']]
+            authors = '; '.join(authors)
 
-        buf = f'<h2>{title}</h2>{authors}'
+            buf = f'<h2>{title}</h2>{authors}'
 
-        buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
+            buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
         # buf = f'{buf}<h3>DataCite</h3>{convert(self.dc)}'
         return buf
@@ -306,7 +354,6 @@ class Foundry(FoundryMetadata):
             of dataset. Contains `source_id`, which can be used to check the
             status of the submission
         """
-
         self.connect_client.create_dc_block(
             title=title,
             authors=authors,
@@ -336,7 +383,8 @@ class Foundry(FoundryMetadata):
             title (req)
             authors (req)
             short_name (req)
-            servable_type (req) ("static method", "class method", "keras", "pytorch", "tensorflow", "sklearn")
+            servable_type (req) ("static method", "class method",
+                           "keras", "pytorch", "tensorflow", "sklearn")
             affiliations
             domains
             abstract
@@ -383,7 +431,9 @@ class Foundry(FoundryMetadata):
                                                  options["servable"].get(
                                                      "arch_path", None),
                                                  options["servable"].get(
-                                                     "custom_objects", None)
+                                                     "custom_objects", None),
+                                                 options["servable"].get(
+                                                     "force_tf_keras", False)
                                                  )
         else:
             raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
@@ -537,7 +587,7 @@ class Foundry(FoundryMetadata):
                 download_datasets=True,
             )
         else:
-            # kwargs to pass in for xtract download
+
             source_id = self.mdf["source_id"]
             xtract_config = {
                  "xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
@@ -613,7 +663,7 @@ class Foundry(FoundryMetadata):
 
         return self
 
-    def get_keys(self, type, as_object=False):
+    def get_keys(self, type=None, as_object=False):
         """Get keys for a Foundry dataset
 
         Arguments:
@@ -625,14 +675,24 @@ class Foundry(FoundryMetadata):
                     is False otherwise returns the full key objects.
 
         """
+
         if as_object:
-            return [key for key in self.dataset.keys if key.type == type]
+            if type:
+                return [key for key in self.dataset.keys if key.type == type]
+            else:
+                return [key for key in self.dataset.keys]
+
         else:
-            keys = [key.key for key in self.dataset.keys if key.type == type]
+            if type:
+                keys = [key.key for key in self.dataset.keys if key.type == type]
+            else:
+                keys = [key.key for key in self.dataset.keys]
+
             key_list = []
             for k in keys:
                 key_list = key_list + k
             return key_list
+
 
     def _load_data(self, file=None, source_id=None, globus=True):
 
@@ -652,7 +712,7 @@ class Foundry(FoundryMetadata):
 
             # Check to make sure the path can be created
             try:
-                path_to_file = os.path.join(path,file)
+                path_to_file = os.path.join(path, file)
             except Exception as e:
                 print(f"Unable to find path to file for download: {e}")
                 raise e
@@ -689,12 +749,39 @@ class Foundry(FoundryMetadata):
                 self.dataset.dataframe[self.get_keys("input")],
                 self.dataset.dataframe[self.get_keys("target")],
             )
-        elif self.dataset.data_type == "hdf5":
+
+        elif self.dataset.data_type.value == "hdf5":
             if not file:
                 file = self.config.data_file
-            f = h5py.File(os.path.join(path, file), "r")
-            inputs = [f[i[0:]] for i in self.get_keys("input")]
-            targets = [f[i[0:]] for i in self.get_keys("target")]
-            return (inputs, targets)
+
+            filepath = os.path.join(path, file)
+            f = h5py.File(filepath, "r")
+            special_types = ["input", "target"]
+            tmp_data = {s: {} for s in special_types}
+            for s in special_types:
+                for key in self.get_keys(s):
+                    if isinstance(f[key], h5py.Group):
+                        if is_pandas_pytable(f[key]):
+                            df = pd.read_hdf(filepath, key)
+                            tmp_data[s][key] = df
+                        else:
+                            tmp_data[s][key] = f[key]
+                    elif isinstance(f[key], h5py.Dataset):
+                        tmp_data[s][key] = f[key][0:]
+            return tmp_data
         else:
             raise NotImplementedError
+
+
+def is_pandas_pytable(group):
+    if 'axis0' in group.keys() and 'axis1' in group.keys():
+        return True
+    else:
+        return False
+
+
+def is_doi(string: str):
+    if string.startswith('10.') or string.startswith('https://doi.org/'):
+        return True
+    else:
+        return False
