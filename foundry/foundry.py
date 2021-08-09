@@ -175,8 +175,7 @@ class Foundry(FoundryMetadata):
         try:
             res["dataset"] = res["projects"][self.config.metadata_key]
         except KeyError as e:
-            raise Exception("load: not able to index with metadata key {}".format(
-                self.config.metadata_key)) from e
+            raise Exception(f"load: not able to index with metadata key {self.config.metadata_key}") from e
 
         del res["projects"][self.config.metadata_key]
 
@@ -436,14 +435,14 @@ class Foundry(FoundryMetadata):
                                                      "force_tf_keras", False)
                                                  )
         else:
-            raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
+            raise ValueError(f"Servable type '{options['servable']['type']}' is not recognized, please use one of the following types: \n"
                              "'sklearn'\n"
                              "'keras'\n"
                              "'pytorch'\n"
                              "'tensorflow'\n"
                              "'static method'\n"
                              "'class method'\n"
-                             .format(options["servable"]["type"]))
+                             )
         # publish it
         model_info.set_name(options["short_name"])
         model_info.set_title(options["title"])
@@ -488,7 +487,7 @@ class Foundry(FoundryMetadata):
             validate_against_dlhub_schema(model_info.to_dict(), 'servable')
             print("DLHub schema successfully validated")
         except Exception as e:
-            print("Failed to validate schema properly: {}".format(e))
+            print(f"Failed to validate schema properly: {e}")
             raise e
 
         res = self.dlhub_client.publish_servable(model_info)
@@ -576,7 +575,7 @@ class Foundry(FoundryMetadata):
                     print("Dataset will be redownloaded, expected file is missing")
 
         res = self.forge_client.search(
-            "mdf.source_id:{name}".format(name=self.mdf["source_id"]), advanced=True
+            f"mdf.source_id:{self.mdf['source_id']}", advanced=True
         )
         if globus:
             self.forge_client.globus_download(
@@ -643,7 +642,7 @@ class Foundry(FoundryMetadata):
         num_cores = multiprocessing.cpu_count()
 
         def start_download(ds, interval=interval, globus=False):
-            print("=== Fetching Data Package {} ===".format(ds.name))
+            print(f"=== Fetching Data Package {ds.name} ===")
             f = Foundry().load(ds.name, download=False)
             f = f.download(interval=interval, globus=globus)
             return {"success": True}
