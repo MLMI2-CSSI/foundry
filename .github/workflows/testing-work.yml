@@ -4,12 +4,13 @@ on:
   pull_request:
     branches:
       - dev
-      - main 
+      - main
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9]
