@@ -11,7 +11,7 @@ DLHub documentation for model publication and running information can be found [
 This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure".
 
 # Other Support
-Foundry brings together many components in the materials data ecosystem. Including MAST-ML, the Data and Learning Hub for Science (DLHub), and The Materials Data Facility (MDF).
+Foundry brings together many components in the materials data ecosystem. Including [MAST-ML](https://mastmldocs.readthedocs.io/en/latest/), the [Data and Learning Hub for Science](https://www.dlhub.org) (DLHub), and the [Materials Data Facility](https://materialsdatafacility.org) (MDF).
 
 ## MAST-ML
 This work was supported by the National Science Foundation (NSF) SI2 award No. 1148011 and DMREF award number DMR-1332851
