@@ -25,6 +25,7 @@ from foundry.models import (
     FoundryConfig,
     FoundrySpecificationDataset,
     FoundrySpecification,
+    FoundryDataset
 )
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
@@ -147,7 +148,7 @@ class Foundry(FoundryMetadata):
         # handle empty dataset name (was returning all the datasets)
         if not name:
             raise ValueError("load: No dataset name is given")
-            
+
         if metadata:
             res = metadata
 
@@ -182,7 +183,12 @@ class Foundry(FoundryMetadata):
 
         # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
-        self = Foundry(**res, index=self.index, authorizers=authorizers)
+
+        fdataset = FoundryDataset(**res['dataset'])
+        self.dc = res['dc']
+        self.mdf = res['mdf']
+        self.dataset = fdataset
+
 
         if download is True:  # Add check for package existence
             self.download(
@@ -753,7 +759,7 @@ class Foundry(FoundryMetadata):
         elif self.dataset.data_type.value == "hdf5":
             if not file:
                 file = self.config.data_file
-            
+
             filepath = os.path.join(path, file)
             f = h5py.File(filepath, "r")
             special_types = ["input", "target"]
