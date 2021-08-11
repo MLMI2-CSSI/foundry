@@ -147,7 +147,7 @@ class Foundry(FoundryMetadata):
         # handle empty dataset name (was returning all the datasets)
         if not name:
             raise ValueError("load: No dataset name is given")
-            
+
         if metadata:
             res = metadata
 
@@ -175,8 +175,7 @@ class Foundry(FoundryMetadata):
         try:
             res["dataset"] = res["projects"][self.config.metadata_key]
         except KeyError as e:
-            raise Exception("load: not able to index with metadata key {}".format(
-                self.config.metadata_key)) from e
+            raise Exception(f"load: not able to index with metadata key {self.config.metadata_key}") from e
 
         del res["projects"][self.config.metadata_key]
 
@@ -436,14 +435,14 @@ class Foundry(FoundryMetadata):
                                                      "force_tf_keras", False)
                                                  )
         else:
-            raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
+            raise ValueError(f"Servable type '{options['servable']['type']}' is not recognized, please use one of the following types: \n"
                              "'sklearn'\n"
                              "'keras'\n"
                              "'pytorch'\n"
                              "'tensorflow'\n"
                              "'static method'\n"
                              "'class method'\n"
-                             .format(options["servable"]["type"]))
+                             )
         # publish it
         model_info.set_name(options["short_name"])
         model_info.set_title(options["title"])
@@ -488,7 +487,7 @@ class Foundry(FoundryMetadata):
             validate_against_dlhub_schema(model_info.to_dict(), 'servable')
             print("DLHub schema successfully validated")
         except Exception as e:
-            print("Failed to validate schema properly: {}".format(e))
+            print(f"Failed to validate schema properly: {e}")
             raise e
 
         res = self.dlhub_client.publish_servable(model_info)
@@ -556,27 +555,28 @@ class Foundry(FoundryMetadata):
         path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
 
         if os.path.isdir(path):
-            # if directory is present, but doesn't have the correct number of files inside, dataset will attempt to redownload
-            dir_length = len(os.listdir(path))
+            #if directory is present, but doesn't have the correct number of files inside, dataset will attempt to redownload
             if self.dataset.splits:
-                # if metadata indicates splits, check that the directory has as many files as there are splits
-                if(dir_length == len(self.dataset.splits)):
-                    return self
+                #array to keep track of missing files
+                missing_files = []
+                for split in self.dataset.splits:
+                    if not os.path.isfile(os.path.join(path, split.path)):
+                        missing_files.append(split.path)
+                #if number of missing files is greater than zero, redownload with informative message
+                if len(missing_files) > 0:
+                    print(f"Dataset will be redownloaded, following files are missing: {missing_files}")
                 else:
-                    print(
-                        "Unexpected number of files in directory -- dataset will be redownloaded.")
+                    return self
             else:
-                # in the case of no splits, ensure the directory contains the data file
-                if(dir_length == 1):
+                # in the case of no splits, ensure the directory contains at least one file
+                if(len(os.listdir(path)) >= 1):
                     return self
                 else:
-                    print(
-                        "Unexpected number of files in directory -- dataset will be redownloaded.")
+                    print("Dataset will be redownloaded, expected file is missing")
 
         res = self.forge_client.search(
-            f'mdf.source_id: {self.mdf["source_id"]}', advanced=True
+            f"mdf.source_id:{self.mdf['source_id']}", advanced=True
         )
-
         if globus:
             self.forge_client.globus_download(
                 res,
@@ -586,31 +586,34 @@ class Foundry(FoundryMetadata):
                 download_datasets=True,
             )
         else:
+
             source_id = self.mdf["source_id"]
             xtract_config = {
-                "xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
-                "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
-                "base_url": "https://data.materialsdatafacility.org",
-                "folder_to_crawl": f"/foundry/{source_id}/",
-                "grouper": "matio"
-            }
+                 "xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
+                 "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
+                 "base_url": "https://data.materialsdatafacility.org",
+                 "folder_to_crawl": f"/foundry/{source_id}/",
+                 "grouper": "matio"
+                }
             xtract_https_download(self, verbose=verbose, **xtract_config)
 
-        # after download check making sure directory exists, contains proper amount of files
+        # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
-            # checking for proper number of files downloaded
-            dir_length = len(os.listdir(path))
+            #checking all necessary files are present
             if self.dataset.splits:
-                if(dir_length != len(self.dataset.splits)):
-                    raise FileNotFoundError(
-                        "Incorrect number of files in download directory")
+                missing_files = []
+                for split in self.dataset.splits:
+                    if not os.path.isfile(os.path.join(path, split.path)):
+                        #keeping track of all files not downloaded
+                        missing_files.append(split.path)
+                if len(missing_files) > 0:
+                    raise FileNotFoundError(f"Downloaded directory does not contain the following files: {missing_files}")
+
             else:
-                if(dir_length != 1):
-                    raise FileNotFoundError(
-                        "Incorrect number of files in download directory")
+                if(len(os.listdir(path)) < 1):
+                    raise FileNotFoundError("Downloaded directory does not contain the expected file")
         else:
-            raise NotADirectoryError(
-                "Unable to create directory to download data")
+            raise NotADirectoryError("Unable to create directory to download data")
 
         return self
 
@@ -639,7 +642,7 @@ class Foundry(FoundryMetadata):
         num_cores = multiprocessing.cpu_count()
 
         def start_download(ds, interval=interval, globus=False):
-            print("=== Fetching Data Package {} ===".format(ds.name))
+            print(f"=== Fetching Data Package {ds.name} ===")
             f = Foundry().load(ds.name, download=False)
             f = f.download(interval=interval, globus=globus)
             return {"success": True}
@@ -705,17 +708,17 @@ class Foundry(FoundryMetadata):
             if not file:
                 file = self.config.dataframe_file
 
+
             # Check to make sure the path can be created
             try:
                 path_to_file = os.path.join(path, file)
             except Exception as e:
-                print("Unable to find path to file for download: {}".format(e))
+                print(f"Unable to find path to file for download: {e}")
                 raise e
 
             # Check to see whether file exists at path
             if not os.path.isfile(path_to_file):
-                raise FileNotFoundError(
-                    "No file found at expected path: {}".format(path_to_file))
+                raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
             # If the file is not local, fetch the contents with Globus
             # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
@@ -724,25 +727,21 @@ class Foundry(FoundryMetadata):
                     path_to_file
                 )
             except Exception as e:
-                print("Reading {} as JSON failed: {} \n".format(
-                    file, e), "Now attempting to read as JSONL")
+                print(f"Reading {file} as JSON failed: {e} \n", "Now attempting to read as JSONL")
                 try:
                     # Try to read individual lines instead
                     self.dataset.dataframe = pd.read_json(
                         path_to_file, lines=True
                     )
                 except Exception as f:
-                    print("Reading {} as JSONL failed: {} \n".format(
-                        file, f), "Now attempting to read as CSV")
+                    print(f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
                     try:
-                        # Try to read as CSV instead
+                        #Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
                             path_to_file
                         )
-
                     except Exception as g:
-                        print(
-                            "Reading {} as CSV failed, unable to load data properly: {}".format(file, g))
+                        print(f"Reading {file} as CSV failed, unable to load data properly: {g}")
                         raise e
 
             return (
@@ -753,7 +752,7 @@ class Foundry(FoundryMetadata):
         elif self.dataset.data_type.value == "hdf5":
             if not file:
                 file = self.config.data_file
-            
+
             filepath = os.path.join(path, file)
             f = h5py.File(filepath, "r")
             special_types = ["input", "target"]
@@ -785,3 +784,4 @@ def is_doi(string: str):
         return True
     else:
         return False
+    
