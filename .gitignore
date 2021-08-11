@@ -2,5 +2,3 @@
 *.DS_STORE
 *.pyc
 *.idea
-/docs
-/.github
