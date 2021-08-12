@@ -35,6 +35,11 @@ res_cred = mdf_toolbox.confidential_login(client_id=client_id,
 test_dataset = "_test_foundry_iris_dev_v2.1"
 expected_title = "Iris Dataset"
 
+dataset_doi = '10.18126/e73h-3w6n'
+doi_dataset_title = 'Benchmark Dataset for Locating Atoms in STEM images'
+hdf5_dataset = 'foundry_wei_atom_locating_benchmark_v1.1'
+
+
 #Kept the Old metadata format in case we ever want to refer back
 old_test_metadata = {
     "inputs": ["sepal length (cm)", "sepal width (cm)", "petal length (cm)", "petal width (cm)"],
@@ -112,7 +117,7 @@ test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-
 
 
 #Quick function to delete any downloaded test data
-def _delete_test_data(foundry_obj):
+def _delete_test_data(foundry_obj, test_dataset):
     path = os.path.join(foundry_obj.config.local_cache_dir, test_dataset)
     if os.path.isdir(path):
         shutil.rmtree(path)
@@ -160,19 +165,19 @@ def test_download_https():
 
     f = Foundry(authorizers=res_cred)
 
-    _delete_test_data(f)
+    _delete_test_data(f, test_dataset)
 
     f = f.load(test_dataset, download=True, globus=False, authorizers=res_cred)
     assert f.dc["titles"][0]["title"] == expected_title
 
-    _delete_test_data(f)
+    _delete_test_data(f, test_dataset)
 
 
 def test_dataframe_load():
 
     f = Foundry(authorizers=res_cred)
 
-    _delete_test_data(f)
+    _delete_test_data(f, test_dataset)
 
     f = f.load(test_dataset, download=True, globus=False, authorizers=res_cred)
     res = f.load_data()
@@ -183,4 +188,22 @@ def test_dataframe_load():
     assert len(y) > 1
     assert isinstance(y, pd.DataFrame)
 
-    _delete_test_data(f)
+    _delete_test_data(f, test_dataset)
+
+
+def test_doi_load():
+    f = Foundry(index='mdf', authorizers=res_cred)
+    f = f.load(dataset_doi, download=False, authorizers=res_cred)
+
+    assert f.dc["titles"][0]["title"] == doi_dataset_title
+
+def test_hdf5_load():
+
+    f = Foundry(index = 'mdf', authorizers=res_cred)
+
+    _delete_test_data(f, hdf5_dataset)
+
+    res = f.load(dataset_doi, download=True, globus=False, authorizers=res_cred).load_data()
+    assert isinstance(res, dict)
+
+    _delete_test_data(f, hdf5_dataset)
