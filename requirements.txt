@@ -13,3 +13,4 @@ json2table
 funcx==0.0.6a5
 scikit-learn
 tensorflow
+tables 
