@@ -366,9 +366,9 @@ class Foundry(FoundryMetadata):
             subjects=kwargs.get("tags", ["machine learning", "foundry"]),
             publisher=kwargs.get("publisher", ""),
             publication_year=publication_year,
-            resource_type=resource_type
-            description=kwargs.get("description", "")
-            dataset_doi=kwargs.get("dataset_doi", "")
+            resource_type=resource_type,
+            description=kwargs.get("description", ""),
+            dataset_doi=kwargs.get("dataset_doi", ""),
             related_dois=kwargs.get("related_dois", [])
         )
         self.connect_client.add_organization(self.config.organization)
