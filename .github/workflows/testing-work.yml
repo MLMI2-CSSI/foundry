@@ -5,6 +5,9 @@ on:
     branches:
       - dev
       - main
+  push:
+    branches:
+      - add-codecov
 
 jobs:
   build:
@@ -51,7 +54,7 @@ jobs:
         pip install pytest
         pip install pytest-cov
         pytest --cov=./ --cov-report=xml
-        
+
     - uses: actions/checkout@master
     - name: "Upload coverage to Codecov"
       uses: codecov/codecov-action@v2
