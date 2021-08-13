@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - dev
-      - main 
+      - main
 
 jobs:
   build:
@@ -45,3 +45,15 @@ jobs:
     - name: Test with pytest
       run: |
         pytest -s tests/test_foundry_gha.py
+
+    - name: Generate coverage report
+      run: |
+        pip install pytest
+        pip install pytest-cov
+        pytest --cov=./ --cov-report=xml
+        
+    - uses: actions/checkout@master
+    - name: "Upload coverage to Codecov"
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
