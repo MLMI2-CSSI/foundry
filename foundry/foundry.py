@@ -327,7 +327,7 @@ class Foundry(FoundryMetadata):
         return buf
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
-                publication_year=None, resource_type=None, **kwargs,):
+                publication_year=None, **kwargs,):
         """Submit a dataset for publication
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
@@ -340,8 +340,6 @@ class Foundry(FoundryMetadata):
             publication_year (int): Year of dataset publication. If None, will
                 be set to the current calendar year by MDF Connect Client.
                 (default: $current_year)
-            resource_type (str): The type of resource. Except in unusual cases, this should be 'Dataset'
-                (default: 'Dataset')
 
         Keyword Args:
             affiliations (list): List of author affiliations
@@ -366,7 +364,6 @@ class Foundry(FoundryMetadata):
             subjects=kwargs.get("tags", ["machine learning", "foundry"]),
             publisher=kwargs.get("publisher", ""),
             publication_year=publication_year,
-            resource_type=resource_type,
             description=kwargs.get("description", ""),
             dataset_doi=kwargs.get("dataset_doi", ""),
             related_dois=kwargs.get("related_dois", [])
