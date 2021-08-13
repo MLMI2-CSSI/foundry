@@ -54,6 +54,13 @@ jobs:
         pip install pytest-cov
         pytest --cov=./foundry --cov-report=xml
 
+    - name: test
+      run: |
+        cat ./coverage.xml
+        cat "now printing contents\n"
+        pwd
+        ls -la
+
     - uses: actions/checkout@master
     - name: "Upload coverage to Codecov"
       uses: codecov/codecov-action@v2
