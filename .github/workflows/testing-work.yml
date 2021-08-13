@@ -51,13 +51,11 @@ jobs:
 
     - name: Generate coverage report
       run: |
-        pip install pytest
         pip install pytest-cov
-        pytest --cov=foundry > ./tests/coverage.xml
+        pytest --cov=./foundry --cov-report=xml
 
     - uses: actions/checkout@master
     - name: "Upload coverage to Codecov"
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v2
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./tests/coverage.xml
