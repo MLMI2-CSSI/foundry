@@ -57,7 +57,7 @@ jobs:
 
     - uses: actions/checkout@master
     - name: "Upload coverage to Codecov"
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./tests/coverage.xml
