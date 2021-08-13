@@ -53,7 +53,7 @@ jobs:
       run: |
         pip install pytest
         pip install pytest-cov
-        pytest --cov=foundry > tests/coverage.xml
+        pytest --cov=foundry > ./tests/coverage.xml
 
     - uses: actions/checkout@master
     - name: "Upload coverage to Codecov"
