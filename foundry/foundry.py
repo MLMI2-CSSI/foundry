@@ -346,6 +346,10 @@ class Foundry(FoundryMetadata):
             tags (list): List of tags to apply to the data package
             short_name (string): Shortened/abbreviated name of the data package
             publisher (string): Data publishing entity (e.g. MDF, Zenodo, etc.)
+            description (str): A description of the dataset.
+            dataset_doi (str): The DOI for this dataset (not an associated paper).
+            related_dois (list): DOIs related to this dataset,
+                    not including the dataset's own DOI (for example, an associated paper's DOI).
 
         Returns
         -------
@@ -360,6 +364,9 @@ class Foundry(FoundryMetadata):
             subjects=kwargs.get("tags", ["machine learning", "foundry"]),
             publisher=kwargs.get("publisher", ""),
             publication_year=publication_year,
+            description=kwargs.get("description", ""),
+            dataset_doi=kwargs.get("dataset_doi", ""),
+            related_dois=kwargs.get("related_dois", [])
         )
         self.connect_client.add_organization(self.config.organization)
         self.connect_client.set_project_block(
@@ -784,4 +791,3 @@ def is_doi(string: str):
         return True
     else:
         return False
-    
