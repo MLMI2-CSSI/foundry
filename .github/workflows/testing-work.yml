@@ -57,7 +57,7 @@ jobs:
     - name: test
       run: |
         cat ./coverage.xml
-        cat "now printing contents\n"
+        echo "now printing contents\n"
         pwd
         ls -la
 
