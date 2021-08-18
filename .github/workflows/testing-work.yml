@@ -61,13 +61,9 @@ jobs:
         pwd
         ls -la
 
-    - name: install directory attempt
+    - name: Upload coverage to Codecov
       run: |
-        pip install -e .
+        curl -Os https://uploader.codecov.io/v0.1.0_4653/linux/codecov
 
-    - uses: actions/checkout@master
-    - name: "Upload coverage to Codecov"
-      uses: codecov/codecov-action@v2
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage.xml
+        chmod +x codecov
+        ./codecov -t ${{ secrets.CODECOV_TOKEN }}
