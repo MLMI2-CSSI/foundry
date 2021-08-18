@@ -61,6 +61,10 @@ jobs:
         pwd
         ls -la
 
+    - name: install directory attempt
+      run: |
+        pip install -e .
+
     - uses: actions/checkout@master
     - name: "Upload coverage to Codecov"
       uses: codecov/codecov-action@v2
