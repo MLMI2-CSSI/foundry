@@ -1,15 +1,14 @@
 name: codecov
 
 on:
-  pull_request:
-    branches:
-      - dev
-      - main
+  workflow_run:
+    workflows: ["testing-work"]
+    types:
+      - completed
 
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
