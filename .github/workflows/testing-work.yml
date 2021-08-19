@@ -7,6 +7,8 @@ on:
       - main
 
 jobs:
+
+- job: build
   runs-on: ubuntu-latest
   timeout-minutes: 10
   strategy:
@@ -16,8 +18,6 @@ jobs:
   env:
     CLIENT_ID: ${{ secrets.CLIENT_ID }}
     CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-
-- job: build
   steps:
   - uses: actions/checkout@v2
   - name: Set up Python ${{ matrix.python-version }}
