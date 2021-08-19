@@ -45,15 +45,3 @@ jobs:
     - name: Test with pytest
       run: |
         pytest -s tests/test_foundry_gha.py
-
-    - name: Generate coverage report
-      run: |
-        pip install pytest-cov
-        pytest --cov=./foundry --cov-report=xml
-
-    - name: Upload coverage to Codecov
-      run: |
-        curl -Os https://uploader.codecov.io/v0.1.0_4653/linux/codecov
-
-        chmod +x codecov
-        ./codecov -t ${{ secrets.CODECOV_TOKEN }}
