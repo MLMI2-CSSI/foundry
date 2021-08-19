@@ -5,9 +5,6 @@ on:
     branches:
       - dev
       - main
-  push:
-    branches:
-      - add-codecov
 
 jobs:
   build:
@@ -53,13 +50,6 @@ jobs:
       run: |
         pip install pytest-cov
         pytest --cov=./foundry --cov-report=xml
-
-    - name: test
-      run: |
-        cat ./coverage.xml
-        echo "now printing contents\n"
-        pwd
-        ls -la
 
     - name: Upload coverage to Codecov
       run: |
