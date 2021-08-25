@@ -567,6 +567,8 @@ class Foundry(FoundryMetadata):
                 #array to keep track of missing files
                 missing_files = []
                 for split in self.dataset.splits:
+                    if split.path[0] == '/':
+                        split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
                         missing_files.append(split.path)
                 #if number of missing files is greater than zero, redownload with informative message
@@ -610,6 +612,8 @@ class Foundry(FoundryMetadata):
             if self.dataset.splits:
                 missing_files = []
                 for split in self.dataset.splits:
+                    if split.path[0] == '/':
+                        split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
                         #keeping track of all files not downloaded
                         missing_files.append(split.path)
