@@ -567,6 +567,8 @@ class Foundry(FoundryMetadata):
                 #array to keep track of missing files
                 missing_files = []
                 for split in self.dataset.splits:
+                    if split.path[0] == '/':
+                        split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
                         missing_files.append(split.path)
                 #if number of missing files is greater than zero, redownload with informative message
@@ -596,7 +598,7 @@ class Foundry(FoundryMetadata):
 
             source_id = self.mdf["source_id"]
             xtract_config = {
-                 "xtract_base_url": "http://xtract-crawler-4.eba-ghixpmdf.us-east-1.elasticbeanstalk.com",
+                 "xtract_base_url": "http://xtractcrawler5-env.eba-akbhvznm.us-east-1.elasticbeanstalk.com/",
                  "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
                  "base_url": "https://data.materialsdatafacility.org",
                  "folder_to_crawl": f"/foundry/{source_id}/",
@@ -610,6 +612,8 @@ class Foundry(FoundryMetadata):
             if self.dataset.splits:
                 missing_files = []
                 for split in self.dataset.splits:
+                    if split.path[0] == '/':
+                        split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
                         #keeping track of all files not downloaded
                         missing_files.append(split.path)

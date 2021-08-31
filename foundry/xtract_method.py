@@ -9,7 +9,6 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 def xtract_https_download(foundryObj, verbose=False, **kwargs):
     source_id = foundryObj.mdf["source_id"]
     xtract_base_url = kwargs.get("xtract_base_url")
-
     # MDF Materials Data at NCSA
     source_ep_id = kwargs.get("source_ep_id")
     base_url = kwargs.get("base_url")
@@ -21,7 +20,7 @@ def xtract_https_download(foundryObj, verbose=False, **kwargs):
     auth_token = foundryObj.xtract_tokens["auth_token"]
     transfer_token = foundryObj.xtract_tokens["transfer_token"]
     funcx_token = foundryObj.xtract_tokens["funcx_token"]
-
+    
     headers = {
         "Authorization": auth_token,
         "Transfer": transfer_token,
@@ -42,7 +41,7 @@ def xtract_https_download(foundryObj, verbose=False, **kwargs):
         "dir_paths": [folder_to_crawl],
         "grouper": grouper,
     }
-    tokens = {"Transfer": transfer_token, "Authorization": funcx_token}
+    tokens = {"Transfer": transfer_token, "FuncX": funcx_token, "Authorization": auth_token}
     crawl_req = requests.post(
         f"{xtract_base_url}/crawl",
         json={"endpoints": [first_ep_dict], "tokens": tokens},
