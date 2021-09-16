@@ -25,6 +25,7 @@ from foundry.models import (
     FoundryConfig,
     FoundrySpecificationDataset,
     FoundrySpecification,
+    FoundryDataset
 )
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
@@ -181,7 +182,12 @@ class Foundry(FoundryMetadata):
 
         # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
-        self = Foundry(**res, index=self.index, authorizers=authorizers)
+
+        fdataset = FoundryDataset(**res['dataset'])
+        self.dc = res['dc']
+        self.mdf = res['mdf']
+        self.dataset = fdataset
+
 
         if download is True:  # Add check for package existence
             self.download(
