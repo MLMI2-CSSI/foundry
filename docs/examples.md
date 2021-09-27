@@ -35,7 +35,7 @@ The Foundry client can be used to access datasets using a `source_id` or a digit
 from foundry import Foundry
 
 f = Foundry(index="mdf")
-f = f.load("10.18126/e73h-3w6n") # Here we are now downloading and caching the data
+f.load("10.18126/e73h-3w6n") # Here we are now downloading and caching the data
 ```
 
 This will remotely load the metadata \(e.g., data location, data keys, etc.\) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine.
@@ -82,6 +82,6 @@ This method may be slow for large datasets and datasets with many files
 
 ```python
 f.load(globus=False)
-res = f.load_data()
+data = f.load_data()
 ```
 
