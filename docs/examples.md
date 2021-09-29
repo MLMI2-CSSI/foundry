@@ -71,7 +71,7 @@ for i in range(n_images):
 Foundry works with common cloud computing providers \(e.g., the NSF sponsored Jetstream and Google Colab\). On these resources, simply add the following arguments to use a cloud-compatible authentication flow.
 
 ```python
-f = Foundry(no_browser=True, no_local_server=True)
+f = Foundry(index="mdf", no_browser=True, no_local_server=True)
 ```
 
 When downloading data, add the following argument to download via HTTPS.
@@ -81,7 +81,7 @@ This method may be slow for large datasets and datasets with many files
 {% endhint %}
 
 ```python
-f.load(globus=False)
+f.load(download=True, globus=False)
 data = f.load_data()
 ```
 
