@@ -1,9 +1,0 @@
-{
-  "name": "Fashion MNIST Image Storing",
-  "version": "1.0.0",
-  "description": "Storing hdf5 image files",
-  "private":true,
-  "dependencies":{
-    "_test_foundry_fashion_mnist_v1.1": "1.1"
-  }
-}
