@@ -13,10 +13,10 @@ from typing import Any
 import multiprocessing
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
-from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
-from dlhub_sdk.models.servables.keras import KerasModel
-from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
-from dlhub_sdk import DLHubClient
+# from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
+# from dlhub_sdk.models.servables.keras import KerasModel
+# from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
+# from dlhub_sdk import DLHubClient
 from collections import namedtuple
 from joblib import Parallel, delayed
 from pydantic import AnyUrl, ValidationError
@@ -43,7 +43,7 @@ class Foundry(FoundryMetadata):
     """
 
     # transfer_client: Any
-    dlhub_client: Any
+    # dlhub_client: Any
     forge_client: Any
     connect_client: Any
     index = ""
@@ -109,15 +109,16 @@ class Foundry(FoundryMetadata):
             authorizer=auths["mdf_connect"], test=test
         )
 
-        self.dlhub_client = DLHubClient(
-            dlh_authorizer=auths["dlhub"],
-            search_client=auths["search"],
-            fx_authorizer=auths[
-                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
-            ],
-            openid_authorizer=auths['openid'],
-            force_login=False,
-        )
+        ## TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
+        # self.dlhub_client = DLHubClient(
+        #     dlh_authorizer=auths["dlhub"],
+        #     search_client=auths["search"],
+        #     fx_authorizer=auths[
+        #         "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
+        #     ],
+        #     openid_authorizer=auths['openid'],
+        #     force_login=False,
+        # )
 
 
         self.xtract_tokens = {
@@ -265,22 +266,22 @@ class Foundry(FoundryMetadata):
 
         return pd.concat(X_frames), pd.concat(y_frames)
 
-    def run(self, name, inputs, **kwargs):
-        """Run a model on data
-
-        Args:
-           name (str): DLHub model name
-           inputs: Data to send to DLHub as inputs (should be JSON serializable)
-
-        Returns
-        -------
-             Returns results after invocation via the DLHub service
-
-        TODO:
-        -------
-        - Pass **kwargs through to DLHub client and document kwargs
-        """
-        return self.dlhub_client.run(name, inputs=inputs)
+    # def run(self, name, inputs, **kwargs):
+    #     """Run a model on data
+    #
+    #     Args:
+    #        name (str): DLHub model name
+    #        inputs: Data to send to DLHub as inputs (should be JSON serializable)
+    #
+    #     Returns
+    #     -------
+    #          Returns results after invocation via the DLHub service
+    #
+    #     TODO:
+    #     -------
+    #     - Pass **kwargs through to DLHub client and document kwargs
+    #     """
+    #     return self.dlhub_client.run(name, inputs=inputs)
 
     def load_data(self, source_id=None, globus=True):
         """Load in the data associated with the prescribed dataset
@@ -383,129 +384,131 @@ class Foundry(FoundryMetadata):
         res = self.connect_client.submit_dataset(update=update)
         return res
 
-    def describe_model(self):
-        pass
-        # maybe have whole fxn for model describing? tbd
-
-    def publish_model(self, options):
-        """Submit a model or function for publication
-        Args:
-            options: dict of all possible options
-        Options keys:
-            title (req)
-            authors (req)
-            short_name (req)
-            servable_type (req) ("static method", "class method",
-                           "keras", "pytorch", "tensorflow", "sklearn")
-            affiliations
-            domains
-            abstract
-            references
-            requirements (dict of library:version keypairs)
-            module (if Python method)
-            function  (if Python method)
-            inputs (not needed for TF) (dict of options)
-            outputs (not needed for TF)
-            methods (e.g. research methods)
-            DOI
-            publication_year (advanced)
-            version (advanced)
-            visibility (dict of users and groups, each a list)
-            funding reference
-            rights
-
-            TODO:
-            alternate identifier (to add an identifier of this artifact in another service)
-            add file
-            add directory
-            add files
-
-        """
-        # TODO: pick nicer way of handling defaults for things besides get (since if the DLHub default changes, we'd be
-        #   overwriting it
-
-        # TODO: add exception handling for key options
-
-        # TODO: make this work for any model type, with if-else
-        if options["servable"]["type"] == "sklearn":
-            model_info = ScikitLearnModel.create_model(options["servable"]["filepath"],
-                                                       options["servable"]["n_input_columns"],
-                                                       options["servable"].get(
-                                                           "classes", None),
-                                                       options["servable"].get(
-                                                           "serialization_method", "pickle")
-                                                       )
-        # TODO: fix weird M1 error with TF
-        elif options["servable"]['type'] == "keras":
-            model_info = KerasModel.create_model(options["servable"]["model_path"],
-                                                 options["servable"].get(
-                                                     "output_names", None),
-                                                 options["servable"].get(
-                                                     "arch_path", None),
-                                                 options["servable"].get(
-                                                     "custom_objects", None),
-                                                 options["servable"].get(
-                                                     "force_tf_keras", False)
-                                                 )
-        else:
-            raise ValueError(f"Servable type '{options['servable']['type']}' is not recognized, please use one of the following types: \n"
-                             "'sklearn'\n"
-                             "'keras'\n"
-                             "'pytorch'\n"
-                             "'tensorflow'\n"
-                             "'static method'\n"
-                             "'class method'\n"
-                             )
-        # publish it
-        model_info.set_name(options["short_name"])
-        model_info.set_title(options["title"])
-        # TODO: fix bug where if you put in name without comma, get list index out of range error
-        model_info.set_authors(
-            options["authors"], options.get("affiliations", []))
-        # TODO: dont pass in {} as default, overwrites everything -- should def document this
-        # TODO: consider whether that's desired functionality (should users be able to specify 1 or 2 requirements, but
-        #   the container still has other pre-loaded dependencies?
-        # model_info.add_requirements(options.get("requirements", {}))
-        model_info.set_domains(options.get("domains", []))
-        # TODO: can't default to empty strings, handle
-        # model_info.set_abstract(options.get("abstract", ""))
-        # model_info.set_methods(options.get("methods", ""))
-        # TODO: ask Ben if user should set this, check what happens if they dont
-        # model_info.set_version(kwargs.get("version", ""))
-
-        # TODO: add dict for rights
-        # model_info.add_rights()
-
-        # advanced use only (most users will not know DOI)
-        if options.get("doi"):
-            model_info.set_doi(options.get("doi"))
-        # advanced use only
-        if options.get("publication_year"):
-            model_info.set_publication_year(options.get("publication_year"))
-
-        # TODO: parse dict of lists
-        # model_info.set_visibility()
-
-        # TODO: parse dict of references (need to loop)
-        # model_info.add_related_identifier()
-
-        # TODO: parse dict of options (need to loop)
-        # model_info.add_funding_reference()
-
-        # TODO: pass dict of data_type, description, shape (opt), item_type (opt) and kwargs
-        # model_info.set_inputs()
-        # model_info.set_outputs()
-
-        try:
-            validate_against_dlhub_schema(model_info.to_dict(), 'servable')
-            print("DLHub schema successfully validated")
-        except Exception as e:
-            print(f"Failed to validate schema properly: {e}")
-            raise e
-
-        res = self.dlhub_client.publish_servable(model_info)
-
-        return res
+    # TODO: come back and address DLHub code
+    #
+    # def describe_model(self):
+    #     pass
+    #     # maybe have whole fxn for model describing? tbd
+    #
+    # def publish_model(self, options):
+    #     """Submit a model or function for publication
+    #     Args:
+    #         options: dict of all possible options
+    #     Options keys:
+    #         title (req)
+    #         authors (req)
+    #         short_name (req)
+    #         servable_type (req) ("static method", "class method",
+    #                        "keras", "pytorch", "tensorflow", "sklearn")
+    #         affiliations
+    #         domains
+    #         abstract
+    #         references
+    #         requirements (dict of library:version keypairs)
+    #         module (if Python method)
+    #         function  (if Python method)
+    #         inputs (not needed for TF) (dict of options)
+    #         outputs (not needed for TF)
+    #         methods (e.g. research methods)
+    #         DOI
+    #         publication_year (advanced)
+    #         version (advanced)
+    #         visibility (dict of users and groups, each a list)
+    #         funding reference
+    #         rights
+    #
+    #         TODO:
+    #         alternate identifier (to add an identifier of this artifact in another service)
+    #         add file
+    #         add directory
+    #         add files
+    #
+    #     """
+    #     # TODO: pick nicer way of handling defaults for things besides get (since if the DLHub default changes, we'd be
+    #     #   overwriting it
+    #
+    #     # TODO: add exception handling for key options
+    #
+    #     # TODO: make this work for any model type, with if-else
+    #     if options["servable"]["type"] == "sklearn":
+    #         model_info = ScikitLearnModel.create_model(options["servable"]["filepath"],
+    #                                                    options["servable"]["n_input_columns"],
+    #                                                    options["servable"].get(
+    #                                                        "classes", None),
+    #                                                    options["servable"].get(
+    #                                                        "serialization_method", "pickle")
+    #                                                    )
+    #     # TODO: fix weird M1 error with TF
+    #     elif options["servable"]['type'] == "keras":
+    #         model_info = KerasModel.create_model(options["servable"]["model_path"],
+    #                                              options["servable"].get(
+    #                                                  "output_names", None),
+    #                                              options["servable"].get(
+    #                                                  "arch_path", None),
+    #                                              options["servable"].get(
+    #                                                  "custom_objects", None),
+    #                                              options["servable"].get(
+    #                                                  "force_tf_keras", False)
+    #                                              )
+    #     else:
+    #         raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
+    #                          "'sklearn'\n"
+    #                          "'keras'\n"
+    #                          "'pytorch'\n"
+    #                          "'tensorflow'\n"
+    #                          "'static method'\n"
+    #                          "'class method'\n"
+    #                          .format(options["servable"]["type"]))
+    #     # publish it
+    #     model_info.set_name(options["short_name"])
+    #     model_info.set_title(options["title"])
+    #     # TODO: fix bug where if you put in name without comma, get list index out of range error
+    #     model_info.set_authors(
+    #         options["authors"], options.get("affiliations", []))
+    #     # TODO: dont pass in {} as default, overwrites everything -- should def document this
+    #     # TODO: consider whether that's desired functionality (should users be able to specify 1 or 2 requirements, but
+    #     #   the container still has other pre-loaded dependencies?
+    #     # model_info.add_requirements(options.get("requirements", {}))
+    #     model_info.set_domains(options.get("domains", []))
+    #     # TODO: can't default to empty strings, handle
+    #     # model_info.set_abstract(options.get("abstract", ""))
+    #     # model_info.set_methods(options.get("methods", ""))
+    #     # TODO: ask Ben if user should set this, check what happens if they dont
+    #     # model_info.set_version(kwargs.get("version", ""))
+    #
+    #     # TODO: add dict for rights
+    #     # model_info.add_rights()
+    #
+    #     # advanced use only (most users will not know DOI)
+    #     if options.get("doi"):
+    #         model_info.set_doi(options.get("doi"))
+    #     # advanced use only
+    #     if options.get("publication_year"):
+    #         model_info.set_publication_year(options.get("publication_year"))
+    #
+    #     # TODO: parse dict of lists
+    #     # model_info.set_visibility()
+    #
+    #     # TODO: parse dict of references (need to loop)
+    #     # model_info.add_related_identifier()
+    #
+    #     # TODO: parse dict of options (need to loop)
+    #     # model_info.add_funding_reference()
+    #
+    #     # TODO: pass dict of data_type, description, shape (opt), item_type (opt) and kwargs
+    #     # model_info.set_inputs()
+    #     # model_info.set_outputs()
+    #
+    #     try:
+    #         validate_against_dlhub_schema(model_info.to_dict(), 'servable')
+    #         print("DLHub schema successfully validated")
+    #     except Exception as e:
+    #         print("Failed to validate schema properly: {}".format(e))
+    #         raise e
+    #
+    #     res = self.dlhub_client.publish_servable(model_info)
+    #
+    #     return res
 
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
@@ -528,13 +531,13 @@ class Foundry(FoundryMetadata):
         """
         return self.connect_client.check_status(source_id, short, raw)
 
-    def check_model_status(self, res):
-        """Check status of model or function publication to DLHub
-
-        TODO: currently broken on DLHub side of things
-        """
-        # return self.dlhub_client.get_task_status(res)
-        pass
+    # def check_model_status(self, res):
+    #     """Check status of model or function publication to DLHub
+    #
+    #     TODO: currently broken on DLHub side of things
+    #     """
+    #     # return self.dlhub_client.get_task_status(res)
+    #     pass
 
     def configure(self, **kwargs):
         """Set Foundry config
