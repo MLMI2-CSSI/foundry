@@ -571,9 +571,10 @@ class Foundry(FoundryMetadata):
         path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
 
         if os.path.isdir(path):
-            #if directory is present, but doesn't have the correct number of files inside, dataset will attempt to redownload
+            # if directory is present, but doesn't have the correct number of files inside,
+            # dataset will attempt to redownload
             if self.dataset.splits:
-                #array to keep track of missing files
+                # array to keep track of missing files
                 missing_files = []
                 for split in self.dataset.splits:
                     if split.path[0] == '/':
@@ -613,18 +614,18 @@ class Foundry(FoundryMetadata):
                  "folder_to_crawl": f"/foundry/{source_id}/",
                  "grouper": "matio"
                 }
-            xtract_https_download(self, verbose=verbose, **xtract_config)
+            xtract_https_download(self, verbose=verbose, **xtract_config) # TODO: figure out better way than passing self?
 
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
-            #checking all necessary files are present
+            # checking all necessary files are present
             if self.dataset.splits:
                 missing_files = []
                 for split in self.dataset.splits:
-                    if split.path[0] == '/':
+                    if split.path[0] == '/': # if absolute path, make it a relative path
                         split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
-                        #keeping track of all files not downloaded
+                        # keeping track of all files not downloaded
                         missing_files.append(split.path)
                 if len(missing_files) > 0:
                     raise FileNotFoundError(f"Downloaded directory does not contain the following files: {missing_files}")
