@@ -18,10 +18,8 @@ setuptools.setup(
         "numpy>=1.15.4",
         "pandas>=0.23.4",
         "pydantic>=1.4",
-        "scikit-learn>=0.24.1",
         "mdf_connect_client>=0.3.8",
         "h5py>=2.10.0",
-        "tensorflow>=2.4.1",
         "json2table"
     ],
     python_requires=">=3.6",
