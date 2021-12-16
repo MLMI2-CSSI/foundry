@@ -114,26 +114,21 @@ def xtract_https_download(foundryObj, verbose=False, **kwargs):
 
         url = "https://data.materialsdatafacility.org" + file["path"]
 
-        # removes data source (eg MDF) parent directories, leaving the split path
-        datasplit_subpath = file["path"].split(source_id)[-1]
+        # removes data source (eg MDF) parent directories, leaving the split path only
+        datasplit_subpath = file["path"].split(source_id + "/")[-1]
 
-        # TODO: fix this into a nice string
-        destination = "data/" + source_id + datasplit_subpath
+        # build destination path for data file
+        destination = os.path.join("data/", source_id, datasplit_subpath)
 
         parent_path = os.path.split(destination)[0]
 
+        # if parent directories don't exist, create them
         if not os.path.exists(parent_path):
             os.makedirs(parent_path)
 
-        # destination = (
-        #         "data/"
-        #         + source_id
-        #         + "/blahblah/"
-        #         + file["path"][file["path"].rindex("/") + 1:]
-        # )
-
         response = requests.get(url, verify=False)
 
+        # write file to local destination
         with open(destination, "wb") as f:
             f.write(response.content)
 
