@@ -614,7 +614,7 @@ class Foundry(FoundryMetadata):
                  "folder_to_crawl": f"/foundry/{source_id}/",
                  "grouper": "matio"
                 }
-            xtract_https_download(self, verbose=verbose, **xtract_config)
+            xtract_https_download(self, verbose=verbose, **xtract_config) # TODO: figure out better way than passing self?
 
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
