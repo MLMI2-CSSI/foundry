@@ -6,6 +6,7 @@ import multiprocessing
 from joblib import Parallel, delayed
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
+# TODO: reassess if there's a better way than passing self in
 def xtract_https_download(foundryObj, verbose=False, **kwargs):
     source_id = foundryObj.mdf["source_id"]
     xtract_base_url = kwargs.get("xtract_base_url")
@@ -112,14 +113,22 @@ def xtract_https_download(foundryObj, verbose=False, **kwargs):
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
         url = "https://data.materialsdatafacility.org" + file["path"]
-        destination = (
-                "data/"
-                + source_id
-                + "/"
-                + file["path"][file["path"].rindex("/") + 1:]
-        )
+
+        # removes data source (eg MDF) parent directories, leaving the split path only
+        datasplit_subpath = file["path"].split(source_id + "/")[-1]
+
+        # build destination path for data file
+        destination = os.path.join("data/", source_id, datasplit_subpath)
+
+        parent_path = os.path.split(destination)[0]
+
+        # if parent directories don't exist, create them
+        if not os.path.exists(parent_path):
+            os.makedirs(parent_path)
+
         response = requests.get(url, verify=False)
 
+        # write file to local destination
         with open(destination, "wb") as f:
             f.write(response.content)
 
