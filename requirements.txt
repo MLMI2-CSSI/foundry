@@ -8,6 +8,4 @@ pydantic>=1.6.1
 joblib>=0.16.0
 mdf_forge>=0.7.6
 mdf-connect-client>=0.3.8
-json2table
-scikit-learn
-tensorflow
+json2table>=1.1.5
