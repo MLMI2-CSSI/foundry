@@ -8,7 +8,7 @@
 
 ### Creating a Foundry Client
 
-The Foundry client provides access to all of the methods described here for listing, loading, and publishing datasets and models. The code below will create a Foundry client 
+The Foundry client provides access to all of the methods described here for listing, loading, and publishing datasets and models. The code below will create a Foundry client&#x20;
 
 ```python
 from foundry import Foundry
@@ -16,7 +16,7 @@ f = Foundry()
 ```
 
 {% hint style="success" %}
-If you are running your script on cloud resources \(e.g. Google Colab, Binder\), see [Using Foundry on Cloud Computing Resources](examples.md#using-foundry-on-cloud-computing-resources)
+If you are running your script on cloud resources (e.g. Google Colab, Binder), see [Using Foundry on Cloud Computing Resources](examples.md#using-foundry-on-cloud-computing-resources)
 {% endhint %}
 
 ### Listing Datasets
@@ -29,7 +29,7 @@ f.list()
 
 ### Loading Datasets
 
-The Foundry client can be used to access datasets using a `source_id` or a digital object identifier \(DOI\) e.g. here `"foundry_wei_atom_locating_benchmark"` or `"10.18126/e73h-3w6n"`_._ You can retrieve the `source_id` or the DOI from the [`list()` method](examples.md#listing-datasets).
+The Foundry client can be used to access datasets using a `source_id` or a digital object identifier (DOI) e.g. here `"foundry_wei_atom_locating_benchmark"` or `"10.18126/e73h-3w6n"`_._ You can retrieve the `source_id` or the DOI from the [`list()` method](examples.md#listing-datasets).
 
 ```python
 from foundry import Foundry
@@ -38,9 +38,9 @@ f = Foundry(index="mdf")
 f.load("10.18126/e73h-3w6n") # Here we are now downloading and caching the data
 ```
 
-This will remotely load the metadata \(e.g., data location, data keys, etc.\) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine.
+This will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine.
 
-![](.gitbook/assets/image.png)
+![](../.gitbook/assets/image.png)
 
 Once the data are accessible locally, access the data with the `load_data()` method. Load data allows you to load data from a specific split that is defined for the dataset, here we use `train`.
 
@@ -64,11 +64,11 @@ for i in range(n_images):
                    coords[key_list[i]][:,1], s = 20, c = 'r', alpha=0.5)
 ```
 
-![Overlay of a STEM image with atomic coordinate labels \(red dots\)](.gitbook/assets/image%20%281%29.png)
+![Overlay of a STEM image with atomic coordinate labels (red dots)](<../.gitbook/assets/image (1).png>)
 
 ## Using Foundry on Cloud Computing Resources
 
-Foundry works with common cloud computing providers \(e.g., the NSF sponsored Jetstream and Google Colab\). On these resources, simply add the following arguments to use a cloud-compatible authentication flow.
+Foundry works with common cloud computing providers (e.g., the NSF sponsored Jetstream and Google Colab). On these resources, simply add the following arguments to use a cloud-compatible authentication flow.
 
 ```python
 f = Foundry(index="mdf", no_browser=True, no_local_server=True)
@@ -84,4 +84,3 @@ This method may be slow for large datasets and datasets with many files
 f.load(download=True, globus=False)
 data = f.load_data()
 ```
-

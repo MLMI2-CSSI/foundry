@@ -4,27 +4,27 @@ description: Information on how to publish datasets
 
 # Publishing Datasets
 
-In order to publish datasets, the datasets must 1\) adhere to specified Foundry dataset shapes \([see here](publishing-datasets.md#shaping-datasets)\), and 2\)  be described with required information \([see here](publishing-datasets.md#describing-datasets)\). Together, the dataset shape and description enable researchers to reuse the datasets more easily.
+In order to publish datasets, the datasets must 1) adhere to specified Foundry dataset shapes ([see here](publishing-datasets.md#shaping-datasets)), and 2)  be described with required information ([see here](publishing-datasets.md#describing-datasets)). Together, the dataset shape and description enable researchers to reuse the datasets more easily.
 
 ## Examples
 
-[Skip to the publication example notebook.](https://github.com/MLMI2-CSSI/foundry/blob/master/examples/foundry_publication_example.ipynb)
+[Skip to the publication example notebook.](https://github.com/MLMI2-CSSI/foundry/blob/master/examples/foundry\_publication\_example.ipynb)
 
 ## Shaping Datasets
 
-For a general dataset to be translated into a usable Foundry dataset, it should follow one of the prescribed shapes. It should also be described by a set of `Key` objects, which provides description of the data, and a mapping that allows Foundry to read data into usable Python objects \([see Describing Datasets](publishing-datasets.md#describing-datasets) for more info\). 
+For a general dataset to be translated into a usable Foundry dataset, it should follow one of the prescribed shapes. It should also be described by a set of `Key` objects, which provides description of the data, and a mapping that allows Foundry to read data into usable Python objects ([see Describing Datasets](publishing-datasets.md#describing-datasets) for more info).&#x20;
 
 ### **Tabular Data**
 
 Tabular data should be in a form where columns represent the different keys of the data and rows represent individual entries. For example:
 
 | **feature\_1** | **feature\_2** | **material\_type** | band\_gap |
-| :--- | :--- | :--- | :--- |
-| 0.10 | 0.52 | 1 | 1.40 |
-| 0.34 | 0.910 | 0 | 0.73 |
-| ... | ... | ... |  |
+| -------------- | -------------- | ------------------ | --------- |
+| 0.10           | 0.52           | 1                  | 1.40      |
+| 0.34           | 0.910          | 0                  | 0.73      |
+| ...            | ...            | ...                |           |
 
-For this example dataset, the `keys` list could be:  
+For this example dataset, the `keys` list could be: &#x20;
 
 ```python
 "keys":[{
@@ -53,12 +53,12 @@ For this example dataset, the `keys` list could be:
 ```
 
 {% hint style="info" %}
-`Don't forget to specify the tabular data filename and path in the submitted metadata. This can be done in a split - see the section on` [`Describing Datasets`](publishing-datasets.md#describing-datasets)\`\`
+`Don't forget to specify the tabular data filename and path in the submitted metadata. This can be done in a split - see the section on` [`Describing Datasets`](publishing-datasets.md#describing-datasets)``
 {% endhint %}
 
 ### Hierarchical Data
 
-Foundry also supports data from hierarchical data formats \(e.g., [HDF5](https://www.h5py.org)\). In this case, features and outputs can be represented with `/` notation. For example, if the features of a dataset are located in an array stored in `/data/arr1` and `/other_data/arr2` while the outputs are in `/data/band_gaps`, the Key object would be:
+Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://www.h5py.org)). In this case, features and outputs can be represented with `/` notation. For example, if the features of a dataset are located in an array stored in `/data/arr1` and `/other_data/arr2` while the outputs are in `/data/band_gaps`, the Key object would be:
 
 ```python
 "keys":[{
@@ -82,14 +82,14 @@ Foundry also supports data from hierarchical data formats \(e.g., [HDF5](https:/
 
 ## Describing Datasets
 
-**DataCite Metadata \(object\):** All datasets can be described using metadata in compliance with the [DataCite metadata format](https://schema.datacite.org). This metadata captures . Many of these capabilities have helper functions in the SDK, to make it easier to match the DataCite schema
+**DataCite Metadata (object):** All datasets can be described using metadata in compliance with the [DataCite metadata format](https://schema.datacite.org). This metadata captures . Many of these capabilities have helper functions in the SDK, to make it easier to match the DataCite schema
 
-**Keys \(list\[Key\]\):** `Key` objects provide a mapping that allows Foundry to read data from the underlying data structure into usable Python objects. Individual `Key` objects have the following properties
+**Keys (list\[Key]):** `Key` objects provide a mapping that allows Foundry to read data from the underlying data structure into usable Python objects. Individual `Key` objects have the following properties
 
-* **`key (str)`**A name mapping to a column name \(e.g., for csv files\) or key within a data structure \(e.g., for HDF5 files\)
-* **`type (str)`** The type of key this entry represents. Currently suported types are _**\["input", "target" \]**_
-* **`units (str)[optional]`** _****_The scientific units associated with a key. _Default: None_
-* **`description (str)[optional]`** _****_A free text description of the key. _Default: None_
+* **`key (str)`**A name mapping to a column name (e.g., for csv files) or key within a data structure (e.g., for HDF5 files)
+* **`type (str)`** The type of key this entry represents. Currently suported types are _**\["input", "target" ]**_
+* **`units (str)[optional]` **_****_ The scientific units associated with a key. _Default: None_
+* **`description (str)[optional]` **_****_ A free text description of the key. _Default: None_
 * **`labels (list) (str) [optional]`:** A list of strings mapped to integers in a key column
 
 ```python
@@ -103,9 +103,9 @@ Foundry also supports data from hierarchical data formats \(e.g., [HDF5](https:/
 }]
 ```
 
-**Splits \(list\[Split\]\):** `Split`objects provide a way for users to specify which data should be included as test, train, or other user defined splits. Individual `Split` objects have the following properties
+**Splits (list\[Split]):** `Split`objects provide a way for users to specify which data should be included as test, train, or other user defined splits. Individual `Split` objects have the following properties
 
-* **`type (str)`**A split type, e.g., the Foundry special split types of `train`, `test`,  and`validation`. These special split types may be handled differently than custom split types defined by users. 
+* **`type (str)`**A split type, e.g., the Foundry special split types of `train`, `test`,  and`validation`. These special split types may be handled differently than custom split types defined by users.&#x20;
 * **`path (str)`** The full filepath to the dataset file or directory that contains the split
 * **`label (str)`** A label to assign to this split
 
@@ -117,14 +117,14 @@ Foundry also supports data from hierarchical data formats \(e.g., [HDF5](https:/
 }]
 ```
 
-**short\_name \(str\):** Short name is a unique name associated with this dataset to make loading and . 
+**short\_name (str):** Short name is a unique name associated with this dataset to make loading and .&#x20;
 
-**type \(str\):** The type provides a hint to Foundry on how to map the keys into loading operations. _Options \["tabular","hdf5"\]_
+**type (str):** The type provides a hint to Foundry on how to map the keys into loading operations. _Options \["tabular","hdf5"]_
 
 ## Publishing
 
 {% hint style="info" %}
-Before continuing, be sure that you have 1\) signed up for a [free Globus account](https://app.globus.org) and 2\) [joined this Globus group](https://app.globus.org/groups/cc192dca-3751-11e8-90c1-0a7c735d220a/about).
+Before continuing, be sure that you have 1) signed up for a [free Globus account](https://app.globus.org) and 2) [joined this Globus group](https://app.globus.org/groups/cc192dca-3751-11e8-90c1-0a7c735d220a/about).
 {% endhint %}
 
 Once your dataset is in the proper shape, and you have created the associated metadata structure, you can publish to Foundry! One example of a complete set of metadata to describe a dataset is shown below.
@@ -206,4 +206,3 @@ The `publish()` method returns a result object that you can inspect for informat
 
 * Add support for wildcard key type specifications
 * Add example showing how to describe an image-containing folder
-
