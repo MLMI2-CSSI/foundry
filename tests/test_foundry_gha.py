@@ -7,7 +7,7 @@ import mdf_toolbox
 import pandas as pd
 from mdf_forge import Forge
 from foundry import Foundry
-from dlhub_sdk import DLHubClient
+# from dlhub_sdk import DLHubClient
 from mdf_connect_client import MDFConnectClient
 
 
@@ -15,13 +15,13 @@ from mdf_connect_client import MDFConnectClient
 client_id = os.getenv('CLIENT_ID')
 client_secret = os.getenv('CLIENT_SECRET')
 
+# TODO: add dlhub back once supported again
 services= [
             "data_mdf",
             "mdf_connect",
             "search",
             "petrel",
             "transfer",
-            "dlhub",
             "openid",
             "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",]
 
@@ -120,7 +120,7 @@ def _delete_test_data(foundry_obj):
 
 def test_foundry_init_cloud():
     f1 = Foundry(authorizers=res_cred)
-    assert isinstance(f1.dlhub_client, DLHubClient)
+#     assert isinstance(f1.dlhub_client, DLHubClient)
     assert isinstance(f1.forge_client, Forge)
     assert isinstance(f1.connect_client, MDFConnectClient)
 
@@ -128,17 +128,17 @@ def test_foundry_init_cloud():
 @pytest.mark.xfail(reason="Tests will fail in cloud")
 def test_foundry_init_cloud():
     f = Foundry(authorizers=res_cred)
-    assert isinstance(f.dlhub_client, DLHubClient)
+#     assert isinstance(f.dlhub_client, DLHubClient)
     assert isinstance(f.forge_client, Forge)
     assert isinstance(f.connect_client, MDFConnectClient)
 
     f2 = Foundry(authorizers=res_cred)
-    assert isinstance(f2.dlhub_client, DLHubClient)
+#     assert isinstance(f2.dlhub_client, DLHubClient)
     assert isinstance(f2.forge_client, Forge)
     assert isinstance(f2.connect_client, MDFConnectClient)
 
     f3 = Foundry(authorizers=res_cred)
-    assert isinstance(f3.dlhub_client, DLHubClient)
+#     assert isinstance(f3.dlhub_client, DLHubClient)
     assert isinstance(f3.forge_client, Forge)
     assert isinstance(f3.connect_client, MDFConnectClient)
 
