@@ -6,10 +6,10 @@ import multiprocessing
 from joblib import Parallel, delayed
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
+# TODO: reassess if there's a better way than passing self in
 def xtract_https_download(foundryObj, verbose=False, **kwargs):
     source_id = foundryObj.mdf["source_id"]
     xtract_base_url = kwargs.get("xtract_base_url")
-
     # MDF Materials Data at NCSA
     source_ep_id = kwargs.get("source_ep_id")
     base_url = kwargs.get("base_url")
@@ -21,7 +21,7 @@ def xtract_https_download(foundryObj, verbose=False, **kwargs):
     auth_token = foundryObj.xtract_tokens["auth_token"]
     transfer_token = foundryObj.xtract_tokens["transfer_token"]
     funcx_token = foundryObj.xtract_tokens["funcx_token"]
-
+    
     headers = {
         "Authorization": auth_token,
         "Transfer": transfer_token,
@@ -42,7 +42,7 @@ def xtract_https_download(foundryObj, verbose=False, **kwargs):
         "dir_paths": [folder_to_crawl],
         "grouper": grouper,
     }
-    tokens = {"Transfer": transfer_token, "Authorization": funcx_token}
+    tokens = {"Transfer": transfer_token, "FuncX": funcx_token, "Authorization": auth_token}
     crawl_req = requests.post(
         f"{xtract_base_url}/crawl",
         json={"endpoints": [first_ep_dict], "tokens": tokens},
@@ -113,14 +113,22 @@ def xtract_https_download(foundryObj, verbose=False, **kwargs):
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
         url = "https://data.materialsdatafacility.org" + file["path"]
-        destination = (
-                "data/"
-                + source_id
-                + "/"
-                + file["path"][file["path"].rindex("/") + 1:]
-        )
+
+        # removes data source (eg MDF) parent directories, leaving the split path only
+        datasplit_subpath = file["path"].split(source_id + "/")[-1]
+
+        # build destination path for data file
+        destination = os.path.join("data/", source_id, datasplit_subpath)
+
+        parent_path = os.path.split(destination)[0]
+
+        # if parent directories don't exist, create them
+        if not os.path.exists(parent_path):
+            os.makedirs(parent_path)
+
         response = requests.get(url, verify=False)
 
+        # write file to local destination
         with open(destination, "wb") as f:
             f.write(response.content)
 
