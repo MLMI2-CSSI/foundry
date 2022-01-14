@@ -6,7 +6,7 @@ packages = (setuptools.find_packages(),)
 # TODO: change dependencies to be looser
 setuptools.setup(
     name="foundry_ml",
-    version="0.1.0",
+    version="0.1.1",
     author="Aristana Scourtas, KJ Schmidt, Imogen Foster, Ribhav Bose, Zoa Katok, Ethan Truelove, Ian Foster, Ben Blaiszik",
     author_email="blaiszik@uchicago.edu",
     packages=setuptools.find_packages(),
@@ -20,6 +20,7 @@ setuptools.setup(
         "pydantic>=1.4",
         "mdf_connect_client>=0.3.8",
         "h5py>=2.10.0",
+        "joblib>=1.0.0",
         "json2table"
     ],
     python_requires=">=3.6",
