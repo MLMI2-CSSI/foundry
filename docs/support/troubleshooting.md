@@ -34,3 +34,18 @@ options_keras = {
 }
 res = f.publish_model(options_keras)
 ```
+
+## Permission denied when downloading datasets from Globus
+
+![A Globus PERMISSION\_DENIED error that occurs when a user tries to load() a dataset locally with globus=True.](<../.gitbook/assets/Screen Shot 2022-01-24 at 12.13.16 PM.png>)
+
+When you call `f.load()` from a script or notebook on your local machine, Foundry by default downloads the dataset for you locally (unless you set `download=False`). Foundry can download data using either Globus or HTTPS -- the default is Globus (`globus=True`). Downloading a dataset via Globus uses Globus Connect Personal (GCP) installed on your local machine -- if you have not given GCP the proper permissions to write to the folder you are running your script or notebook from, then you will receive this `PERMISSION_DENIED` error.
+
+To fix it, first make sure that GCP is running (it should be visible in your toolbar). Then, click on the icon and select **Preferences...**&#x20;
+
+![Example of locating GCP in the toolbar and navigating to Preferences... on MacOS](<../.gitbook/assets/Screen Shot 2022-01-28 at 2.42.07 PM.png>)
+
+From the **Preferences...** window you should be able to amend the access permissions. Be sure that you have the **Writable** column checked for your desired dataset destinations.
+
+![Example Preferences... window with the Access tab selected to amend GCP permissions on MacOS. Add directory paths as needed to include destinations where you will be running code that uses Foundry. ](<../.gitbook/assets/Screen Shot 2022-01-28 at 2.39.02 PM.png>)
+
