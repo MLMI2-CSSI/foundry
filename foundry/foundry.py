@@ -217,6 +217,8 @@ class Foundry(FoundryMetadata):
                     "source_id": r["mdf"]["source_id"],
                     "name": r["dc"]["titles"][0]["title"],
                     "year": r["dc"].get("publicationYear", None),
+                    "DOI": r["dc"]["dataset_doi"], 
+                    #check where the DOI is in the data. this is a guess. could also be r["dc"].get("dataset_doi", "")
                 }
                 for r in res
             ]
