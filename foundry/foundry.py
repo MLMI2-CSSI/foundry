@@ -202,7 +202,7 @@ class Foundry(FoundryMetadata):
 
         Returns
         -------
-            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, and publication year
+            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication year, and DOI
         """
         res = (
             self.forge_client.match_field(
