@@ -211,14 +211,14 @@ class Foundry(FoundryMetadata):
             .search()
         )
 
+
         return pd.DataFrame(
             [
                 {
                     "source_id": r["mdf"]["source_id"],
                     "name": r["dc"]["titles"][0]["title"],
                     "year": r["dc"].get("publicationYear", None),
-                    "DOI": r["dc"]["dataset_doi"], 
-                    #check where the DOI is in the data. this is a guess. could also be r["dc"].get("dataset_doi", "")
+                    "DOI": r["dc"]["identifier"]["identifier"], 
                 }
                 for r in res
             ]
