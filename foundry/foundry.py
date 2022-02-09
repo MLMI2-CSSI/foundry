@@ -327,7 +327,7 @@ class Foundry(FoundryMetadata):
             authors = [creator['creatorName']
                        for creator in self.dc['creators']]
             authors = '; '.join(authors)
-            DOI = self.dc['identifier']['identifier']
+            DOI = "DOI: " + self.dc['identifier']['identifier']
 
             buf = f'<h2>{title}</h2>{authors}<br/>{DOI}'
 
