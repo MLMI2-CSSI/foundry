@@ -329,7 +329,7 @@ class Foundry(FoundryMetadata):
             authors = '; '.join(authors)
             DOI = "DOI: " + self.dc['identifier']['identifier']
 
-            buf = f'<h2>{title}</h2>{authors}<br/>{DOI}'
+            buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
 
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
