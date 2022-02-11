@@ -4,7 +4,7 @@ description: Describe the metadata that is for each Foundry dataset
 
 # Foundry Datasets
 
-Foundry Datasets are comprised of two key components, [_**data**_](foundry-datasets.md#data) and descriptive [_**metadata**_](foundry-datasets.md#describing-datasets-with-metadata). In order to make the data easily consumable, _**data**_ (consisting of files) should be assembled following the supported structures. The _**metadata**_ description allows tracking of high level information (e.g.,  authors, assoicated institutions, licenses, data location), and also information on how to operate on the datasets (e.g., how to load the data, training/test splits)
+Foundry Datasets are comprised of two key components, [_**data**_](foundry-datasets.md#data) and descriptive [_**metadata**_](foundry-datasets.md#descriptive-metadata). In order to make the data easily consumable, _**data**_ (consisting of files) should be assembled following the supported structures. The _**metadata**_ description allows tracking of high level information (e.g.,  authors, assoicated institutions, licenses, data location), and also information on how to operate on the datasets (e.g., how to load the data, training/test splits)
 
 ### **Data**
 
@@ -177,7 +177,9 @@ Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://
 
 **DataCite Metadata (object):** All datasets can be described using metadata in compliance with the [DataCite metadata format](https://schema.datacite.org). This metadata captures . Many of these capabilities have helper functions in the SDK, to make it easier to match the DataCite schema
 
-**Keys (object):** Key objects provide a mapping that allows Foundry to read data from the underlying data structure into usable Python objects. Key objects have the following properties
+#### **Keys (object):**&#x20;
+
+Key objects provide a mapping that allows Foundry to read data from the underlying data structure into usable Python objects. Key objects have the following properties
 
 * **`key (str)`**A name mapping to a column name (e.g., for csv files) or key within a data structure (e.g., for HDF5 files)
 * **`type (str)`** The type of key this entry represents. Currently suported types are _**\["input", "target" ]**_
@@ -185,9 +187,25 @@ Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://
 * **`description (str)[optional]` **_****_ A free text description of the key. _Default: None_
 * **`labels (list) (str) [optional]`:** A list of strings mapped to integers in a key column
 
-**short\_name (str):** Short name is a unique name associated with this dataset to make loading and .&#x20;
+#### **splits (str):**
 
-**type (str):** The type provides a hint to Foundry on how to map the keys into loading operations. _Options \["tabular","hdf5"]_
+#### **short\_name (str):**&#x20;
+
+Short name is a unique name associated with this dataset to make loading and .&#x20;
+
+****
+
+#### **data\_type (str):**&#x20;
+
+The type provides a hint to Foundry on how to map the keys into loading operations. _Options \["tabular","hdf5"]_
+
+__
+
+#### **task\_type (str):**
+
+#### **domain (str):**
+
+#### **n\_items (str):**
 
 ```
 "foundry": {
@@ -209,4 +227,18 @@ Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://
 	"short_name": "my_short_name",
 	"type": "tabular"
 }
+```
+
+
+
+![This is what f looks like when printed in a notebook. This table details the dataset's keys (a key can be thought of as a column head in tabular data) with their type (input or target), filter, units, description, and classes where applicable; the dataset's splits (train, test, validate, etc); data\_type (hdf5, tabular, etc); shortname; task\_type (ML task such as supervised or unsupervised); scientific domain; and n\_items (the number of items in the data).](../.gitbook/assets/metadata.png)
+
+### How to reference programmatically
+
+```
+imgs = res['train']['input']['imgs']
+desc = res['train']['input']['metadata']
+coords = res['train']['target']['coords']
+
+key_list = list(res['train']['input']['imgs'].keys())[0+offset:n_images+offset]
 ```

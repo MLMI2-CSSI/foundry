@@ -1,8 +1,12 @@
-# Getting Started with Python
+---
+description: We'll take you from importing Foundry all the way to seeing your data.
+---
+
+# Getting Started Loading Data
 
 ## Scientific Examples
 
-[Checkout our example notebooks ](https://github.com/MLMI2-CSSI/foundry/tree/master/examples)for how to load or publish datasets using Foundry.
+We have [example notebooks](https://github.com/MLMI2-CSSI/foundry/tree/main/examples) using material science data that illustrate how to load data or publish datasets using Foundry. These notebooks are compatible with Google Colab and with Jupyter Notebook. However, some of the datasets are quite large and cannot be loaded into Google Colab without the pro version.
 
 ## Quickstart
 
@@ -12,37 +16,41 @@ The Foundry client provides access to all of the methods described here for list
 
 ```python
 from foundry import Foundry
-f = Foundry()
+f = Foundry(index="mdf")
 ```
 
 {% hint style="success" %}
-If you are running your script on cloud resources (e.g. Google Colab, Binder), see [Using Foundry on Cloud Computing Resources](examples.md#using-foundry-on-cloud-computing-resources)
+If you are running your script on cloud resources (e.g. Google Colab, Binder), see: [Using Foundry on Cloud Computing Resources](examples.md#using-foundry-on-cloud-computing-resources)
 {% endhint %}
 
 ### Listing Datasets
 
-To show all available Foundry datasets, you can use the Foundry `list()` method as follows. The method returns a pandas DataFrame with details on the available datasets.
+To show all available Foundry datasets, you can use the Foundry [`list()` method](concepts/methods.md#.list) as follows. The method returns a pandas DataFrame with details on the available datasets.
 
 ```python
 f.list()
 ```
 
+![The returned Dataframe from f.list()](<.gitbook/assets/Screen Shot 2022-01-27 at 1.29.23 PM (1).png>)
+
 ### Loading Datasets
 
-The Foundry client can be used to access datasets using a `source_id` or a digital object identifier (DOI) e.g. here `"foundry_wei_atom_locating_benchmark"` or `"10.18126/e73h-3w6n"`_._ You can retrieve the `source_id` or the DOI from the [`list()` method](examples.md#listing-datasets).
+The Foundry client can be used to access datasets using a `source_id` or a digital object identifier (DOI) e.g. here `"foundry_wei_atom_locating_benchmark"` or `"10.18126/e73h-3w6n"`_._ You can retrieve the `source_id`from the [`list()` method](examples.md#listing-datasets).
 
 ```python
 from foundry import Foundry
 
 f = Foundry(index="mdf")
-f.load("10.18126/e73h-3w6n") # Here we are now downloading and caching the data
+f.load("10.18126/e73h-3w6n", globus=True)
 ```
 
-This will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine.
+The [`load()` method](concepts/methods.md#.load) will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup (set `download` to `True` and `globus` to `False`) or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine (set `download` to `False` and `globus` to `True`).&#x20;
+
+The image below is what `f` looks like when printed in a notebook. This table contains the dataset's [metadata](concepts/foundry-datasets.md#descriptive-metadata).
 
 ![](../.gitbook/assets/image.png)
 
-Once the data are accessible locally, access the data with the `load_data()` method. Load data allows you to load data from a specific split that is defined for the dataset, here we use `train`.
+Once the data are accessible locally, access the data with the [`load_data()` method](concepts/methods.md#.load\_data). Load data allows you to load data from a specific [split](concepts/foundry-datasets.md#splits) that is defined for the dataset, here we use `train`.&#x20;
 
 ```python
 res = f.load_data()
@@ -81,6 +89,7 @@ This method may be slow for large datasets and datasets with many files
 {% endhint %}
 
 ```python
-f.load(download=True, globus=False)
+f.load("10.18126/e73h-3w6n", download=True, globus=False)
 data = f.load_data()
 ```
+
