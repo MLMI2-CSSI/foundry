@@ -26,9 +26,9 @@ In this example, we showcase how to describe a JSON record-based dataset where e
 | 0.34           | 0.910          | 0                  | 0.73      |
 | ...            | ...            | ...                |           |
 
-For this example dataset, the `Key` object could be: &#x20;
+For this example dataset, the `Key` Python object could be: &#x20;
 
-```json
+```python
 "keys": [{
 	"key": "feature_1",
 	"type": "input",
@@ -76,7 +76,7 @@ Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://
 
 and the dataset may be described in whole as:
 
-```javascript
+```python
 {
 	"short_name": "segmentation-dev",
 	"data_type": "hdf5",
