@@ -162,16 +162,44 @@ The type provides a hint to Foundry on how to map the keys into loading operatio
 }
 ```
 
+## Example Dataset - Atom Position Finding
+
+This example shows the entire process to load, inspect, and use a Foundry dataset. Here, we choose the Benchmark Dataset for Locating Atoms in STEM images. You can find the full Jupyter notebook example [here](https://github.com/MLMI2-CSSI/foundry/blob/main/examples/atom-position-finding/atom\_position\_finding.ipynb).
 
 
-![This is what f looks like when printed in a notebook. This table details the dataset's keys (a key can be thought of as a column head in tabular data) with their type (input or target), filter, units, description, and classes where applicable; the dataset's splits (train, test, validate, etc); data\_type (hdf5, tabular, etc); shortname; task\_type (ML task such as supervised or unsupervised); scientific domain; and n\_items (the number of items in the data).](../.gitbook/assets/metadata.png)
 
-### How to reference programmatically
+First, instantiate a Foundry client `f` and load the metadata using the known dataset DOI `10.18126/e73h-3w6n.` This collects information about the dataset tht is needed for inspection and for accessing the dataset contents.
 
+```python
+from foundry import Foundry
+
+f = Foundry(index="mdf")
+f.load('10.18126/e73h-3w6n')
+
+f
 ```
+
+![This is what the Foundry object looks like when printed in a notebook. The table details the dataset key with their type (e.g., input or target), filter, units, description, and classes where applicable; the datasetsplits (e.g., train, test, validate, etc); data\_type (hdf5, tabular, etc); shortname; task\_type (ML task such as supervised or unsupervised); scientific domain; and n\_items (the number of items in the data).](<../.gitbook/assets/image (1).png>)
+
+The full dataset can then be loaded using the `load_data` method an visualized using matplotlib.&#x20;
+
+```python
+res = f.load_data()
+
 imgs = res['train']['input']['imgs']
 desc = res['train']['input']['metadata']
 coords = res['train']['target']['coords']
-
-key_list = list(res['train']['input']['imgs'].keys())[0+offset:n_images+offset]
 ```
+
+```python
+n_images = 3
+offset = 150
+key_list = list(res['train']['input']['imgs'].keys())[0+offset:n_images+offset]
+
+fig, axs = plt.subplots(1, n_images, figsize=(20,20))
+for i in range(n_images):
+    axs[i].imshow(imgs[key_list[i]])
+    axs[i].scatter(coords[key_list[i]][:,0], coords[key_list[i]][:,1], s = 20, c = 'r', alpha=0.5)
+```
+
+![](../.gitbook/assets/image.png)
