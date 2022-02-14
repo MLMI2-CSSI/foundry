@@ -1,7 +1,7 @@
 # Table of contents
 
 * [Introduction and Installation](README.md)
-* [Getting Started Loading Data](examples.md)
+* [Getting Started - Loading Data](examples.md)
 
 ## Key Concepts <a href="#concepts" id="concepts"></a>
 

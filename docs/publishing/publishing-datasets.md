@@ -202,7 +202,9 @@ The `publish()` method returns a result object that you can inspect for informat
 }
 ```
 
-
+{% hint style="success" %}
+Once the dataset is submitted, there is a manual curation step required to maintain dataset standards. This will take additional time.
+{% endhint %}
 
 ## Future Work
 
