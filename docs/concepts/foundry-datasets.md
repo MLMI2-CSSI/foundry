@@ -1,12 +1,12 @@
 ---
-description: Describe the metadata that is for each Foundry dataset
+description: An introduction to how Foundry datasets and their metadata are defined
 ---
 
 # Foundry Datasets
 
-Foundry Datasets are comprised of two key components, [_**data**_](foundry-datasets.md#data) and descriptive [_**metadata**_](foundry-datasets.md#descriptive-metadata). In order to make the data easily consumable, _**data**_ (consisting of files) should be assembled following the supported structures. The _**metadata**_ description allows tracking of high level information (e.g.,  authors, assoicated institutions, licenses, data location), and also information on how to operate on the datasets (e.g., how to load the data, training/test splits)
+Foundry Datasets are comprised of two key components, [_**data**_](foundry-datasets.md#data) and descriptive [_**metadata**_](foundry-datasets.md#descriptive-metadata). In order to make the data easily consumable, _**data**_ (consisting of files) should be assembled following the supported structures. The _**metadata**_ description allows tracking of high level information (e.g.,  authors, associated institutions, licenses, data location), and also information on how to operate on the datasets (e.g., how to load the data, training/test splits).
 
-### **Data**
+## **Data**
 
 ### Example - Record-Based Data
 
@@ -15,7 +15,7 @@ Foundry Datasets are comprised of two key components, [_**data**_](foundry-datas
 For tabular data, columns should represent the different keys of the data, and rows the individual records.
 
 {% hint style="info" %}
-Supported tabular data types currently include JSON, csv, and xlsx.
+Supported tabular data types currently include .json, .jsonl, .csv, and .xlsx
 {% endhint %}
 
 In this example, we showcase how to describe a JSON record-based dataset where each record is a valid JSON object in a JSON list or a line in a JSON line delimited file.
@@ -106,11 +106,17 @@ and the dataset may be described in whole as:
 
 ## Descriptive Metadata
 
-**DataCite Metadata (object):** All datasets can be described using metadata in compliance with the [DataCite metadata format](https://schema.datacite.org). This metadata captures . Many of these capabilities have helper functions in the SDK, to make it easier to match the DataCite schema
+Metadata in Foundry comprehensively describe datasets using a combination of the DataCite metadata schema and our own Foundry schema.
+
+### Metadata schema
+
+**DataCite Metadata (object):** All datasets can be described using metadata in compliance with the [DataCite metadata format](https://schema.datacite.org). This metadata captures core elements needed for dataset citation and discovery, such as author names, institutions, associated abstracts, and more. Many of these capabilities have helper functions in the SDK, to make it easier to match the DataCite schema.
+
+For a full list of the metadata keys in DataCite, see their [Metadata Schema 4.4 documentation](https://schema.datacite.org/meta/kernel-4.4/).
 
 #### **Keys list (list of objects):**&#x20;
 
-`Key` objects provide a mapping that allows Foundry to read data from the underlying data structure into usable Python objects. `Key` objects have the following properties
+`Key` objects provide a mapping that allows Foundry to read data from the underlying data structure into usable Python objects. `Key` objects have the following properties:
 
 * **`key (str)`**A name mapping to a column name (e.g., for csv files) or key within a data structure (e.g., for HDF5 files)
 * **`type (str)`** The type of key this entry represents. Currently suported types are _**\["input", "target" ]**_
@@ -120,7 +126,7 @@ and the dataset may be described in whole as:
 
 #### **splits (**list of objects**):**
 
-&#x20;`Split` objects provide a convenient way to specify various data splits.
+&#x20;`split` objects provide a convenient way to specify various data splits, or subsets of the dataset. `split` objects have the following properties:
 
 * **`type (str)`**The type of split (e.g., "train", "test", "validation")
 * **`path (str)`** A path to the file or folder containing the split data
@@ -128,17 +134,23 @@ and the dataset may be described in whole as:
 
 #### **short\_name (str):**&#x20;
 
-Short name is a unique name associated with this dataset to make loading and .&#x20;
+Short name is a unique, human-readable name associated with this dataset to make loading and finding the dataset simple.&#x20;
 
 #### **data\_type (str):**&#x20;
 
-The type provides a hint to Foundry on how to map the keys into loading operations. _Options \["tabular","hdf5"]_
+The type of data provided. This gives a hint to Foundry on how to map the keys into loading operations. _Options \["tabular","hdf5"]_
 
-#### **task\_type (str):**
+#### **task\_type (str)\[optional]:**
 
-#### **domain (str):**
+The type of process or analytical task the dataset is meant for. For example, "classification", "supervised", etc.
 
-#### **n\_items (str):**
+#### **domain (str)\[optional]:**
+
+The science domain of the dataset. For example, "materials science".
+
+#### **n\_items (number)\[optional]:**
+
+The number of items within the dataset.
 
 ```
 "foundry": {
