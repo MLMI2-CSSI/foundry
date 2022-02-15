@@ -2,7 +2,9 @@
 
 ## Introduction
 
+The most important Foundry methods are listed below. Full documentation coming soon.
 
+In the following examples, assume `f = Foundry()`
 
 ### Methods
 
