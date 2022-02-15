@@ -8,9 +8,6 @@ Foundry's functionality is built on a variety of existing services, bringing tog
 
 **Datasets:** For dataset publication, we use the [Materials Data Facility (MDF)](https://materialsdatafacility.org). Using Foundry alone, you can publish a dataset to Foundry's collection, which is made available via MDF storage resources. Because we use MDF as our data provider, the data are a made available and discoverable via MDF as well. We plan to add more data providers in the future.
 
-**Models:** Model publishing and storage is made possible with [DLHub](https://www.dlhub.org). When publishing or running a model on Foundry, you'll use our interface to do so. Your published model will be a part of both Foundry and DLHub's collections.
+**Models:** Model publishing and storage is made possible with [DLHub](https://www.dlhub.org). When publishing or running a model on Foundry, you'll use our interface to do so. Your published model will be a part of both Foundry and DLHub's collections. Model functionality is currently still in development.
 
 **Access:** When a consumer wants to access a dataset or model, they'll use Foundry's interface. Behind the scenes, our API layer communicates with MDF to pull the data and DLHub to run the model. The consumer will only ever need to interact with Foundry to get everything they need.
-
-
-
