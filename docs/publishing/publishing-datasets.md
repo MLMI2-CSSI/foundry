@@ -63,23 +63,22 @@ For this example dataset, the `keys` list could be: &#x20;
 Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://www.h5py.org)). In this case, features and outputs can be represented with `/` notation. For example, if the features of a dataset are located in an array stored in `/data/arr1` and `/other_data/arr2` while the outputs are in `/data/band_gaps`, the Key object would be:
 
 ```python
-"keys":[{
-			"key": "/data/arr1",
-			"type": "input",
-			"units": None,
-			"description": "This is an array containing input data"
-		},{
-		  "key": "/other_data/arr2",
-			"type": "input",
-			"units": None,
-			"description": "This is an another array containing input data"
-		},{
-		  "key": "/data/band_gaps",
-			"type": "target",
-			"units": "eV",
-			"description": "This is the simulated band gap in eV"
-		}
-]
+"keys": [{
+	"key": "/data/arr1",
+	"type": "input",
+	"units": None,
+	"description": "This is an array containing input data"
+}, {
+	"key": "/other_data/arr2",
+	"type": "input",
+	"units": None,
+	"description": "This is an another array containing input data"
+}, {
+	"key": "/data/band_gaps",
+	"type": "target",
+	"units": "eV",
+	"description": "This is the simulated band gap in eV"
+}]
 ```
 
 ## Describing Datasets
@@ -141,13 +140,13 @@ Once your dataset is in the proper shape, and you have created the associated me
 		}],
 		"keys": [{
 				"type": "input",
-				"name": "feature_1",
+				"key": ["feature_1"],
 				"units": "",
 				"description": "This is an input"
 			},
 			{
 				"type": "target",
-				"name": "band_gap",
+				"key": ["band_gap"],
 				"units": "eV",
 				"description": "Bandgap of the material"
 			}
