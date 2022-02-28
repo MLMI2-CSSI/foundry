@@ -29,29 +29,28 @@ Tabular data should be in a form where columns represent the different keys of t
 For this example dataset, the `keys` list could be: &#x20;
 
 ```python
-"keys":[{
-		 	"key": "feature_1",
-			"type": "input",
-			"units": None,
-			"description": "This is feature 1"
-		},{
-			"key": "feature_2",
-			"type": "input",
-			"units": None,
-			"description": "This is feature 2"
-		},{
-			"key": "material_type",
-			"type": "input",
-			"units": None,
-			"description": "This is the material type",
-			"classes":["perovskite","not perovskite"]
-		}{
-			"key": "band_gap",
-			"type": "target",
-			"units": "eV",
-			"description": "This is the simulated band gap in eV"
-		}
-]
+"keys": [{
+	"key": ["feature_1"],
+	"type": "input",
+	"units": None,
+	"description": "This is feature 1"
+},{
+	"key": ["feature_2"],
+	"type": "input",
+	"units": None,
+	"description": "This is feature 2"
+},{
+	"key": ["material_type"],
+	"type": "input",
+	"units": None,
+	"description": "This is the material type",
+	"classes": ["perovskite", "not perovskite"]
+},{
+	"key": ["band_gap"],
+	"type": "target",
+	"units": "eV",
+	"description": "This is the simulated band gap in eV"
+}]
 ```
 
 {% hint style="info" %}
@@ -64,17 +63,17 @@ Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://
 
 ```python
 "keys": [{
-	"key": "/data/arr1",
+	"key": ["/data/arr1"],
 	"type": "input",
 	"units": None,
 	"description": "This is an array containing input data"
 }, {
-	"key": "/other_data/arr2",
+	"key": ["/other_data/arr2"],
 	"type": "input",
 	"units": None,
 	"description": "This is an another array containing input data"
 }, {
-	"key": "/data/band_gaps",
+	"key": ["/data/band_gaps"],
 	"type": "target",
 	"units": "eV",
 	"description": "This is the simulated band gap in eV"
@@ -97,10 +96,10 @@ Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://
 # An example of keys object
 
 "keys":[{
-    "key": "band_gaps",
-		"type": "target",
-		"units": "eV",
-		"description": "This is the simulated band gap in eV"
+    "key": ["band_gaps"],
+    "type": "target",
+    "units": "eV",
+    "description": "This is the simulated band gap in eV"
 }]
 ```
 
