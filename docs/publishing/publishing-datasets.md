@@ -32,17 +32,16 @@ For this example dataset, the `keys` list could be: &#x20;
 "keys": [{
 	"key": ["feature_1"],
 	"type": "input",
-	"units": None,
+	"units": "",
 	"description": "This is feature 1"
 },{
 	"key": ["feature_2"],
 	"type": "input",
-	"units": None,
+	"units": "",
 	"description": "This is feature 2"
 },{
 	"key": ["material_type"],
 	"type": "input",
-	"units": None,
 	"description": "This is the material type",
 	"classes": ["perovskite", "not perovskite"]
 },{
