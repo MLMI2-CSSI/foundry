@@ -85,8 +85,8 @@ Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://
 
 **Keys (list\[Key]):** `Key` objects provide a mapping that allows Foundry to read data from the underlying data structure into usable Python objects. Individual `Key` objects have the following properties
 
-* **`key (str)`**A name mapping to a column name (e.g., for csv files) or key within a data structure (e.g., for HDF5 files)
-* **`type (str)`** The type of key this entry represents. Currently suported types are _**\["input", "target" ]**_
+* **`key (str) [required]`**A name mapping to a column name (e.g., for csv files) or key within a data structure (e.g., for HDF5 files)
+* **`type (str) [required]`** The type of key this entry represents. Currently suported types are _**\["input", "target" ]**_
 * **`units (str)[optional]` **_****_ The scientific units associated with a key. _Default: None_
 * **`description (str)[optional]` **_****_ A free text description of the key. _Default: None_
 * **`labels (list) (str) [optional]`:** A list of strings mapped to integers in a key column
@@ -102,10 +102,10 @@ Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://
 }]
 ```
 
-**Splits (list\[Split]):** `Split`objects provide a way for users to specify which data should be included as test, train, or other user defined splits. Individual `Split` objects have the following properties
+**Splits (list\[Split]) \[required]:** `Split`objects provide a way for users to specify which data should be included as test, train, or other user defined splits. Individual `Split` objects have the following properties
 
-* **`type (str)`**A split type, e.g., the Foundry special split types of `train`, `test`,  and`validation`. These special split types may be handled differently than custom split types defined by users.&#x20;
-* **`path (str)`** The full filepath to the dataset file or directory that contains the split
+* **`type (str) [required]`**A split type, e.g., the Foundry special split types of `train`, `test`,  and`validation`. These special split types may be handled differently than custom split types defined by users.&#x20;
+* **`path (str) [required]`** The full filepath to the dataset file or directory that contains the split
 * **`label (str)`** A label to assign to this split
 
 ```python
@@ -116,9 +116,9 @@ Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://
 }]
 ```
 
-**short\_name (str):** Short name is a unique name associated with this dataset to make loading and .&#x20;
+**short\_name (str) \[required]:** Short name is a unique name associated with this dataset to make loading and .&#x20;
 
-**type (str):** The type provides a hint to Foundry on how to map the keys into loading operations. _Options \["tabular","hdf5"]_
+**type (str) \[required]:** The type provides a hint to Foundry on how to map the keys into loading operations. _Options \["tabular","hdf5"]_
 
 ## Publishing
 

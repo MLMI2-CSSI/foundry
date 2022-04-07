@@ -114,29 +114,29 @@ Metadata in Foundry comprehensively describe datasets using a combination of the
 
 For a full list of the metadata keys in DataCite, see their [Metadata Schema 4.4 documentation](https://schema.datacite.org/meta/kernel-4.4/).
 
-#### **Keys list (list of objects):**&#x20;
+#### **Keys list (list of objects) \[required]:**&#x20;
 
 `Key` objects provide a mapping that allows Foundry to read data from the underlying data structure into usable Python objects. `Key` objects have the following properties:
 
-* **`key (str)`**A name mapping to a column name (e.g., for csv files) or key within a data structure (e.g., for HDF5 files)
-* **`type (str)`** The type of key this entry represents. Currently suported types are _**\["input", "target" ]**_
+* **`key (str) [required]`**A name mapping to a column name (e.g., for csv files) or key within a data structure (e.g., for HDF5 files)
+* **`type (str) [required]`** The type of key this entry represents. Currently suported types are _**\["input", "target" ]**_
 * **`units (str)[optional]` **_****_ The scientific units associated with a key. _Default: None_
 * **`description (str)[optional]` **_****_ A free text description of the key. _Default: None_
 * **`labels (list) (str) [optional]`:** A list of strings mapped to integers in a key column
 
-#### **splits (**list of objects**):**
+#### **splits (**list of objects**) \[required]:**
 
-&#x20;`split` objects provide a convenient way to specify various data splits, or subsets of the dataset. `split` objects have the following properties:
+`split` objects provide a convenient way to specify various data splits, or subsets of the dataset. `split` objects have the following properties:
 
-* **`type (str)`**The type of split (e.g., "train", "test", "validation")
-* **`path (str)`** A path to the file or folder containing the split data
+* **`type (str) [required]`**The type of split (e.g., "train", "test", "validation")
+* **`path (str) [required]`** A path to the file or folder containing the split data
 * **`label (str)` **_****_ A descriptive name for the split if required. _Default: None_
 
-#### **short\_name (str):**&#x20;
+#### **short\_name (str) \[required]:**&#x20;
 
 Short name is a unique, human-readable name associated with this dataset to make loading and finding the dataset simple.&#x20;
 
-#### **data\_type (str):**&#x20;
+#### **data\_type (str) \[required]:**&#x20;
 
 The type of data provided. This gives a hint to Foundry on how to map the keys into loading operations. _Options \["tabular","hdf5"]_
 
