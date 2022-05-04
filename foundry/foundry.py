@@ -81,6 +81,7 @@ class Foundry(FoundryMetadata):
                     "petrel",
                     "transfer",
                     "dlhub",
+                    "funcx",
                     "openid",
                     "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
                 ],
