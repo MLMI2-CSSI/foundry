@@ -15,6 +15,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     install_requires=[
         "mdf_forge>=0.7.6",
+        "globus-sdk>=1.2.1,<=2.0.3",
         "dlhub_sdk==0.10.0",
         "numpy>=1.15.4",
         "pandas>=0.23.4",

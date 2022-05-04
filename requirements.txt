@@ -1,4 +1,4 @@
-globus-sdk>=1.2.1
+globus-sdk>=1.2.1,<=2.0.3
 dlhub_sdk==0.10.0
 requests>=2.18.4
 tqdm>=4.19.4
