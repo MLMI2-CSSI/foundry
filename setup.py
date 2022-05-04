@@ -6,7 +6,7 @@ packages = (setuptools.find_packages(),)
 # TODO: change dependencies to be looser
 setuptools.setup(
     name="foundry_ml",
-    version="0.1.0",
+    version="0.1.2",
     author="Aristana Scourtas, KJ Schmidt, Imogen Foster, Ribhav Bose, Zoa Katok, Ethan Truelove, Ian Foster, Ben Blaiszik",
     author_email="blaiszik@uchicago.edu",
     packages=setuptools.find_packages(),
@@ -15,6 +15,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     install_requires=[
         "mdf_forge>=0.7.6",
+        "dlhub_sdk==0.10.0",
         "numpy>=1.15.4",
         "pandas>=0.23.4",
         "pydantic>=1.4",
