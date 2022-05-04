@@ -21,6 +21,7 @@ services= [
             "mdf_connect",
             "search",
             "dlhub",
+            "funcx",
             "petrel",
             "transfer",
             "openid",
