@@ -20,6 +20,7 @@ services= [
             "data_mdf",
             "mdf_connect",
             "search",
+            "dlhub"
             "petrel",
             "transfer",
             "openid",
