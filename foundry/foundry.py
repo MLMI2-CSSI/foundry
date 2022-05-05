@@ -203,7 +203,7 @@ class Foundry(FoundryMetadata):
 
         Returns
         -------
-            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, and publication year
+            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication year, and DOI
         """
         res = (
             self.forge_client.match_field(
@@ -212,12 +212,14 @@ class Foundry(FoundryMetadata):
             .search()
         )
 
+
         return pd.DataFrame(
             [
                 {
                     "source_id": r["mdf"]["source_id"],
                     "name": r["dc"]["titles"][0]["title"],
                     "year": r["dc"].get("publicationYear", None),
+                    "DOI": r["dc"]["identifier"]["identifier"], 
                 }
                 for r in res
             ]
@@ -322,8 +324,9 @@ class Foundry(FoundryMetadata):
             authors = [creator['creatorName']
                        for creator in self.dc['creators']]
             authors = '; '.join(authors)
+            DOI = "DOI: " + self.dc['identifier']['identifier']
 
-            buf = f'<h2>{title}</h2>{authors}'
+            buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
 
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
