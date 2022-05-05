@@ -22,6 +22,7 @@ setuptools.setup(
         "pydantic>=1.4",
         "mdf_connect_client>=0.3.8",
         "h5py>=2.10.0",
+        "joblib>=1.0.0",
         "json2table"
     ],
     python_requires=">=3.6",
