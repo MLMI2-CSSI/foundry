@@ -15,21 +15,26 @@ from mdf_connect_client import MDFConnectClient
 client_id = os.getenv('CLIENT_ID')
 client_secret = os.getenv('CLIENT_SECRET')
 
-# TODO: add dlhub back once supported again
 services= [
             "data_mdf",
             "mdf_connect",
             "search",
+            "dlhub",
             "petrel",
             "transfer",
             "openid",
             "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",]
 
-res_cred = mdf_toolbox.confidential_login(client_id=client_id,
+auths = mdf_toolbox.confidential_login(client_id=client_id,
                                         client_secret=client_secret,
                                         services=services, make_clients=True)
 
+search_auth = mdf_toolbox.confidential_login(client_id=client_id,
+                                        client_secret=client_secret,
+                                        services=['search'], make_clients=False)
 
+
+auths['search_authorizer'] = search_auth['search']
 
 #updated test dataset
 test_dataset = "_test_foundry_iris_dev_v2.1"
@@ -119,7 +124,7 @@ def _delete_test_data(foundry_obj):
 
 
 def test_foundry_init_cloud():
-    f1 = Foundry(authorizers=res_cred)
+    f1 = Foundry(authorizers=auths)
 #     assert isinstance(f1.dlhub_client, DLHubClient)
     assert isinstance(f1.forge_client, Forge)
     assert isinstance(f1.connect_client, MDFConnectClient)
@@ -127,42 +132,42 @@ def test_foundry_init_cloud():
 
 @pytest.mark.xfail(reason="Tests will fail in cloud")
 def test_foundry_init_cloud():
-    f = Foundry(authorizers=res_cred)
+    f = Foundry(authorizers=auths)
 #     assert isinstance(f.dlhub_client, DLHubClient)
     assert isinstance(f.forge_client, Forge)
     assert isinstance(f.connect_client, MDFConnectClient)
 
-    f2 = Foundry(authorizers=res_cred)
+    f2 = Foundry(authorizers=auths)
 #     assert isinstance(f2.dlhub_client, DLHubClient)
     assert isinstance(f2.forge_client, Forge)
     assert isinstance(f2.connect_client, MDFConnectClient)
 
-    f3 = Foundry(authorizers=res_cred)
+    f3 = Foundry(authorizers=auths)
 #     assert isinstance(f3.dlhub_client, DLHubClient)
     assert isinstance(f3.forge_client, Forge)
     assert isinstance(f3.connect_client, MDFConnectClient)
 
 
 def test_list():
-    f = Foundry(authorizers=res_cred)
+    f = Foundry(authorizers=auths)
     ds = f.list()
     assert isinstance(ds, pd.DataFrame)
     assert len(ds) > 0
 
 def test_metadata_pull():
-    f = Foundry(authorizers=res_cred)
+    f = Foundry(authorizers=auths)
     assert f.dc == {}
-    f = f.load(test_dataset, download=False, authorizers=res_cred)
+    f = f.load(test_dataset, download=False, authorizers=auths)
     assert f.dc["titles"][0]["title"] == expected_title
 
 
 def test_download_https():
 
-    f = Foundry(authorizers=res_cred)
+    f = Foundry(authorizers=auths)
 
     _delete_test_data(f)
 
-    f = f.load(test_dataset, download=True, globus=False, authorizers=res_cred)
+    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     assert f.dc["titles"][0]["title"] == expected_title
 
     _delete_test_data(f)
@@ -170,11 +175,11 @@ def test_download_https():
 
 def test_dataframe_load():
 
-    f = Foundry(authorizers=res_cred)
+    f = Foundry(authorizers=auths)
 
     _delete_test_data(f)
 
-    f = f.load(test_dataset, download=True, globus=False, authorizers=res_cred)
+    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     res = f.load_data()
     X, y = res['train']
 
