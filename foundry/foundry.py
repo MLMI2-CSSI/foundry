@@ -16,7 +16,7 @@ from mdf_forge import Forge
 # from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
 # from dlhub_sdk.models.servables.keras import KerasModel
 # from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
-# from dlhub_sdk import DLHubClient
+from dlhub_sdk import DLHubClient
 from collections import namedtuple
 from joblib import Parallel, delayed
 from pydantic import AnyUrl, ValidationError
@@ -43,7 +43,7 @@ class Foundry(FoundryMetadata):
     """
 
     # transfer_client: Any
-    # dlhub_client: Any
+    dlhub_client: Any
     forge_client: Any
     connect_client: Any
     index = ""
@@ -81,6 +81,7 @@ class Foundry(FoundryMetadata):
                     "petrel",
                     "transfer",
                     "dlhub",
+                    "funcx",
                     "openid",
                     "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
                 ],
@@ -110,15 +111,15 @@ class Foundry(FoundryMetadata):
         )
 
         ## TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
-        # self.dlhub_client = DLHubClient(
-        #     dlh_authorizer=auths["dlhub"],
-        #     search_client=auths["search"],
-        #     fx_authorizer=auths[
-        #         "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
-        #     ],
-        #     openid_authorizer=auths['openid'],
-        #     force_login=False,
-        # )
+        self.dlhub_client = DLHubClient(
+            dlh_authorizer=auths["dlhub"],
+            search_authorizer=auths["search_authorizer"],
+            fx_authorizer=auths[
+                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
+            ],
+            openid_authorizer=auths['openid'],
+            force_login=False,
+        )
 
 
         self.xtract_tokens = {
@@ -266,22 +267,18 @@ class Foundry(FoundryMetadata):
 
         return pd.concat(X_frames), pd.concat(y_frames)
 
-    # def run(self, name, inputs, **kwargs):
-    #     """Run a model on data
-    #
-    #     Args:
-    #        name (str): DLHub model name
-    #        inputs: Data to send to DLHub as inputs (should be JSON serializable)
-    #
-    #     Returns
-    #     -------
-    #          Returns results after invocation via the DLHub service
-    #
-    #     TODO:
-    #     -------
-    #     - Pass **kwargs through to DLHub client and document kwargs
-    #     """
-    #     return self.dlhub_client.run(name, inputs=inputs)
+    def run(self, name, inputs, **kwargs):
+        """Run a model on data
+
+        Args:
+           name (str): DLHub model name
+           inputs: Data to send to DLHub as inputs (should be JSON serializable)
+
+        Returns
+        -------
+             Returns results after invocation via the DLHub service
+        """
+        return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
     def load_data(self, source_id=None, globus=True):
         """Load in the data associated with the prescribed dataset
