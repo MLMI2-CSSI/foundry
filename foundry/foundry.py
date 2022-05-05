@@ -113,7 +113,7 @@ class Foundry(FoundryMetadata):
         ## TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
         self.dlhub_client = DLHubClient(
             dlh_authorizer=auths["dlhub"],
-            search_client=auths["search"],
+            search_authorizer=auths["search_authorizer"],
             fx_authorizer=auths[
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
             ],
