@@ -24,9 +24,13 @@ auths = mdf_toolbox.login(services=services, make_clients=True)
 search_auth = mdf_toolbox.login(services=['search'], make_clients=False)
 auths['search_authorizer'] = search_auth['search']
 
-# updated test dataset
-test_dataset = "_test_foundry_iris_dev_v2.1"
-expected_title = "Iris Dataset"
+# updated test dataset for publication
+pub_test_dataset = "_test_foundry_iris_dev_v2.1"
+pub_expected_title = "Iris Dataset"
+
+# test dataset for all other tests
+test_dataset = "foundry_experimental_band_gaps_v1.1"
+expected_title = "Graph Network Based Deep Learning of Band Gaps - Experimental Band Gaps"
 
 
 # Kept the Old metadata format in case we ever want to refer back
@@ -43,7 +47,7 @@ old_test_metadata = {
     "package_type": "tabular"
 }
 
-test_metadata = {
+pub_test_metadata = {
     "keys":[
         {
             "key": ["sepal length (cm)"],
@@ -101,8 +105,8 @@ test_metadata = {
     'n_items': 1000
 }
 
-# Globus endpoint for '_iris_dev'
-test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2Firis-dev%2F"
+# Globus endpoint for '_iris_dev' for test publication
+pub_test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2Firis-dev%2F"
 
 
 # Quick function to delete any downloaded test data
@@ -157,18 +161,17 @@ def test_globus_dataframe_load():
     _delete_test_data(f)
 
 
-
 def test_publish():
     # TODO: automate dealing with curation and cleaning after tests
 
-    f = Foundry(authorizers=auths, index="test", no_browser=True, no_local_server=True)
+    f = Foundry(authorizers=auths, index="mdf-test", no_browser=True, no_local_server=True)
 
     timestamp = datetime.now().timestamp()
     title = "scourtas_example_iris_test_publish_{:.0f}".format(timestamp)
     short_name = "example_AS_iris_test_{:.0f}".format(timestamp)
     authors = ["A Scourtas"]
 
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
+    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name)
 
     # publish with short name
     assert res['success']
@@ -176,21 +179,21 @@ def test_publish():
 
     # TODO: publish with long title -- for some reason even when I change the title, it still says it's already pub'd
     # title += "long"
-    # res = f.publish(test_metadata, test_data_source, title, authors)
+    # res = f.publish(pub_test_metadata, pub_test_data_source, title, authors)
     # assert res['success']
     # assert res['source_id'] == "_test_scourtas_example_iris_publish_{:.0f}_v1.1".format(timestamp)
 
     # check that pushing same dataset without update flag fails
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
+    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name)
     assert not res['success']
 
     # check that using update flag allows us to update dataset
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name, update=True)
+    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name, update=True)
     assert res['success']
 
     # check that using update flag for new dataset fails
     new_short_name = short_name + "_update"
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=new_short_name, update=True)
+    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=new_short_name, update=True)
     assert not res['success']
 
 
