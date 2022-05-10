@@ -112,8 +112,7 @@ def _delete_test_data(foundry_obj):
         shutil.rmtree(path)
 
 
-@pytest.mark.xfail(reason="Tests will fail in cloud")
-def test_foundry_init_cloud():
+def test_foundry_init():
     f = Foundry(authorizers=auths)
     assert isinstance(f.dlhub_client, DLHubClient)
     assert isinstance(f.forge_client, Forge)
@@ -130,7 +129,6 @@ def test_foundry_init_cloud():
     assert isinstance(f3.connect_client, MDFConnectClient)
 
 
-@pytest.mark.xfail(reason="Test should have a local endpoint, will fail cloud CI")
 def test_download_globus():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
 
