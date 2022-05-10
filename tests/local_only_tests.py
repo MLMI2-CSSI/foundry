@@ -10,14 +10,26 @@ from foundry import Foundry
 from dlhub_sdk import DLHubClient
 from mdf_connect_client import MDFConnectClient
 
+services = [
+            "data_mdf",
+            "mdf_connect",
+            "search",
+            "dlhub",
+            "petrel",
+            "transfer",
+            "openid",
+            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",]
 
+auths = mdf_toolbox.login(services=services, make_clients=True)
+search_auth = mdf_toolbox.login(services=['search'], make_clients=False)
+auths['search_authorizer'] = search_auth['search']
 
-#updated test dataset
+# updated test dataset
 test_dataset = "_test_foundry_iris_dev_v2.1"
 expected_title = "Iris Dataset"
 
 
-#Kept the Old metadata format in case we ever want to refer back
+# Kept the Old metadata format in case we ever want to refer back
 old_test_metadata = {
     "inputs": ["sepal length (cm)", "sepal width (cm)", "petal length (cm)", "petal width (cm)"],
     "input_descriptions": ["sepal length in unit(cm)", "sepal width in unit(cm)", "petal length in unit(cm)",
@@ -30,7 +42,6 @@ old_test_metadata = {
     "short_name": "iris_example",
     "package_type": "tabular"
 }
-
 
 test_metadata = {
     "keys":[
@@ -89,11 +100,12 @@ test_metadata = {
     'domain': ['materials science', 'chemistry'],
     'n_items': 1000
 }
+
 # Globus endpoint for '_iris_dev'
 test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2Firis-dev%2F"
 
 
-#Quick function to delete any downloaded test data
+# Quick function to delete any downloaded test data
 def _delete_test_data(foundry_obj):
     path = os.path.join(foundry_obj.config.local_cache_dir, test_dataset)
     if os.path.isdir(path):
@@ -102,17 +114,17 @@ def _delete_test_data(foundry_obj):
 
 @pytest.mark.xfail(reason="Tests will fail in cloud")
 def test_foundry_init_cloud():
-    f = Foundry()
+    f = Foundry(authorizers=auths)
     assert isinstance(f.dlhub_client, DLHubClient)
     assert isinstance(f.forge_client, Forge)
     assert isinstance(f.connect_client, MDFConnectClient)
 
-    f2 = Foundry(no_browser=False, no_local_server=True)
+    f2 = Foundry(authorizers=auths, no_browser=False, no_local_server=True)
     assert isinstance(f2.dlhub_client, DLHubClient)
     assert isinstance(f2.forge_client, Forge)
     assert isinstance(f2.connect_client, MDFConnectClient)
 
-    f3 = Foundry(no_browser=True, no_local_server=False)
+    f3 = Foundry(authorizers=auths, no_browser=True, no_local_server=False)
     assert isinstance(f3.dlhub_client, DLHubClient)
     assert isinstance(f3.forge_client, Forge)
     assert isinstance(f3.connect_client, MDFConnectClient)
@@ -120,9 +132,7 @@ def test_foundry_init_cloud():
 
 @pytest.mark.xfail(reason="Test should have a local endpoint, will fail cloud CI")
 def test_download_globus():
-
-
-    f = Foundry(no_browser=True, no_local_server=True)
+    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
 
     _delete_test_data(f)
 
@@ -133,8 +143,7 @@ def test_download_globus():
 
 
 def test_globus_dataframe_load():
-
-    f = Foundry(no_browser=True, no_local_server=True)
+    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
 
     _delete_test_data(f)
 
@@ -154,7 +163,7 @@ def test_globus_dataframe_load():
 def test_publish():
     # TODO: automate dealing with curation and cleaning after tests
 
-    f = Foundry(no_browser=True, no_local_server=True)
+    f = Foundry(authorizers=auths, index="test", no_browser=True, no_local_server=True)
 
     timestamp = datetime.now().timestamp()
     title = "scourtas_example_iris_test_publish_{:.0f}".format(timestamp)
