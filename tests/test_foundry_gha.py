@@ -15,7 +15,7 @@ from mdf_connect_client import MDFConnectClient
 client_id = os.getenv('CLIENT_ID')
 client_secret = os.getenv('CLIENT_SECRET')
 
-services= [
+services = [
             "data_mdf",
             "mdf_connect",
             "search",
@@ -36,11 +36,11 @@ search_auth = mdf_toolbox.confidential_login(client_id=client_id,
 
 auths['search_authorizer'] = search_auth['search']
 
-#updated test dataset
-test_dataset = "_test_foundry_iris_dev_v2.1"
-expected_title = "Iris Dataset"
+# updated test dataset
+test_dataset = "foundry_experimental_band_gaps_v1.1"
+expected_title = "Graph Network Based Deep Learning of Band Gaps - Experimental Band Gaps"
 
-#Kept the Old metadata format in case we ever want to refer back
+# Kept the Old metadata format in case we ever want to refer back
 old_test_metadata = {
     "inputs": ["sepal length (cm)", "sepal width (cm)", "petal length (cm)", "petal width (cm)"],
     "input_descriptions": ["sepal length in unit(cm)", "sepal width in unit(cm)", "petal length in unit(cm)",
