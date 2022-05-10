@@ -73,8 +73,7 @@ class Foundry(FoundryMetadata):
         if authorizers:
             auths = authorizers
         else:
-            auths = mdf_toolbox.login(
-                services=[
+            services = [
                     "data_mdf",
                     "mdf_connect",
                     "search",
@@ -84,12 +83,24 @@ class Foundry(FoundryMetadata):
                     "funcx",
                     "openid",
                     "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
-                ],
+                ]
+            auths = mdf_toolbox.login(
+                services=services,
                 app_name="Foundry",
                 make_clients=True,
                 no_browser=no_browser,
                 no_local_server=no_local_server,
             )
+            # request Search as an authorizer and not a client
+            search_auth = mdf_toolbox.login(
+                services=['search'],
+                app_name="Foundry",
+                make_clients=False,
+                no_browser=no_browser,
+                no_local_server=no_local_server,
+            )
+            # add special SearchAuthorizer object
+            auths['search_authorizer'] = search_auth['search']
 
         self.forge_client = Forge(
             index=index,
