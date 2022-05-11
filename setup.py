@@ -6,7 +6,7 @@ packages = (setuptools.find_packages(),)
 # TODO: change dependencies to be looser
 setuptools.setup(
     name="foundry_ml",
-    version="0.1.2",
+    version="0.2.0",
     author="Aristana Scourtas, KJ Schmidt, Imogen Foster, Ribhav Bose, Zoa Katok, Ethan Truelove, Ian Foster, Ben Blaiszik",
     author_email="blaiszik@uchicago.edu",
     packages=setuptools.find_packages(),
@@ -14,13 +14,13 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=[
-        "mdf_forge>=0.7.6",
-        "globus-sdk>=1.2.1,<=2.0.3",
-        "dlhub_sdk==0.10.0",
+        "mdf_forge>=0.8.0",
+        "globus-sdk>=3,<4",
+        "dlhub_sdk>=0.10.2",
         "numpy>=1.15.4",
         "pandas>=0.23.4",
         "pydantic>=1.4",
-        "mdf_connect_client>=0.3.8",
+        "mdf_connect_client>=0.4.0",
         "h5py>=2.10.0",
         "joblib>=1.0.0",
         "json2table"

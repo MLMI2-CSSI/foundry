@@ -51,7 +51,7 @@ class Foundry(FoundryMetadata):
     xtract_tokens: Any
 
     def __init__(
-        self, no_browser=False, no_local_server=False, index="mdf-test", authorizers=None, **data
+        self, no_browser=False, no_local_server=False, index="mdf", authorizers=None, **data
     ):
         """Initialize a Foundry client
         Args:
@@ -73,8 +73,7 @@ class Foundry(FoundryMetadata):
         if authorizers:
             auths = authorizers
         else:
-            auths = mdf_toolbox.login(
-                services=[
+            services = [
                     "data_mdf",
                     "mdf_connect",
                     "search",
@@ -84,12 +83,24 @@ class Foundry(FoundryMetadata):
                     "funcx",
                     "openid",
                     "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
-                ],
+                ]
+            auths = mdf_toolbox.login(
+                services=services,
                 app_name="Foundry",
                 make_clients=True,
                 no_browser=no_browser,
                 no_local_server=no_local_server,
             )
+            # request Search as an authorizer and not a client
+            search_auth = mdf_toolbox.login(
+                services=['search'],
+                app_name="Foundry",
+                make_clients=False,
+                no_browser=no_browser,
+                no_local_server=no_local_server,
+            )
+            # add special SearchAuthorizer object
+            auths['search_authorizer'] = search_auth['search']
 
         self.forge_client = Forge(
             index=index,
@@ -203,7 +214,7 @@ class Foundry(FoundryMetadata):
 
         Returns
         -------
-            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, and publication year
+            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication year, and DOI
         """
         res = (
             self.forge_client.match_field(
@@ -212,12 +223,14 @@ class Foundry(FoundryMetadata):
             .search()
         )
 
+
         return pd.DataFrame(
             [
                 {
                     "source_id": r["mdf"]["source_id"],
                     "name": r["dc"]["titles"][0]["title"],
                     "year": r["dc"].get("publicationYear", None),
+                    "DOI": r["dc"]["identifier"]["identifier"], 
                 }
                 for r in res
             ]
@@ -322,8 +335,9 @@ class Foundry(FoundryMetadata):
             authors = [creator['creatorName']
                        for creator in self.dc['creators']]
             authors = '; '.join(authors)
+            DOI = "DOI: " + self.dc['identifier']['identifier']
 
-            buf = f'<h2>{title}</h2>{authors}'
+            buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
 
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
