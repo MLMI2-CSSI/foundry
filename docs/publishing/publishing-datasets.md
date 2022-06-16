@@ -130,30 +130,29 @@ Once your dataset is in the proper shape, and you have created the associated me
 
 ```python
 {
-	"foundry": {
-		"splits": [{
-			"type": "train",
-			"path": "g4mp2_data.json",
-			"label": "train"
-		}],
-		"keys": [{
-				"type": "input",
-				"key": ["feature_1"],
-				"units": "",
-				"description": "This is an input"
-			},
-			{
-				"type": "target",
-				"key": ["band_gap"],
-				"units": "eV",
-				"description": "Bandgap of the material"
-			}
-		],
-		"short_name": "my_short_name",
-		"data_type": "tabular",
-		"task_type": ["supervised"],
-		"domain": ["materials science"]
-	}
+	"splits": [{
+		"type": "train",
+		"path": "g4mp2_data.json",
+		"label": "train"
+	}],
+	"keys": [{
+			"type": "input",
+			"key": ["feature_1"],
+			"units": "",
+			"description": "This is an input"
+		},
+		{
+			"type": "target",
+			"key": ["band_gap"],
+			"units": "eV",
+			"description": "Bandgap of the material"
+		}
+	],
+	"short_name": "my_short_name",
+	"data_type": "tabular",
+	"task_type": ["supervised"],
+	"domain": ["materials science"]
+	
 }
 ```
 
