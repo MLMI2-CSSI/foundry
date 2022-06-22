@@ -29,3 +29,13 @@ https://www.materialsdatafacility.org
 Using [githubocto/repo-visualizer](https://github.com/githubocto/repo-visualizer)
 
 ![Visualization of the codebase](./diagram.svg)
+
+## Screenshots
+<h3 align=center>Atom Position Finding</h3>
+<img src = "https://user-images.githubusercontent.com/83286825/174967457-b11c2855-e233-46c3-96ed-fc6110bb67ed.png" />
+<h3 align = center>Band gap</h3>
+<img src ="https://user-images.githubusercontent.com/83286825/174968749-19973ca3-1712-4fef-a00c-3e16fbd477b4.png" />
+<h3 align = center>Dendrite Segmentation</h3>
+<img src ="https://user-images.githubusercontent.com/83286825/174970744-72fbd235-86ce-47b7-b072-a2ddd7c3a138.png" />
+<h3 align = center>Solvation</h3>
+<img src ="https://user-images.githubusercontent.com/83286825/174972311-3360e726-f7af-4aff-9402-e1f21e6f9f65.png"/>
