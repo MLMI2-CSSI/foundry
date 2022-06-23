@@ -325,6 +325,7 @@ class Foundry(FoundryMetadata):
                 return data
             else:
                 return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
+
         except Exception as e:
             raise Exception(
                 "Metadata not loaded into Foundry object, make sure to call load()") from e
