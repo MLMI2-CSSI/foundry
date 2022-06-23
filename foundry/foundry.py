@@ -1,6 +1,3 @@
-
-import enum
-from sklearn import datasets
 from foundry.xtract_method import *
 import time
 import h5py
