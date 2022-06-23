@@ -293,7 +293,7 @@ class Foundry(FoundryMetadata):
         """
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
-    def load_data(self, source_id=None, as_hdf5=True):
+    def load_data(self, source_id=None, as_hdf5=False):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
