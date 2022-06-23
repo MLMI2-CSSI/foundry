@@ -1,4 +1,6 @@
 
+import enum
+from sklearn import datasets
 from foundry.xtract_method import *
 import time
 import h5py
@@ -7,6 +9,7 @@ import json
 import requests
 import mdf_toolbox
 from json2table import convert
+import numpy as np
 import pandas as pd
 from datetime import date
 from typing import Any
@@ -26,6 +29,10 @@ from foundry.models import (
     FoundrySpecificationDataset,
     FoundrySpecification,
     FoundryDataset
+)
+
+from foundry.eda import (
+    FoundryDataset_Torch
 )
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
@@ -807,7 +814,52 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
+    
+    def toTorch(self, raw=None, split=None):
+        """Convert Foundry Dataset to a PyTorch Dataset
 
+        Arguments:
+            raw (dict): The output of running ``f.load_data(keep_hdf5=True)``
+                    Recommended that this is left as ``None``
+                    **Default:** ``None``
+            split (string): Split to creaty PyTorch Dataset on.
+                    **Default:** ``None``
+
+        Returns: (FoundryDataset_Torch) PyTorch Dataset of all the data from the specified split
+
+        """
+        if not raw:
+            raw = self.load_data(keep_hdf5=True)
+        
+        if not split:
+            split = self.dataset.splits[0].type
+
+        if self.dataset.data_type.value == "hdf5":
+            inputs = []
+            targets = []
+            for key in self.dataset.keys:
+                if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
+                    continue
+
+                val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
+                if key.type == 'input':
+                    inputs.append(val)
+                else:
+                    targets.append(val)
+
+            return FoundryDataset_Torch(inputs, targets)
+        elif self.dataset.data_type.value == "tabular":
+            inputs = []
+            targets = []
+
+            for index, arr in enumerate([inputs, targets]):
+                df = raw[split][index]
+                for key in df.keys():
+                    arr.append(df[key].values)
+
+            return FoundryDataset_Torch(inputs, targets)
+        else:
+            raise NotImplementedError
 def is_pandas_pytable(group):
     if 'axis0' in group.keys() and 'axis1' in group.keys():
         return True
