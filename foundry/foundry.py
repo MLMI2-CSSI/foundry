@@ -308,7 +308,7 @@ class Foundry(FoundryMetadata):
            inputs (list): List of strings for input columns
            targets (list): List of strings for output columns
            source_id (string): Relative path to the source file
-           keep_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
+           as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
 
         Returns
         -------s
