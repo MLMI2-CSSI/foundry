@@ -293,7 +293,7 @@ class Foundry(FoundryMetadata):
         """
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
-    def load_data(self, source_id=None, keep_hdf5=True):
+    def load_data(self, source_id=None, as_hdf5=True):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
@@ -321,10 +321,10 @@ class Foundry(FoundryMetadata):
             if self.dataset.splits:
                 for split in self.dataset.splits:
                     data[split.label] = self._load_data(file=split.path,
-                                                        source_id=source_id, keep_hdf5=keep_hdf5)
+                                                        source_id=source_id, as_hdf5=as_hdf5)
                 return data
             else:
-                return {"data": self._load_data(source_id=source_id, keep_hdf5=keep_hdf5)}
+                return {"data": self._load_data(source_id=source_id, as_hdf5=as_hdf5)}
         except Exception as e:
             raise Exception(
                 "Metadata not loaded into Foundry object, make sure to call load()") from e
@@ -727,7 +727,7 @@ class Foundry(FoundryMetadata):
             return key_list
 
 
-    def _load_data(self, file=None, source_id=None, keep_hdf5=True):
+    def _load_data(self, file=None, source_id=None, as_hdf5=True):
 
         # Build the path to access the cached data
         if source_id:
@@ -793,7 +793,7 @@ class Foundry(FoundryMetadata):
             tmp_data = {s: {} for s in special_types}
             for s in special_types:
                 for key in self.get_keys(s):
-                    if keep_hdf5:
+                    if as_hdf5:
                         tmp_data[s][key] = f[key]
                     elif isinstance(f[key], h5py.Group):
                         if is_pandas_pytable(f[key]):
