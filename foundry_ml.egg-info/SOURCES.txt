@@ -1,0 +1,16 @@
+LICENSE
+README.md
+setup.py
+foundry/__init__.py
+foundry/external_data_architectures.py
+foundry/foundry.py
+foundry/models.py
+foundry/xtract_method.py
+foundry_ml.egg-info/PKG-INFO
+foundry_ml.egg-info/SOURCES.txt
+foundry_ml.egg-info/dependency_links.txt
+foundry_ml.egg-info/requires.txt
+foundry_ml.egg-info/top_level.txt
+tests/__init__.py
+tests/local_only_tests.py
+tests/test_foundry_gha.py
