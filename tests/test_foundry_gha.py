@@ -199,7 +199,7 @@ def test_to_pytorch():
     f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     raw = f.load_data()
 
-    ds = f.to_torch(raw=raw, split='train')
+    ds = f.to_torch(split='train')
     
     assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
     assert len(raw['train'][0]) == len(ds)
@@ -215,7 +215,7 @@ def test_to_tensorflow():
     f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     raw = f.load_data()
 
-    ds = f.to_tensorflow(raw=raw, split='train')
+    ds = f.to_tensorflow(split='train')
     
     assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
     assert len(raw['train'][0]) == len(ds)
