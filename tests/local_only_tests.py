@@ -162,23 +162,6 @@ def test_globus_dataframe_load():
 
     _delete_test_data(f)
 
-def test_to_pytorch():
-    f = Foundry(no_browser=True, no_local_server=True)
-    
-    _delete_test_data(f)
-
-    f = f.load(test_dataset, download=True, globus=False)
-    raw = f.load_data()
-
-    ds = f.toTorch(raw=raw, split='train')
-    
-    assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
-    assert len(raw['train'][0]) == len(ds)
-
-    _delete_test_data(f)
-
-
-
 def test_publish():
     # TODO: automate dealing with curation and cleaning after tests
 
