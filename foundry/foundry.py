@@ -814,7 +814,7 @@ class Foundry(FoundryMetadata):
             raise NotImplementedError
 
     
-    def toTorch(self, split=None):
+    def to_torch(self, split=None):
         """Convert Foundry Dataset to a PyTorch Dataset
 
         Arguments:
@@ -857,7 +857,7 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
-    def toTensorflow(self, split=None):
+    def to_tensorflow(self, split=None):
         """Convert Foundry Dataset to a Tensorflow Sequence
 
         Arguments:
