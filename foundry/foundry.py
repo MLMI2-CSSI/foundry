@@ -293,7 +293,7 @@ class Foundry(FoundryMetadata):
         """
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
-    def load_data(self, source_id=None, globus=True):
+    def load_data(self, source_id=None, as_hdf5=False):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
@@ -307,6 +307,8 @@ class Foundry(FoundryMetadata):
         Args:
            inputs (list): List of strings for input columns
            targets (list): List of strings for output columns
+           source_id (string): Relative path to the source file
+           as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
 
         Returns
         -------s
@@ -319,10 +321,10 @@ class Foundry(FoundryMetadata):
             if self.dataset.splits:
                 for split in self.dataset.splits:
                     data[split.label] = self._load_data(file=split.path,
-                                                        source_id=source_id, globus=globus)
+                                                        source_id=source_id, as_hdf5=as_hdf5)
                 return data
             else:
-                return {"data": self._load_data(source_id=source_id, globus=globus)}
+                return {"data": self._load_data(source_id=source_id, as_hdf5=as_hdf5)}
         except Exception as e:
             raise Exception(
                 "Metadata not loaded into Foundry object, make sure to call load()") from e
@@ -725,7 +727,7 @@ class Foundry(FoundryMetadata):
             return key_list
 
 
-    def _load_data(self, file=None, source_id=None, globus=True):
+    def _load_data(self, file=None, source_id=None, as_hdf5=False):
 
         # Build the path to access the cached data
         if source_id:
@@ -791,7 +793,9 @@ class Foundry(FoundryMetadata):
             tmp_data = {s: {} for s in special_types}
             for s in special_types:
                 for key in self.get_keys(s):
-                    if isinstance(f[key], h5py.Group):
+                    if as_hdf5:
+                        tmp_data[s][key] = f[key]
+                    elif isinstance(f[key], h5py.Group):
                         if is_pandas_pytable(f[key]):
                             df = pd.read_hdf(filepath, key)
                             tmp_data[s][key] = df
