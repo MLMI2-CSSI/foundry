@@ -28,9 +28,11 @@ from foundry.models import (
     FoundryDataset
 )
 
-from foundry.external_data_architectures import (
-    FoundryDataset_Torch,
-    FoundryDataset_TF
+from foundry.torch_dataset_wrapper import (
+    FoundryDatasetAsTorchDataset
+)
+from foundry.tensorflow_dataset_wrapper import (
+    FoundryDatasetAsTensorflowSequence
 )
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
@@ -812,17 +814,14 @@ class Foundry(FoundryMetadata):
             raise NotImplementedError
 
     
-    def toTorch(self, raw=None, split=None):
+    def toTorch(self, split=None):
         """Convert Foundry Dataset to a PyTorch Dataset
 
         Arguments:
-            raw (dict): The output of running ``f.load_data(as_hdf5=False)``
-                    Recommended that this is left as ``None``
-                    **Default:** ``None``
             split (string): Split to create PyTorch Dataset on.
                     **Default:** ``None``
 
-        Returns: (FoundryDataset_Torch) PyTorch Dataset of all the data from the specified split
+        Returns: (FoundryDatasetAsTorchDataset) PyTorch Dataset of all the data from the specified split
 
         """
         if not raw:
@@ -844,7 +843,7 @@ class Foundry(FoundryMetadata):
                 else:
                     targets.append(val)
 
-            return FoundryDataset_Torch(inputs, targets)
+            return FoundryDatasetAsTorchDataset(inputs, targets)
         elif self.dataset.data_type.value == "tabular":
             inputs = []
             targets = []
@@ -854,21 +853,18 @@ class Foundry(FoundryMetadata):
                 for key in df.keys():
                     arr.append(df[key].values)
 
-            return FoundryDataset_Torch(inputs, targets)
+            return FoundryDatasetAsTorchDataset(inputs, targets)
         else:
             raise NotImplementedError
 
-    def toTensorflow(self, raw=None, split=None):
+    def toTensorflow(self, split=None):
         """Convert Foundry Dataset to a Tensorflow Sequence
 
         Arguments:
-            raw (dict): The output of running ``f.load_data(as_hdf5=False)``
-                    Recommended that this is left as ``None``
-                    **Default:** ``None``
             split (string): Split to create Tensorflow Sequence on.
                     **Default:** ``None``
 
-        Returns: (FoundryDataset_TF) Tensorflow Sequence of all the data from the specified split
+        Returns: (FoundryDatasetAsTensorflowSequence) Tensorflow Sequence of all the data from the specified split
 
         """
         if not raw:
@@ -890,7 +886,7 @@ class Foundry(FoundryMetadata):
                 else:
                     targets.append(val)
 
-            return FoundryDataset_TF(inputs, targets)
+            return FoundryDatasetAsTensorflowSequence(inputs, targets)
         elif self.dataset.data_type.value == "tabular":
             inputs = []
             targets = []
@@ -900,7 +896,7 @@ class Foundry(FoundryMetadata):
                 for key in df.keys():
                     arr.append(df[key].values)
 
-            return FoundryDataset_TF(inputs, targets)
+            return FoundryDatasetAsTensorflowSequence(inputs, targets)
         else:
             raise NotImplementedError
 
