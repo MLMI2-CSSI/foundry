@@ -819,7 +819,7 @@ class Foundry(FoundryMetadata):
             raw (dict): The output of running ``f.load_data(as_hdf5=False)``
                     Recommended that this is left as ``None``
                     **Default:** ``None``
-            split (string): Split to creaty PyTorch Dataset on.
+            split (string): Split to create PyTorch Dataset on.
                     **Default:** ``None``
 
         Returns: (FoundryDataset_Torch) PyTorch Dataset of all the data from the specified split
