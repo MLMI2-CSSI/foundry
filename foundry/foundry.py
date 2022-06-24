@@ -731,7 +731,6 @@ class Foundry(FoundryMetadata):
                 key_list = key_list + k
             return key_list
 
-
     def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
 
         # Build the path to access the cached data
