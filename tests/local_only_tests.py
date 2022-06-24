@@ -1,6 +1,8 @@
 import os, shutil
 import re
 import types
+
+from torch import NoopLogger
 import pytest
 from datetime import datetime
 import mdf_toolbox
@@ -159,7 +161,6 @@ def test_globus_dataframe_load():
     assert isinstance(y, pd.DataFrame)
 
     _delete_test_data(f)
-
 
 def test_publish():
     # TODO: automate dealing with curation and cleaning after tests

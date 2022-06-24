@@ -1,4 +1,3 @@
-
 from foundry.xtract_method import *
 import time
 import h5py
@@ -7,6 +6,7 @@ import json
 import requests
 import mdf_toolbox
 from json2table import convert
+import numpy as np
 import pandas as pd
 from datetime import date
 from typing import Any
@@ -26,6 +26,10 @@ from foundry.models import (
     FoundrySpecificationDataset,
     FoundrySpecification,
     FoundryDataset
+)
+
+from foundry.external_data_architectures import (
+    FoundryDataset_Torch
 )
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
@@ -296,7 +300,7 @@ class Foundry(FoundryMetadata):
             self.dlhub_client.fx_endpoint = funcx_endpoint
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
-    def load_data(self, source_id=None, globus=True):
+    def load_data(self, source_id=None, globus=True, as_hdf5=False):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
@@ -310,6 +314,8 @@ class Foundry(FoundryMetadata):
         Args:
            inputs (list): List of strings for input columns
            targets (list): List of strings for output columns
+           source_id (string): Relative path to the source file
+           as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
 
         Returns
         -------s
@@ -322,10 +328,10 @@ class Foundry(FoundryMetadata):
             if self.dataset.splits:
                 for split in self.dataset.splits:
                     data[split.label] = self._load_data(file=split.path,
-                                                        source_id=source_id, globus=globus)
+                                                        source_id=source_id, globus=globus, as_hdf5=as_hdf5)
                 return data
             else:
-                return {"data": self._load_data(source_id=source_id, globus=globus)}
+                return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
         except Exception as e:
             raise Exception(
                 "Metadata not loaded into Foundry object, make sure to call load()") from e
@@ -728,7 +734,7 @@ class Foundry(FoundryMetadata):
             return key_list
 
 
-    def _load_data(self, file=None, source_id=None, globus=True):
+    def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
 
         # Build the path to access the cached data
         if source_id:
@@ -794,7 +800,9 @@ class Foundry(FoundryMetadata):
             tmp_data = {s: {} for s in special_types}
             for s in special_types:
                 for key in self.get_keys(s):
-                    if isinstance(f[key], h5py.Group):
+                    if as_hdf5:
+                        tmp_data[s][key] = f[key]
+                    elif isinstance(f[key], h5py.Group):
                         if is_pandas_pytable(f[key]):
                             df = pd.read_hdf(filepath, key)
                             tmp_data[s][key] = df
@@ -806,7 +814,52 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
+    
+    def toTorch(self, raw=None, split=None):
+        """Convert Foundry Dataset to a PyTorch Dataset
 
+        Arguments:
+            raw (dict): The output of running ``f.load_data(as_hdf5=False)``
+                    Recommended that this is left as ``None``
+                    **Default:** ``None``
+            split (string): Split to create PyTorch Dataset on.
+                    **Default:** ``None``
+
+        Returns: (FoundryDataset_Torch) PyTorch Dataset of all the data from the specified split
+
+        """
+        if not raw:
+            raw = self.load_data(as_hdf5=False)
+        
+        if not split:
+            split = self.dataset.splits[0].type
+
+        if self.dataset.data_type.value == "hdf5":
+            inputs = []
+            targets = []
+            for key in self.dataset.keys:
+                if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
+                    continue
+
+                val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
+                if key.type == 'input':
+                    inputs.append(val)
+                else:
+                    targets.append(val)
+
+            return FoundryDataset_Torch(inputs, targets)
+        elif self.dataset.data_type.value == "tabular":
+            inputs = []
+            targets = []
+
+            for index, arr in enumerate([inputs, targets]):
+                df = raw[split][index]
+                for key in df.keys():
+                    arr.append(df[key].values)
+
+            return FoundryDataset_Torch(inputs, targets)
+        else:
+            raise NotImplementedError
 def is_pandas_pytable(group):
     if 'axis0' in group.keys() and 'axis1' in group.keys():
         return True
