@@ -192,11 +192,11 @@ def test_dataframe_load():
 
 
 def test_to_pytorch():
-    f = Foundry(no_browser=True, no_local_server=True)
+    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
     
     _delete_test_data(f)
 
-    f = f.load(test_dataset, download=True, globus=False)
+    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     raw = f.load_data()
 
     ds = f.toTorch(raw=raw, split='train')
