@@ -184,19 +184,6 @@ def test_dataframe_load():
     _delete_test_data(f)
 
 
-def test_to_pytorch():
-    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    _delete_test_data(f)
-
-    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
-    raw = f.load_data()
-    ds = f.toTorch(raw=raw, split='train')
-
-    assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
-    assert len(raw['train'][0]) == len(ds)
-    _delete_test_data(f)
-
-
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR IS INTENDED
 def test_download_globus():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
@@ -263,3 +250,35 @@ def test_publish():
 def test_check_status():
     # TODO: the 'active messages' in MDF CC's check_status() don't appear to do anything? need to determine how to test
     pass
+
+
+def test_to_pytorch():
+    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
+    
+    _delete_test_data(f)
+
+    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
+    raw = f.load_data()
+
+    ds = f.to_torch(raw=raw, split='train')
+    
+    assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
+    assert len(raw['train'][0]) == len(ds)
+
+    _delete_test_data(f)
+
+
+def test_to_tensorflow():
+    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
+    
+    _delete_test_data(f)
+
+    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
+    raw = f.load_data()
+
+    ds = f.to_tensorflow(raw=raw, split='train')
+    
+    assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
+    assert len(raw['train'][0]) == len(ds)
+
+    _delete_test_data(f)
