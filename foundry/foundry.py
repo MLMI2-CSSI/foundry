@@ -820,8 +820,7 @@ class Foundry(FoundryMetadata):
         Returns: (FoundryDatasetAsTorchDataset) PyTorch Dataset of all the data from the specified split
 
         """
-        if not raw:
-            raw = self.load_data(as_hdf5=False)
+        raw = self.load_data(as_hdf5=False)
         
         if not split:
             split = self.dataset.splits[0].type
@@ -863,8 +862,7 @@ class Foundry(FoundryMetadata):
         Returns: (FoundryDatasetAsTensorflowSequence) Tensorflow Sequence of all the data from the specified split
 
         """
-        if not raw:
-            raw = self.load_data(as_hdf5=False)
+        raw = self.load_data(as_hdf5=False)
         
         if not split:
             split = self.dataset.splits[0].type
