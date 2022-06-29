@@ -13,6 +13,11 @@
 
 * [Publishing Datasets](publishing/publishing-datasets.md)
 
+## Advanced Usage
+
+* [PyTorch Datasets](advanced-usage/pytorch-datasets.md)
+* [TensorFlow Datasets](advanced-usage/tensorflow-datasets.md)
+
 ## How to contribute
 
 * [Contribution Process](how-to-contribute/contributing.md)
