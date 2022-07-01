@@ -28,12 +28,8 @@ from foundry.models import (
     FoundryDataset
 )
 
-from foundry.torch_dataset_wrapper import (
-    FoundryDatasetAsTorchDataset
-)
-from foundry.tensorflow_dataset_wrapper import (
-    FoundryDatasetAsTensorflowSequence
-)
+from foundry.loaders import *
+
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
 import os
@@ -814,14 +810,14 @@ class Foundry(FoundryMetadata):
             raise NotImplementedError
 
     
-    def to_torch(self, split=None):
+    def to_torch(self, split: str = None) -> TorchDataset:
         """Convert Foundry Dataset to a PyTorch Dataset
 
         Arguments:
             split (string): Split to create PyTorch Dataset on.
                     **Default:** ``None``
 
-        Returns: (FoundryDatasetAsTorchDataset) PyTorch Dataset of all the data from the specified split
+        Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
 
         """
         raw = self.load_data(as_hdf5=False)
@@ -842,7 +838,7 @@ class Foundry(FoundryMetadata):
                 else:
                     targets.append(val)
 
-            return FoundryDatasetAsTorchDataset(inputs, targets)
+            return TorchDataset(inputs, targets)
         elif self.dataset.data_type.value == "tabular":
             inputs = []
             targets = []
@@ -852,20 +848,23 @@ class Foundry(FoundryMetadata):
                 for key in df.keys():
                     arr.append(df[key].values)
 
-            return FoundryDatasetAsTorchDataset(inputs, targets)
+            return TorchDataset(inputs, targets)
         else:
             raise NotImplementedError
 
-    def to_tensorflow(self, split=None):
+    def to_tensorflow(self, split: str = None) -> TensorflowSequence:
         """Convert Foundry Dataset to a Tensorflow Sequence
 
         Arguments:
             split (string): Split to create Tensorflow Sequence on.
                     **Default:** ``None``
 
-        Returns: (FoundryDatasetAsTensorflowSequence) Tensorflow Sequence of all the data from the specified split
+        Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split
 
         """
+
+        from tensorflow.keras.utils import Sequence
+        
         raw = self.load_data(as_hdf5=False)
         
         if not split:
@@ -884,7 +883,7 @@ class Foundry(FoundryMetadata):
                 else:
                     targets.append(val)
 
-            return FoundryDatasetAsTensorflowSequence(inputs, targets)
+            return TensorflowSequence(inputs, targets)
         elif self.dataset.data_type.value == "tabular":
             inputs = []
             targets = []
@@ -894,7 +893,7 @@ class Foundry(FoundryMetadata):
                 for key in df.keys():
                     arr.append(df[key].values)
 
-            return FoundryDatasetAsTensorflowSequence(inputs, targets)
+            return TensorflowSequence(inputs, targets)
         else:
             raise NotImplementedError
 
