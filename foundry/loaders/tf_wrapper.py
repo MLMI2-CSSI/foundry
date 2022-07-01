@@ -1,8 +1,8 @@
 import numpy as np
-from torch.utils.data import Dataset
+from tensorflow.keras.utils import Sequence
 
-class FoundryDatasetAsTorchDataset(Dataset):
-    """Foundry Dataset Converted to Pytorch Format"""
+class TensorflowSequence(Sequence):
+    """Foundry Dataset Converted to Tensorflow Format"""
 
     def __init__(self, inputs, targets):
         self.inputs=inputs
@@ -23,3 +23,4 @@ class FoundryDatasetAsTorchDataset(Dataset):
         item["target"] = np.array(item["target"])
         
         return item
+        
