@@ -15,7 +15,7 @@ Foundry Datasets are comprised of two key components, [_**data**_](foundry-datas
 For tabular data, columns should represent the different keys of the data, and rows the individual records.
 
 {% hint style="info" %}
-Supported tabular data types currently include .json, .jsonl, .csv, and .xlsx
+Supported tabular data types currently include .json, .jsonl, and .csv
 {% endhint %}
 
 In this example, we showcase how to describe a JSON record-based dataset where each record is a valid JSON object in a JSON list or a line in a JSON line delimited file.
