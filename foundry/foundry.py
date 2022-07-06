@@ -807,7 +807,7 @@ class Foundry(FoundryMetadata):
             raise NotImplementedError
 
     
-    def to_torch(self, split: str = None) -> TorchDataset:
+    def to_torch(self, split: str = None):
         """Convert Foundry Dataset to a PyTorch Dataset
 
         Arguments:
@@ -817,6 +817,7 @@ class Foundry(FoundryMetadata):
         Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
 
         """
+        from foundry.loaders.torch_wrapper import TorchDataset
         raw = self.load_data(as_hdf5=False)
         
         if not split:
@@ -849,7 +850,7 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
-    def to_tensorflow(self, split: str = None) -> TensorflowSequence:
+    def to_tensorflow(self, split: str = None):
         """Convert Foundry Dataset to a Tensorflow Sequence
 
         Arguments:
@@ -859,8 +860,7 @@ class Foundry(FoundryMetadata):
         Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split
 
         """
-
-        from tensorflow.keras.utils import Sequence
+        from foundry.loaders.tf_wrapper import TensorflowSequence
         
         raw = self.load_data(as_hdf5=False)
         
