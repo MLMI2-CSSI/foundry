@@ -183,13 +183,13 @@ class Foundry(FoundryMetadata):
             res = res.match_field("mdf.source_id", name).search()
 
         # unpack res, handle if empty
-        try:
-            # if search returns multiple results, this automatically uses first result, while warning the user
-            if len(res) > 1:
-                warnings.warn("Multiple datasets found for the given search query")
-            res = res[0]
-        except IndexError as e:
-            raise Exception("load: No metadata found for given dataset") from e
+        if len(res) == 0:
+            raise Exception("load: No metadata found for given dataset")
+
+        # if search returns multiple results, this automatically uses first result, while warning the user
+        if len(res) > 1:
+            warnings.warn("Multiple datasets found for the given search query. Using first dataset")
+        res = res[0]
 
         try:
             res["dataset"] = res["projects"][self.config.metadata_key]
@@ -206,7 +206,7 @@ class Foundry(FoundryMetadata):
         self.dataset = FoundryDataset(**res['dataset'])
 
 
-        if download is True:  # Add check for package existence
+        if download:  # Add check for package existence
             self.download(
                 interval=kwargs.get("interval", 10), globus=globus, verbose=verbose
             )
