@@ -828,9 +828,15 @@ class Foundry(FoundryMetadata):
             inputs = []
             targets = []
             for key in self.dataset.keys:
+                # raw[split][key.type][key.key[0]] gets the data values for the given key.
+                #
+                # For example, if the key was coordinates and had type target, then 
+                # raw[split][key.type][key.key[0]] would return all the coordinates for each item
+                # and raw[split][key.type][key.key[0]].keys() are the indexes of the item.
                 if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
                     continue
 
+                # Get a numpy array of all the values for each item for that key
                 val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
                 if key.type == 'input':
                     inputs.append(val)
@@ -872,9 +878,15 @@ class Foundry(FoundryMetadata):
             inputs = []
             targets = []
             for key in self.dataset.keys:
+                # raw[split][key.type][key.key[0]] gets the data values for the given key.
+                #
+                # For example, if the key was coordinates and had type target, then 
+                # raw[split][key.type][key.key[0]] would return all the coordinates for each item
+                # and raw[split][key.type][key.key[0]].keys() are the indexes of the item.
                 if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
                     continue
 
+                # Get a numpy array of all the values for each item for that key
                 val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
                 if key.type == 'input':
                     inputs.append(val)
