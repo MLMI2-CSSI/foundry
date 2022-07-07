@@ -1,36 +1,23 @@
 
 from foundry.xtract_method import *
-import time
 import h5py
 import glob
 import json
-import requests
 import mdf_toolbox
 from json2table import convert
 import pandas as pd
 from datetime import date
 from typing import Any
-import multiprocessing
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
-# from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
-# from dlhub_sdk.models.servables.keras import KerasModel
-# from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
 from dlhub_sdk import DLHubClient
-from collections import namedtuple
-from joblib import Parallel, delayed
-from pydantic import AnyUrl, ValidationError
 from foundry.models import (
     FoundryMetadata,
     FoundryConfig,
-    FoundrySpecificationDataset,
-    FoundrySpecification,
     FoundryDataset
 )
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
 import os
-import shutil
 logging.disable(logging.INFO)
 
 
@@ -596,7 +583,7 @@ class Foundry(FoundryMetadata):
                         missing_files.append(split.path)
                 #if number of missing files is greater than zero, redownload with informative message
                 if len(missing_files) > 0:
-                    print(f"Dataset will be redownloaded, following files are missing: {missing_files}")
+                    logging.log(25, f"Dataset will be redownloaded, following files are missing: {missing_files}")
                 else:
                     return self
             else:
@@ -604,7 +591,7 @@ class Foundry(FoundryMetadata):
                 if(len(os.listdir(path)) >= 1):
                     return self
                 else:
-                    print("Dataset will be redownloaded, expected file is missing")
+                    logging.log(25, "Dataset will be redownloaded, expected file is missing")
 
         res = self.forge_client.search(
             f"mdf.source_id:{self.mdf['source_id']}", advanced=True
@@ -672,30 +659,6 @@ class Foundry(FoundryMetadata):
                 key_list = key_list + k
             return key_list
 
-        print("Building Data Package")
-        num_cores = multiprocessing.cpu_count()
-
-        def start_download(ds, interval=interval, globus=False):
-            print(f"=== Fetching Data Package {ds.name} ===")
-            f = Foundry().load(ds.name, download=False)
-            f = f.download(interval=interval, globus=globus)
-            return {"success": True}
-
-        if file:
-            with open(file, "r") as fp:
-                fs = FoundrySpecification(**json.load(fp))
-        else:
-            fs = FoundrySpecification(**spec)
-
-        fs.remove_duplicate_dependencies()
-
-        results = Parallel(n_jobs=num_cores)(
-            delayed(start_download)(ds, interval=interval, globus=globus)
-            for ds in fs.dependencies
-        )
-
-        return self
-
     def get_keys(self, type=None, as_object=False):
         """Get keys for a Foundry dataset
 
@@ -747,7 +710,7 @@ class Foundry(FoundryMetadata):
             try:
                 path_to_file = os.path.join(path, file)
             except Exception as e:
-                print(f"Unable to find path to file for download: {e}")
+                logging.log(logging.FATAL, f"Unable to find path to file for download: {e}")  # is this even necessary?
                 raise e
 
             # Check to see whether file exists at path
@@ -761,21 +724,21 @@ class Foundry(FoundryMetadata):
                     path_to_file
                 )
             except Exception as e:
-                print(f"Reading {file} as JSON failed: {e} \n", "Now attempting to read as JSONL")
+                logging.log(logging.WARNING, f"Reading {file} as JSON failed: {e} \n", "Now attempting to read as JSONL")
                 try:
                     # Try to read individual lines instead
                     self.dataset.dataframe = pd.read_json(
                         path_to_file, lines=True
                     )
                 except Exception as f:
-                    print(f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
+                    logging.log(logging.WARNING, f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
                     try:
                         #Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
                             path_to_file
                         )
                     except Exception as g:
-                        print(f"Reading {file} as CSV failed, unable to load data properly: {g}")
+                        logging.log(logging.FATAL, f"Reading {file} as CSV failed, unable to load data properly: {g}")
                         raise e
 
             return (
