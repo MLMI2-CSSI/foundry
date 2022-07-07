@@ -35,7 +35,9 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
 import os
 import shutil
+import warnings
 logging.disable(logging.INFO)
+
 
 
 class Foundry(FoundryMetadata):
@@ -169,9 +171,6 @@ class Foundry(FoundryMetadata):
         if metadata:
             res = metadata
 
-        if metadata:
-            res = metadata
-
         # MDF specific logic
         if is_doi(name) and not metadata:
             res = self.forge_client.match_resource_types("dataset")
@@ -185,7 +184,9 @@ class Foundry(FoundryMetadata):
 
         # unpack res, handle if empty
         try:
-            # if search returns multiple results, this automatically uses first result
+            # if search returns multiple results, this automatically uses first result, while warning the user
+            if len(res) > 1:
+                warnings.warn("Multiple datasets found for the given search query")
             res = res[0]
         except IndexError as e:
             raise Exception("load: No metadata found for given dataset") from e
@@ -199,7 +200,7 @@ class Foundry(FoundryMetadata):
 
         # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
-
+        
         fdataset = FoundryDataset(**res['dataset'])
         self.dc = res['dc']
         self.mdf = res['mdf']
