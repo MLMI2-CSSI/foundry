@@ -329,8 +329,6 @@ class Foundry(FoundryMetadata):
             buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
 
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
-        # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
-        # buf = f'{buf}<h3>DataCite</h3>{convert(self.dc)}'
         return buf
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
