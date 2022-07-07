@@ -201,10 +201,11 @@ class Foundry(FoundryMetadata):
         # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
         
-        fdataset = FoundryDataset(**res['dataset'])
+        # fdataset = FoundryDataset(**res['dataset'])
         self.dc = res['dc']
         self.mdf = res['mdf']
-        self.dataset = fdataset
+        # self.dataset = fdataset
+        self.dataset.__dict__.update(**res['dataset'])
 
 
         if download is True:  # Add check for package existence
