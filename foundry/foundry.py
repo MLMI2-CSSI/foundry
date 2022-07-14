@@ -35,6 +35,9 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
 import os
 import shutil
+import warnings
+
+
 logging.disable(logging.INFO)
 
 
@@ -169,9 +172,6 @@ class Foundry(FoundryMetadata):
         if metadata:
             res = metadata
 
-        if metadata:
-            res = metadata
-
         # MDF specific logic
         if is_doi(name) and not metadata:
             res = self.forge_client.match_resource_types("dataset")
@@ -184,11 +184,13 @@ class Foundry(FoundryMetadata):
             res = res.match_field("mdf.source_id", name).search()
 
         # unpack res, handle if empty
-        try:
-            # if search returns multiple results, this automatically uses first result
-            res = res[0]
-        except IndexError as e:
-            raise Exception("load: No metadata found for given dataset") from e
+        if len(res) == 0:
+            raise Exception(f"load: No metadata found for given dataset {name}")
+
+        # if search returns multiple results, this automatically uses first result, while warning the user
+        if len(res) > 1:
+            warnings.warn("Multiple datasets found for the given search query. Using first dataset")
+        res = res[0]
 
         try:
             res["dataset"] = res["projects"][self.config.metadata_key]
@@ -199,14 +201,13 @@ class Foundry(FoundryMetadata):
 
         # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
-
-        fdataset = FoundryDataset(**res['dataset'])
+        
         self.dc = res['dc']
         self.mdf = res['mdf']
-        self.dataset = fdataset
+        self.dataset = FoundryDataset(**res['dataset'])
 
 
-        if download is True:  # Add check for package existence
+        if download:  # Add check for package existence
             self.download(
                 interval=kwargs.get("interval", 10), globus=globus, verbose=verbose
             )
