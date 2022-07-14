@@ -1,6 +1,4 @@
 import os, shutil
-import re
-import types
 import pytest
 from datetime import datetime
 import mdf_toolbox
