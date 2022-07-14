@@ -36,8 +36,9 @@ import logging
 import os
 import shutil
 import warnings
-logging.disable(logging.INFO)
 
+
+logging.disable(logging.INFO)
 
 
 class Foundry(FoundryMetadata):
@@ -184,7 +185,7 @@ class Foundry(FoundryMetadata):
 
         # unpack res, handle if empty
         if len(res) == 0:
-            raise Exception("load: No metadata found for given dataset")
+            raise Exception(f"load: No metadata found for given dataset {name}")
 
         # if search returns multiple results, this automatically uses first result, while warning the user
         if len(res) > 1:
