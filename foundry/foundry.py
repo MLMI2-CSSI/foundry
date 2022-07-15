@@ -1,14 +1,11 @@
 from foundry.xtract_method import *
-import time
 import h5py
 import glob
 import json
-import requests
 import mdf_toolbox
 from json2table import convert
 import numpy as np
 import pandas as pd
-from datetime import date
 from typing import Any
 import multiprocessing
 from mdf_connect_client import MDFConnectClient
@@ -17,26 +14,18 @@ from mdf_forge import Forge
 # from dlhub_sdk.models.servables.keras import KerasModel
 # from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
 from dlhub_sdk import DLHubClient
-from collections import namedtuple
 from joblib import Parallel, delayed
-from pydantic import AnyUrl, ValidationError
 from foundry.models import (
     FoundryMetadata,
     FoundryConfig,
-    FoundrySpecificationDataset,
     FoundrySpecification,
     FoundryDataset
 )
-
 from foundry.external_data_architectures import (
     FoundryDataset_Torch
 )
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
 import os
-import shutil
-import warnings
-
 
 logging.disable(logging.INFO)
 
@@ -300,6 +289,7 @@ class Foundry(FoundryMetadata):
         if funcx_endpoint is not None:
             self.dlhub_client.fx_endpoint = funcx_endpoint
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
+
 
     def load_data(self, source_id=None, globus=True, as_hdf5=False):
         """Load in the data associated with the prescribed dataset
@@ -736,7 +726,6 @@ class Foundry(FoundryMetadata):
 
 
     def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
-
         # Build the path to access the cached data
         if source_id:
             path = os.path.join(self.config.local_cache_dir, source_id)

@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any
-from pydantic import BaseModel, AnyHttpUrl
+from pydantic import BaseModel
 from enum import Enum
 import pandas as pd
 from json2table import convert
@@ -44,7 +44,7 @@ class FoundrySpecification(BaseModel):
                 for key in self.dependencies]
         df = pd.DataFrame.from_records(deps)
         self.clear_dependencies()
-        for i, row in df.drop_duplicates().iterrows():
+        for _, row in df.drop_duplicates().iterrows():
             self.add_dependency(name=row["name"], version=row["version"])
 
     def clear_dependencies(self):
