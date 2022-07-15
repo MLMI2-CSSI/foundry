@@ -157,7 +157,6 @@ def test_globus_dataframe_load():
 
     _delete_test_data(f)
 
-
 def test_publish():
     # TODO: automate dealing with curation and cleaning after tests
 
