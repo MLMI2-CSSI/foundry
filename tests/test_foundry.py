@@ -197,7 +197,7 @@ def test_to_pytorch():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(is_gha, reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR AS INTENDED
+@pytest.mark.skipif(is_gha.__bool__(), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR AS INTENDED
 def test_download_globus():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
     _delete_test_data(f)
@@ -207,7 +207,7 @@ def test_download_globus():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(is_gha, reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR AS INTENDED
+@pytest.mark.skipif(is_gha.__bool__(), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR AS INTENDED
 def test_globus_dataframe_load():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
     _delete_test_data(f)
@@ -223,7 +223,7 @@ def test_globus_dataframe_load():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(is_gha, reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR AS INTENDED
+@pytest.mark.skipif(is_gha.__bool__(), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR AS INTENDED
 def test_publish():
     # TODO: automate dealing with curation and cleaning after tests
 
