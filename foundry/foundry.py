@@ -18,7 +18,6 @@ from foundry.models import (
 )
 import logging
 import os
-logging.disable(logging.INFO)
 
 
 class Foundry(FoundryMetadata):
@@ -581,7 +580,7 @@ class Foundry(FoundryMetadata):
                         missing_files.append(split.path)
                 #if number of missing files is greater than zero, redownload with informative message
                 if len(missing_files) > 0:
-                    logging.log(25, f"Dataset will be redownloaded, following files are missing: {missing_files}")
+                    logging.log(logging.INFO, f"Dataset will be redownloaded, following files are missing: {missing_files}")
                 else:
                     return self
             else:
@@ -589,7 +588,7 @@ class Foundry(FoundryMetadata):
                 if(len(os.listdir(path)) >= 1):
                     return self
                 else:
-                    logging.log(25, "Dataset will be redownloaded, expected file is missing")
+                    logging.log(logging.INFO, "Dataset will be redownloaded, expected file is missing")
 
         res = self.forge_client.search(
             f"mdf.source_id:{self.mdf['source_id']}", advanced=True
@@ -722,14 +721,14 @@ class Foundry(FoundryMetadata):
                     path_to_file
                 )
             except Exception as e:
-                logging.log(logging.WARNING, f"Reading {file} as JSON failed: {e} \n", "Now attempting to read as JSONL")
+                logging.log(logging.INFO, f"Reading {file} as JSON failed: {e} \n", "Now attempting to read as JSONL")
                 try:
                     # Try to read individual lines instead
                     self.dataset.dataframe = pd.read_json(
                         path_to_file, lines=True
                     )
                 except Exception as f:
-                    logging.log(logging.WARNING, f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
+                    logging.log(logging.INFO, f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
                     try:
                         #Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
