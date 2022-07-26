@@ -282,17 +282,20 @@ class Foundry(FoundryMetadata):
 
         return pd.concat(X_frames), pd.concat(y_frames)
 
-    def run(self, name, inputs, **kwargs):
+    def run(self, name, inputs, funcx_endpoint=None, **kwargs):
         """Run a model on data
 
         Args:
            name (str): DLHub model name
            inputs: Data to send to DLHub as inputs (should be JSON serializable)
+           funcx_endpoint (optional): UUID for the funcx endpoint to run the model on, if not the default (eg River)
 
         Returns
         -------
              Returns results after invocation via the DLHub service
         """
+        if funcx_endpoint is not None:
+            self.dlhub_client.fx_endpoint = funcx_endpoint
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
     def load_data(self, source_id=None, globus=True, as_hdf5=False):
