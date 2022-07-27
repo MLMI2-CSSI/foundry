@@ -345,57 +345,76 @@ class Foundry(FoundryMetadata):
         # buf = f'{buf}<h3>DataCite</h3>{convert(self.dc)}'
         return buf
 
-    def publish(self, foundry_metadata, data_source, title, authors, update=False,
-                publication_year=None, **kwargs,):
-        """Submit a dataset for publication
+    def publish(self, title, creators, short_name, servable_type, serv_options):
+        """Simplified publishing method for servables
+
         Args:
-            foundry_metadata (dict): Dict of metadata describing data package
-            data_source (string): Url for Globus endpoint
-            title (string): Title of data package
-            authors (list): List of data package author names e.g., Jack Black
-                or Nunez, Victoria
-            update (bool): True if this is an update to a prior data package
-                (default: self.config.metadata_file)
-            publication_year (int): Year of dataset publication. If None, will
-                be set to the current calendar year by MDF Connect Client.
-                (default: $current_year)
-
-        Keyword Args:
-            affiliations (list): List of author affiliations
-            tags (list): List of tags to apply to the data package
-            short_name (string): Shortened/abbreviated name of the data package
-            publisher (string): Data publishing entity (e.g. MDF, Zenodo, etc.)
-            description (str): A description of the dataset.
-            dataset_doi (str): The DOI for this dataset (not an associated paper).
-            related_dois (list): DOIs related to this dataset,
-                    not including the dataset's own DOI (for example, an associated paper's DOI).
-
-        Returns
-        -------
-        (dict) MDF Connect Response: Response from MDF Connect to allow tracking
-            of dataset. Contains `source_id`, which can be used to check the
-            status of the submission
+            title (string): title for the servable
+            creators (string | list): either the creator's name (FamilyName, GivenName) or a list of the creators' names
+            short_name (string): shorthand name for the servable
+            servable_type (string): the type of the servable, must be a member of ("static_method",
+                                                                                   "class_method",
+                                                                                   "keras",
+                                                                                   "pytorch",
+                                                                                   "tensorflow",
+                                                                                   "sklearn")
+            serv_options (dict): the servable_type specific arguments that are necessary for publishing
+        Returns:
+            (string): task id of this submission, can be used to check for success
+        Raises:
+            ValueError: If the given servable_type is not in the list of acceptable types
+            Exception: If the serv_options are incomplete or the request to publish results in an error
         """
-        self.connect_client.create_dc_block(
-            title=title,
-            authors=authors,
-            affiliations=kwargs.get("affiliations", []),
-            subjects=kwargs.get("tags", ["machine learning", "foundry"]),
-            publisher=kwargs.get("publisher", ""),
-            publication_year=publication_year,
-            description=kwargs.get("description", ""),
-            dataset_doi=kwargs.get("dataset_doi", ""),
-            related_dois=kwargs.get("related_dois", [])
-        )
-        self.connect_client.add_organization(self.config.organization)
-        self.connect_client.set_project_block(
-            self.config.metadata_key, foundry_metadata)
-        self.connect_client.add_data_source(data_source)
-        self.connect_client.set_source_name(kwargs.get("short_name", title))
-
-        res = self.connect_client.submit_dataset(update=update)
-        return res
-
+        return self.dlhub_client.easy_publish(title, creators, short_name, servable_type, serv_options)
+    #    Submit a dataset for publication
+    #    Args:
+    #        foundry_metadata (dict): Dict of metadata describing data package
+    #        data_source (string): Url for Globus endpoint
+    #        title (string): Title of data package
+    #        authors (list): List of data package author names e.g., Jack Black
+    #            or Nunez, Victoria
+    #        update (bool): True if this is an update to a prior data package
+    #            (default: self.config.metadata_file)
+    #        publication_year (int): Year of dataset publication. If None, will
+    #            be set to the current calendar year by MDF Connect Client.
+    #            (default: $current_year)
+    #
+    #    Keyword Args:
+    #        affiliations (list): List of author affiliations
+    #        tags (list): List of tags to apply to the data package
+    #        short_name (string): Shortened/abbreviated name of the data package
+    #        publisher (string): Data publishing entity (e.g. MDF, Zenodo, etc.)
+    #        description (str): A description of the dataset.
+    #        dataset_doi (str): The DOI for this dataset (not an associated paper).
+    #        related_dois (list): DOIs related to this dataset,
+    #                not including the dataset's own DOI (for example, an associated paper's DOI).
+    #
+    #    Returns
+    #    -------
+    #    (dict) MDF Connect Response: Response from MDF Connect to allow tracking
+    #        of dataset. Contains `source_id`, which can be used to check the
+    #        status of the submission
+    #
+    #    self.connect_client.create_dc_block(
+    #        title=title,
+    #        authors=authors,
+    #        affiliations=kwargs.get("affiliations", []),
+    #        subjects=kwargs.get("tags", ["machine learning", "foundry"]),
+    #        publisher=kwargs.get("publisher", ""),
+    #        publication_year=publication_year,
+    #        description=kwargs.get("description", ""),
+    #        dataset_doi=kwargs.get("dataset_doi", ""),
+    #        related_dois=kwargs.get("related_dois", [])
+    #    )
+    #    self.connect_client.add_organization(self.config.organization)
+    #    self.connect_client.set_project_block(
+    #        self.config.metadata_key, foundry_metadata)
+    #    self.connect_client.add_data_source(data_source)
+    #    self.connect_client.set_source_name(kwargs.get("short_name", title))
+    #
+    #    res = self.connect_client.submit_dataset(update=update)
+    #    return res
+    #
     # TODO: come back and address DLHub code
     #
     # def describe_model(self):
