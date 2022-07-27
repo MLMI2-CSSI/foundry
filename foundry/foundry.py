@@ -801,7 +801,16 @@ class Foundry(FoundryMetadata):
             return tmp_data
         else:
             raise NotImplementedError
+
     def _get_inputs_targets(self, split: str = None):
+        """Get Inputs and Outputs from a Foundry Dataset
+
+        Arguments:
+            split (string): Split to get inputs and outputs from.
+                    **Default:** ``None``
+        
+        Returns: (Tuple) Tuple of the inputs and outputs
+        """
         raw = self.load_data(as_hdf5=False)
         
         if not split:
