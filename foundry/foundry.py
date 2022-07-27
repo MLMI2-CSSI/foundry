@@ -396,6 +396,28 @@ class Foundry(FoundryMetadata):
         res = self.connect_client.submit_dataset(update=update)
         return res
 
+    def publish_model(self, title, creators, short_name, servable_type, serv_options):
+        """Simplified publishing method for servables
+
+        Args:
+            title (string): title for the servable
+            creators (string | list): either the creator's name (FamilyName, GivenName) or a list of the creators' names
+            short_name (string): shorthand name for the servable
+            servable_type (string): the type of the servable, must be a member of ("static_method",
+                                                                                   "class_method",
+                                                                                   "keras",
+                                                                                   "pytorch",
+                                                                                   "tensorflow",
+                                                                                   "sklearn")
+            serv_options (dict): the servable_type specific arguments that are necessary for publishing
+        Returns:
+            (string): task id of this submission, can be used to check for success
+        Raises:
+            ValueError: If the given servable_type is not in the list of acceptable types
+            Exception: If the serv_options are incomplete or the request to publish results in an error
+        """
+        return self.dlhub_client.easy_publish(title, creators, short_name, servable_type, serv_options)
+
     # TODO: come back and address DLHub code
     #
     # def describe_model(self):
