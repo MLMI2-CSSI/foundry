@@ -1,4 +1,5 @@
 
+from multiprocessing.sharedctypes import Value
 from foundry.xtract_method import *
 import h5py
 import glob
@@ -580,7 +581,7 @@ class Foundry(FoundryMetadata):
                         missing_files.append(split.path)
                 #if number of missing files is greater than zero, redownload with informative message
                 if len(missing_files) > 0:
-                    logging.log(logging.INFO, f"Dataset will be redownloaded, following files are missing: {missing_files}")
+                    logging.info(f"Dataset will be redownloaded, following files are missing: {missing_files}")
                 else:
                     return self
             else:
@@ -588,7 +589,7 @@ class Foundry(FoundryMetadata):
                 if(len(os.listdir(path)) >= 1):
                     return self
                 else:
-                    logging.log(logging.INFO, "Dataset will be redownloaded, expected file is missing")
+                    logging.info("Dataset will be redownloaded, expected file is missing")
 
         res = self.forge_client.search(
             f"mdf.source_id:{self.mdf['source_id']}", advanced=True
@@ -703,12 +704,9 @@ class Foundry(FoundryMetadata):
                 file = self.config.dataframe_file
 
 
-            # Check to make sure the path can be created
-            try:
-                path_to_file = os.path.join(path, file)
-            except Exception as e:
-                logging.log(logging.FATAL, f"Unable to find path to file for download: {e}")  # is this even necessary?
-                raise e
+            if path is None or file is None:
+                raise ValueError("Path to file or file name is None, must be set")
+            path_to_file = os.path.join(path, file)
 
             # Check to see whether file exists at path
             if not os.path.isfile(path_to_file):
