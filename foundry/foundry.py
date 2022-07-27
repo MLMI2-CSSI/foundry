@@ -806,19 +806,7 @@ class Foundry(FoundryMetadata):
             return tmp_data
         else:
             raise NotImplementedError
-
-    
-    def to_torch(self, split: str = None):
-        """Convert Foundry Dataset to a PyTorch Dataset
-
-        Arguments:
-            split (string): Split to create PyTorch Dataset on.
-                    **Default:** ``None``
-
-        Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
-
-        """
-        from foundry.loaders.torch_wrapper import TorchDataset
+    def _get_inputs_targets(self, split: str = None):
         raw = self.load_data(as_hdf5=False)
         
         if not split:
@@ -842,8 +830,9 @@ class Foundry(FoundryMetadata):
                     inputs.append(val)
                 else:
                     targets.append(val)
+            
+            return (inputs, targets)
 
-            return TorchDataset(inputs, targets)
         elif self.dataset.data_type.value == "tabular":
             inputs = []
             targets = []
@@ -852,10 +841,26 @@ class Foundry(FoundryMetadata):
                 df = raw[split][index]
                 for key in df.keys():
                     arr.append(df[key].values)
-
-            return TorchDataset(inputs, targets)
+            
+            return (inputs, targets)
+            
         else:
             raise NotImplementedError
+
+    def to_torch(self, split: str = None):
+        """Convert Foundry Dataset to a PyTorch Dataset
+
+        Arguments:
+            split (string): Split to create PyTorch Dataset on.
+                    **Default:** ``None``
+
+        Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
+
+        """
+        from foundry.loaders.torch_wrapper import TorchDataset
+        
+        inputs, targets = _get_inputs_targets(self, split)
+        return TorchDataset(inputs, targets)
 
     def to_tensorflow(self, split: str = None):
         """Convert Foundry Dataset to a Tensorflow Sequence
@@ -869,43 +874,8 @@ class Foundry(FoundryMetadata):
         """
         from foundry.loaders.tf_wrapper import TensorflowSequence
         
-        raw = self.load_data(as_hdf5=False)
-        
-        if not split:
-            split = self.dataset.splits[0].type
-
-        if self.dataset.data_type.value == "hdf5":
-            inputs = []
-            targets = []
-            for key in self.dataset.keys:
-                # raw[split][key.type][key.key[0]] gets the data values for the given key.
-                #
-                # For example, if the key was coordinates and had type target, then 
-                # raw[split][key.type][key.key[0]] would return all the coordinates for each item
-                # and raw[split][key.type][key.key[0]].keys() are the indexes of the item.
-                if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
-                    continue
-
-                # Get a numpy array of all the values for each item for that key
-                val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
-                if key.type == 'input':
-                    inputs.append(val)
-                else:
-                    targets.append(val)
-
-            return TensorflowSequence(inputs, targets)
-        elif self.dataset.data_type.value == "tabular":
-            inputs = []
-            targets = []
-
-            for index, arr in enumerate([inputs, targets]):
-                df = raw[split][index]
-                for key in df.keys():
-                    arr.append(df[key].values)
-
-            return TensorflowSequence(inputs, targets)
-        else:
-            raise NotImplementedError
+        inputs, targets = _get_inputs_targets(self, split)
+        return TensorflowSequence(inputs, targets)
 
 def is_pandas_pytable(group):
     if 'axis0' in group.keys() and 'axis1' in group.keys():
