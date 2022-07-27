@@ -1,5 +1,3 @@
-
-from multiprocessing.sharedctypes import Value
 from foundry.xtract_method import *
 import h5py
 import glob
@@ -7,7 +5,6 @@ import json
 import mdf_toolbox
 from json2table import convert
 import pandas as pd
-from datetime import date
 from typing import Any
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
