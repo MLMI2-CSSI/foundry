@@ -719,21 +719,21 @@ class Foundry(FoundryMetadata):
                     path_to_file
                 )
             except Exception as e:
-                logging.log(logging.INFO, f"Reading {file} as JSON failed: {e} \n", "Now attempting to read as JSONL")
+                logging.info(f"Reading {file} as JSON failed: {e} \n", "Now attempting to read as JSONL")
                 try:
                     # Try to read individual lines instead
                     self.dataset.dataframe = pd.read_json(
                         path_to_file, lines=True
                     )
                 except Exception as f:
-                    logging.log(logging.INFO, f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
+                    logging.info(f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
                     try:
                         #Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
                             path_to_file
                         )
                     except Exception as g:
-                        logging.log(logging.FATAL, f"Reading {file} as CSV failed, unable to load data properly: {g}")
+                        logging.fatal(f"Reading {file} as CSV failed, unable to load data properly: {g}")
                         raise e
 
             return (
