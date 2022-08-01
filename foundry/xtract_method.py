@@ -1,10 +1,10 @@
 import requests
+import urllib3
 import json
 import time
 import os
 import multiprocessing
 from joblib import Parallel, delayed
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 # TODO: reassess if there's a better way than passing self in
 def xtract_https_download(foundryObj, verbose=False, **kwargs):
@@ -12,7 +12,6 @@ def xtract_https_download(foundryObj, verbose=False, **kwargs):
     xtract_base_url = kwargs.get("xtract_base_url")
     # MDF Materials Data at NCSA
     source_ep_id = kwargs.get("source_ep_id")
-    base_url = kwargs.get("base_url")
     folder_to_crawl = kwargs.get("folder_to_crawl")
 
     # This only matters if you want files grouped together.
@@ -21,7 +20,7 @@ def xtract_https_download(foundryObj, verbose=False, **kwargs):
     auth_token = foundryObj.xtract_tokens["auth_token"]
     transfer_token = foundryObj.xtract_tokens["transfer_token"]
     funcx_token = foundryObj.xtract_tokens["funcx_token"]
-    
+
     headers = {
         "Authorization": auth_token,
         "Transfer": transfer_token,
@@ -109,8 +108,9 @@ def xtract_https_download(foundryObj, verbose=False, **kwargs):
 
     num_cores = multiprocessing.cpu_count()
 
+    @delayed
     def download_file(file):
-        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
         url = "https://data.materialsdatafacility.org" + file["path"]
 
@@ -135,7 +135,7 @@ def xtract_https_download(foundryObj, verbose=False, **kwargs):
         return {file["path"] + " status": True}
 
     results = Parallel(n_jobs=num_cores)(
-        delayed(download_file)(file) for file in file_ls
+        download_file(file) for file in file_ls
     )
 
     print("Done curling.")
