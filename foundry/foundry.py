@@ -15,6 +15,8 @@ from foundry.models import (
     FoundryConfig,
     FoundryDataset
 )
+from foundry.external_data_architectures import FoundryDataset_Torch
+
 import logging
 import warnings
 import os
