@@ -4,6 +4,7 @@ import glob
 import json
 import mdf_toolbox
 from json2table import convert
+import numpy as np
 import pandas as pd
 from typing import Any
 from mdf_connect_client import MDFConnectClient
@@ -15,6 +16,7 @@ from foundry.models import (
     FoundryDataset
 )
 import logging
+import warnings
 import os
 
 logger = logging.getLogger(__name__)
@@ -150,9 +152,6 @@ class Foundry(FoundryMetadata):
         if metadata:
             res = metadata
 
-        if metadata:
-            res = metadata
-
         # MDF specific logic
         if is_doi(name) and not metadata:
             res = self.forge_client.match_resource_types("dataset")
@@ -165,11 +164,13 @@ class Foundry(FoundryMetadata):
             res = res.match_field("mdf.source_id", name).search()
 
         # unpack res, handle if empty
-        try:
-            # if search returns multiple results, this automatically uses first result
-            res = res[0]
-        except IndexError as e:
-            raise Exception("load: No metadata found for given dataset") from e
+        if len(res) == 0:
+            raise Exception(f"load: No metadata found for given dataset {name}")
+
+        # if search returns multiple results, this automatically uses first result, while warning the user
+        if len(res) > 1:
+            warnings.warn("Multiple datasets found for the given search query. Using first dataset")
+        res = res[0]
 
         try:
             res["dataset"] = res["projects"][self.config.metadata_key]
@@ -180,14 +181,13 @@ class Foundry(FoundryMetadata):
 
         # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
-
-        fdataset = FoundryDataset(**res['dataset'])
+        
         self.dc = res['dc']
         self.mdf = res['mdf']
-        self.dataset = fdataset
+        self.dataset = FoundryDataset(**res['dataset'])
 
 
-        if download is True:  # Add check for package existence
+        if download:  # Add check for package existence
             self.download(
                 interval=kwargs.get("interval", 10), globus=globus, verbose=verbose
             )
@@ -265,20 +265,23 @@ class Foundry(FoundryMetadata):
 
         return pd.concat(X_frames), pd.concat(y_frames)
 
-    def run(self, name, inputs, **kwargs):
+    def run(self, name, inputs, funcx_endpoint=None, **kwargs):
         """Run a model on data
 
         Args:
            name (str): DLHub model name
            inputs: Data to send to DLHub as inputs (should be JSON serializable)
+           funcx_endpoint (optional): UUID for the funcx endpoint to run the model on, if not the default (eg River)
 
         Returns
         -------
              Returns results after invocation via the DLHub service
         """
+        if funcx_endpoint is not None:
+            self.dlhub_client.fx_endpoint = funcx_endpoint
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
-    def load_data(self, source_id=None, as_hdf5=False):
+    def load_data(self, source_id=None, globus=True, as_hdf5=False):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
@@ -306,10 +309,10 @@ class Foundry(FoundryMetadata):
             if self.dataset.splits:
                 for split in self.dataset.splits:
                     data[split.label] = self._load_data(file=split.path,
-                                                        source_id=source_id, as_hdf5=as_hdf5)
+                                                        source_id=source_id, globus=globus, as_hdf5=as_hdf5)
                 return data
             else:
-                return {"data": self._load_data(source_id=source_id, as_hdf5=as_hdf5)}
+                return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
         except Exception as e:
             raise Exception(
                 "Metadata not loaded into Foundry object, make sure to call load()") from e
@@ -685,9 +688,7 @@ class Foundry(FoundryMetadata):
                 key_list = key_list + k
             return key_list
 
-
-    def _load_data(self, file=None, source_id=None, as_hdf5=False):
-
+    def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
         # Build the path to access the cached data
         if source_id:
             path = os.path.join(self.config.local_cache_dir, source_id)
@@ -763,7 +764,52 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
+    
+    def toTorch(self, raw=None, split=None):
+        """Convert Foundry Dataset to a PyTorch Dataset
 
+        Arguments:
+            raw (dict): The output of running ``f.load_data(as_hdf5=False)``
+                    Recommended that this is left as ``None``
+                    **Default:** ``None``
+            split (string): Split to create PyTorch Dataset on.
+                    **Default:** ``None``
+
+        Returns: (FoundryDataset_Torch) PyTorch Dataset of all the data from the specified split
+
+        """
+        if not raw:
+            raw = self.load_data(as_hdf5=False)
+        
+        if not split:
+            split = self.dataset.splits[0].type
+
+        if self.dataset.data_type.value == "hdf5":
+            inputs = []
+            targets = []
+            for key in self.dataset.keys:
+                if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
+                    continue
+
+                val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
+                if key.type == 'input':
+                    inputs.append(val)
+                else:
+                    targets.append(val)
+
+            return FoundryDataset_Torch(inputs, targets)
+        elif self.dataset.data_type.value == "tabular":
+            inputs = []
+            targets = []
+
+            for index, arr in enumerate([inputs, targets]):
+                df = raw[split][index]
+                for key in df.keys():
+                    arr.append(df[key].values)
+
+            return FoundryDataset_Torch(inputs, targets)
+        else:
+            raise NotImplementedError
 def is_pandas_pytable(group):
     if 'axis0' in group.keys() and 'axis1' in group.keys():
         return True
