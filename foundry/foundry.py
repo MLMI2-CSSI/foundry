@@ -658,7 +658,7 @@ class Foundry(FoundryMetadata):
 
         return self
 
-    def build(self, spec, globus=False, interval=3, file=False):
+    def build(self, spec, globus=False, interval=3, file=False, as_object=False):
         """Build a Foundry Data Package
         Args:
             spec (multiple): dict or str (relative filename) of the data package specification
