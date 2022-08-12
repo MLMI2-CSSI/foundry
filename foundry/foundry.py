@@ -118,7 +118,7 @@ class Foundry(FoundryMetadata):
             authorizer=auths["mdf_connect"], test=test
         )
 
-        ## TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
+        # TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
         self.dlhub_client = DLHubClient(
             dlh_authorizer=auths["dlhub"],
             search_authorizer=auths["search_authorizer"],
@@ -128,7 +128,6 @@ class Foundry(FoundryMetadata):
             openid_authorizer=auths['openid'],
             force_login=False,
         )
-
 
         self.xtract_tokens = {
             "auth_token": auths["petrel"].access_token,
@@ -191,11 +190,10 @@ class Foundry(FoundryMetadata):
 
         # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
-        
+
         self.dc = res['dc']
         self.mdf = res['mdf']
         self.dataset = FoundryDataset(**res['dataset'])
-
 
         if download:  # Add check for package existence
             self.download(
@@ -218,14 +216,13 @@ class Foundry(FoundryMetadata):
             .search()
         )
 
-
         return pd.DataFrame(
             [
                 {
                     "source_id": r["mdf"]["source_id"],
                     "name": r["dc"]["titles"][0]["title"],
                     "year": r["dc"].get("publicationYear", None),
-                    "DOI": r["dc"]["identifier"]["identifier"], 
+                    "DOI": r["dc"]["identifier"]["identifier"],
                 }
                 for r in res
             ]
@@ -260,7 +257,6 @@ class Foundry(FoundryMetadata):
         """
         if not packages:
             packages = self.get_packages()
-        f = Foundry()
 
         X_frames = []
         y_frames = []
@@ -290,7 +286,6 @@ class Foundry(FoundryMetadata):
         if funcx_endpoint is not None:
             self.dlhub_client.fx_endpoint = funcx_endpoint
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
-
 
     def load_data(self, source_id=None, globus=True, as_hdf5=False):
         """Load in the data associated with the prescribed dataset
@@ -593,14 +588,14 @@ class Foundry(FoundryMetadata):
                         split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
                         missing_files.append(split.path)
-                #if number of missing files is greater than zero, redownload with informative message
+                # if number of missing files is greater than zero, redownload with informative message
                 if len(missing_files) > 0:
                     print(f"Dataset will be redownloaded, following files are missing: {missing_files}")
                 else:
                     return self
             else:
                 # in the case of no splits, ensure the directory contains at least one file
-                if(len(os.listdir(path)) >= 1):
+                if (len(os.listdir(path)) >= 1):
                     return self
                 else:
                     print("Dataset will be redownloaded, expected file is missing")
@@ -626,7 +621,7 @@ class Foundry(FoundryMetadata):
                  "folder_to_crawl": f"/foundry/{source_id}/",
                  "grouper": "matio"
                 }
-            xtract_https_download(self, verbose=verbose, **xtract_config) # TODO: figure out better way than passing self?
+            xtract_https_download(self, verbose=verbose, **xtract_config)  # TODO: figure out better way than passing self?
 
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
@@ -634,7 +629,7 @@ class Foundry(FoundryMetadata):
             if self.dataset.splits:
                 missing_files = []
                 for split in self.dataset.splits:
-                    if split.path[0] == '/': # if absolute path, make it a relative path
+                    if split.path[0] == '/':  # if absolute path, make it a relative path
                         split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
                         # keeping track of all files not downloaded
@@ -643,7 +638,7 @@ class Foundry(FoundryMetadata):
                     raise FileNotFoundError(f"Downloaded directory does not contain the following files: {missing_files}")
 
             else:
-                if(len(os.listdir(path)) < 1):
+                if (len(os.listdir(path)) < 1):
                     raise FileNotFoundError("Downloaded directory does not contain the expected file")
         else:
             raise NotADirectoryError("Unable to create directory to download data")
@@ -725,7 +720,6 @@ class Foundry(FoundryMetadata):
                 key_list = key_list + k
             return key_list
 
-
     def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
         # Build the path to access the cached data
         if source_id:
@@ -739,7 +733,6 @@ class Foundry(FoundryMetadata):
             # Determine which file to load, defaults to config.dataframe_file
             if not file:
                 file = self.config.dataframe_file
-
 
             # Check to make sure the path can be created
             try:
@@ -768,7 +761,7 @@ class Foundry(FoundryMetadata):
                 except Exception as f:
                     print(f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
                     try:
-                        #Try to read as CSV instead
+                        # Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
                             path_to_file
                         )
@@ -805,7 +798,6 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
-    
     def toTorch(self, raw=None, split=None):
         """Convert Foundry Dataset to a PyTorch Dataset
 
@@ -821,7 +813,7 @@ class Foundry(FoundryMetadata):
         """
         if not raw:
             raw = self.load_data(as_hdf5=False)
-        
+
         if not split:
             split = self.dataset.splits[0].type
 
@@ -851,6 +843,8 @@ class Foundry(FoundryMetadata):
             return FoundryDataset_Torch(inputs, targets)
         else:
             raise NotImplementedError
+
+
 def is_pandas_pytable(group):
     if 'axis0' in group.keys() and 'axis1' in group.keys():
         return True
