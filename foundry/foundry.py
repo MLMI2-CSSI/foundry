@@ -21,8 +21,6 @@ from foundry.models import (
     FoundrySpecification,
     FoundryDataset
 )
-# TODO: cleanup to not use *
-from foundry.loaders import *
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
