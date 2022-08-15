@@ -1,4 +1,3 @@
-import time
 import h5py
 import glob
 import json
@@ -29,7 +28,6 @@ import logging
 import warnings
 import os
 import requests
-import shutil
 from collections import deque
 
 logging.disable(logging.INFO)
@@ -112,7 +110,7 @@ class Foundry(FoundryMetadata):
             data_mdf_authorizer=auths["data_mdf"],
             petrel_authorizer=auths["petrel"],
         )
-        
+
         self.transfer_client = auths['transfer']
 
         if index == "mdf":
@@ -619,17 +617,15 @@ class Foundry(FoundryMetadata):
                 download_datasets=True,
             )
         else:
-
-            source_id = self.mdf["source_id"]
             https_config = {
                 "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
                 "base_url": "https://data.materialsdatafacility.org",
                 "folder_to_crawl": f"/foundry/{self.mdf['source_id']}/",
-                "source_id":self.mdf["source_id"]
+                "source_id": self.mdf["source_id"]
             }
-            
-            task_list = list(recursive_ls(self.transfer_client, 
-                                          https_config['source_ep_id'], 
+
+            task_list = list(recursive_ls(self.transfer_client,
+                                          https_config['source_ep_id'],
                                           https_config['folder_to_crawl']))
             # TODO Add parallel
             for task in task_list:
@@ -889,9 +885,9 @@ def _get_files(tc, ep, queue, max_depth):
                 if item["type"] == "dir"
             )
         for item in res["DATA"]:
-            if item["type"]=='file':
+            if item["type"] =='file':
                 item["name"] = path_prefix + item["name"]
-                item["path"] = abs_path.replace('/~/','/')
+                item["path"] = abs_path.replace('/~/', '/')
                 yield item
 
 
@@ -902,24 +898,21 @@ def recursive_ls(tc, ep, path, max_depth=3):
 
 
 def download_file(item, https_config):
-        url = f"{https_config['base_url']}{item['path']}{item['name']}"
-        
-        # removes data source (eg MDF) parent directories, leaving the split path only
-        datasplit_subpath = item["path"].replace("/foundry/","/")
+    url = f"{https_config['base_url']}{item['path']}{item['name']}"
 
-        # build destination path for data file
-        destination = os.path.join("data/", https_config['source_id'], item['name'])
+    # build destination path for data file
+    destination = os.path.join("data/", https_config['source_id'], item['name'])
 
-        parent_path = os.path.split(destination)[0]
+    parent_path = os.path.split(destination)[0]
 
-        # if parent directories don't exist, create them
-        if not os.path.exists(parent_path):
-            os.makedirs(parent_path)
+    # if parent directories don't exist, create them
+    if not os.path.exists(parent_path):
+        os.makedirs(parent_path)
 
-        response = requests.get(url)
+    response = requests.get(url)
 
-        # write file to local destination
-        with open(destination, "wb") as f:
-            f.write(response.content)
+    # write file to local destination
+    with open(destination, "wb") as f:
+        f.write(response.content)
 
-        return {destination + " status": True}
+    return {destination + " status": True}

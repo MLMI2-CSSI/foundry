@@ -1,4 +1,5 @@
-import os, shutil
+import os
+import shutil
 import pytest
 from datetime import datetime
 import mdf_toolbox
@@ -20,16 +21,16 @@ services = [
             "petrel",
             "transfer",
             "openid",
-            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",]
+            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"]
 
 if is_gha:
     auths = mdf_toolbox.confidential_login(client_id=client_id,
-                                        client_secret=client_secret,
-                                        services=services, make_clients=True)
+                                           client_secret=client_secret,
+                                           services=services, make_clients=True)
 
     search_auth = mdf_toolbox.confidential_login(client_id=client_id,
-                                            client_secret=client_secret,
-                                            services=["search"], make_clients=False)
+                                                 client_secret=client_secret,
+                                                 services=["search"], make_clients=False)
 else:
     auths = mdf_toolbox.login(services=services, make_clients=True)
     search_auth = mdf_toolbox.login(services=["search"], make_clients=False)
@@ -59,7 +60,7 @@ old_test_metadata = {
 }
 
 test_metadata = {
-    "keys":[
+    "keys": [
         {
             "key": ["sepal length (cm)"],
             "type": "input",
@@ -120,7 +121,7 @@ test_metadata = {
 test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2Firis-dev%2F"
 
 
-#Quick function to delete any downloaded test data
+# Quick function to delete any downloaded test data
 def _delete_test_data(foundry_obj):
     path = os.path.join(foundry_obj.config.local_cache_dir, test_dataset)
     if os.path.isdir(path):
