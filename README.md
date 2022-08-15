@@ -2,6 +2,9 @@
 
 Foundry is a Python package that simplifies the discovery and usage of machine-learning ready datasets in materials science and chemistry. Foundry provides software tools that make it easy to load these datasets and work with them in local or cloud environments. Further, Foundry provides a dataset specification, and defined curation flows, that allow users to create new datasets for the community to use through this same interface.
 
+[![PyPI](https://img.shields.io/pypi/v/foundry_ml.svg)](https://pypi.python.org/pypi/foundry_ml)
+![GHA](https://github.com/MLMI2-CSSI/foundry/workflows/testing-work/badge.svg)
+
 # Documentation
 Information on how to install and use foundry can be found in our documentation [here](https://ai-materials-and-chemistry.gitbook.io/foundry/v/docs/).
 
