@@ -21,8 +21,8 @@ from foundry.models import (
     FoundrySpecification,
     FoundryDataset
 )
+# TODO: cleanup to not use *
 from foundry.loaders import *
-
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
@@ -742,7 +742,6 @@ class Foundry(FoundryMetadata):
             if not file:
                 file = self.config.dataframe_file
 
-
             # Check to make sure the path can be created
             try:
                 path_to_file = os.path.join(path, file)
@@ -868,7 +867,7 @@ class Foundry(FoundryMetadata):
         """
         from foundry.loaders.torch_wrapper import TorchDataset
         
-        inputs, targets = _get_inputs_targets(self, split)
+        inputs, targets = self._get_inputs_targets(self, split)
         return TorchDataset(inputs, targets)
 
     def to_tensorflow(self, split: str = None):
@@ -883,7 +882,7 @@ class Foundry(FoundryMetadata):
         """
         from foundry.loaders.tf_wrapper import TensorflowSequence
         
-        inputs, targets = _get_inputs_targets(self, split)
+        inputs, targets = self._get_inputs_targets(self, split)
         return TensorflowSequence(inputs, targets)
 
 def is_pandas_pytable(group):
