@@ -873,7 +873,7 @@ class Foundry(FoundryMetadata):
         """
         from foundry.loaders.torch_wrapper import TorchDataset
 
-        inputs, targets = self._get_inputs_targets(self, split)
+        inputs, targets = self._get_inputs_targets(split)
         return TorchDataset(inputs, targets)
 
     def to_tensorflow(self, split: str = None):
@@ -888,7 +888,7 @@ class Foundry(FoundryMetadata):
         """
         from foundry.loaders.tf_wrapper import TensorflowSequence
 
-        inputs, targets = self._get_inputs_targets(self, split)
+        inputs, targets = self._get_inputs_targets(split)
         return TensorflowSequence(inputs, targets)
 
 
