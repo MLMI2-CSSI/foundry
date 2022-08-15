@@ -22,7 +22,6 @@ from foundry.models import (
     FoundryDataset
 )
 
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import logging
 import warnings
 import os
@@ -725,7 +724,6 @@ class Foundry(FoundryMetadata):
                 key_list = key_list + k
             return key_list
 
-
     def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
         # Build the path to access the cached data
         if source_id:
@@ -864,7 +862,7 @@ class Foundry(FoundryMetadata):
 
         """
         from foundry.loaders.torch_wrapper import TorchDataset
-        
+
         inputs, targets = self._get_inputs_targets(self, split)
         return TorchDataset(inputs, targets)
 
@@ -879,7 +877,7 @@ class Foundry(FoundryMetadata):
 
         """
         from foundry.loaders.tf_wrapper import TensorflowSequence
-        
+
         inputs, targets = self._get_inputs_targets(self, split)
         return TensorflowSequence(inputs, targets)
 
