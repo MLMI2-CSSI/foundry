@@ -885,7 +885,7 @@ def _get_files(tc, ep, queue, max_depth):
                 if item["type"] == "dir"
             )
         for item in res["DATA"]:
-            if item["type"] =='file':
+            if item["type"] == 'file':
                 item["name"] = path_prefix + item["name"]
                 item["path"] = abs_path.replace('/~/', '/')
                 yield item
