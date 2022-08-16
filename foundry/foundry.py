@@ -687,20 +687,20 @@ class Foundry(FoundryMetadata):
             path = os.path.join(self.config.local_cache_dir,
                                 self.mdf["source_id"])
 
+        # Determine which file to load, defaults to config.dataframe_file
+        if not file:
+            file = self.config.dataframe_file
+        if path is None:
+            raise ValueError(f"Path to data file is invalid; check that dataset source_id is valid: "
+                             f"{source_id or self.mdf['source_id']}")
+        path_to_file = os.path.join(path, file)
+
+        # Check to see whether file exists at path
+        if not os.path.isfile(path_to_file):
+            raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
+
         # Handle Foundry-defined types.
         if self.dataset.data_type.value == "tabular":
-            # Determine which file to load, defaults to config.dataframe_file
-            if not file:
-                file = self.config.dataframe_file
-            if path is None:
-                raise ValueError(f"Path to data file is invalid; check that dataset source_id is valid: "
-                                 f"{source_id or self.mdf['source_id']}")
-            path_to_file = os.path.join(path, file)
-
-            # Check to see whether file exists at path
-            if not os.path.isfile(path_to_file):
-                raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
-
             # If the file is not local, fetch the contents with Globus
             # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
@@ -732,11 +732,7 @@ class Foundry(FoundryMetadata):
             )
 
         elif self.dataset.data_type.value == "hdf5":
-            if not file:
-                file = self.config.data_file
-
-            filepath = os.path.join(path, file)
-            f = h5py.File(filepath, "r")
+            f = h5py.File(path_to_file, "r")
             special_types = ["input", "target"]
             tmp_data = {s: {} for s in special_types}
             for s in special_types:
@@ -745,7 +741,7 @@ class Foundry(FoundryMetadata):
                         tmp_data[s][key] = f[key]
                     elif isinstance(f[key], h5py.Group):
                         if is_pandas_pytable(f[key]):
-                            df = pd.read_hdf(filepath, key)
+                            df = pd.read_hdf(path_to_file, key)
                             tmp_data[s][key] = df
                         else:
                             tmp_data[s][key] = f[key]
