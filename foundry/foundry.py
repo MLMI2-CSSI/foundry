@@ -692,14 +692,12 @@ class Foundry(FoundryMetadata):
             # Determine which file to load, defaults to config.dataframe_file
             if not file:
                 file = self.config.dataframe_file
-
-            if path is None or file is None:
-                raise ValueError("Path to file or file name is None, must be set")
             path_to_file = os.path.join(path, file)
 
             # Check to see whether file exists at path
             if not os.path.isfile(path_to_file):
                 raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
+
             # If the file is not local, fetch the contents with Globus
             # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
