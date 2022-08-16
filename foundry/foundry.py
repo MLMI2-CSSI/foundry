@@ -639,27 +639,6 @@ class Foundry(FoundryMetadata):
 
         return self
 
-    def build(self, spec, globus=False, interval=3, file=False):
-        """Build a Foundry Data Package
-        Args:
-            spec (multiple): dict or str (relative filename) of the data package specification
-            globus (bool): if True use Globus to fetch datasets
-            interval (int): Polling interval on checking task status in seconds.
-            type (str): One of "file" or None
-
-        Returns
-        -------
-        (Foundry): self: for chaining
-        """
-        if as_object:
-            return [key for key in self.dataset.keys if key.type == type]
-        else:
-            keys = [key.key for key in self.dataset.keys if key.type == type]
-            key_list = []
-            for k in keys:
-                key_list = key_list + k
-            return key_list
-
     def get_keys(self, type=None, as_object=False):
         """Get keys for a Foundry dataset
 
@@ -720,21 +699,21 @@ class Foundry(FoundryMetadata):
                     path_to_file
                 )
             except Exception as e:
-                logger.info(f"Reading {file} as JSON failed: {e} \n", "Now attempting to read as JSONL")
+                logger.info(f"Cannot read {file} as JSON: {e} \n", "Now attempting to read as JSONL")
                 try:
                     # Try to read individual lines instead
                     self.dataset.dataframe = pd.read_json(
                         path_to_file, lines=True
                     )
                 except Exception as f:
-                    logger.info(f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
+                    logger.info(f"Cannot read {file} as JSONL: {f} \n", "Now attempting to read as CSV")
                     try:
                         #Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
                             path_to_file
                         )
                     except Exception as g:
-                        logger.fatal(f"Reading {file} as CSV failed, unable to load data properly: {g}")
+                        logger.fatal(f"Cannot read {file} as CSV, failed to load data properly: {g}")
                         raise e
 
             return (
