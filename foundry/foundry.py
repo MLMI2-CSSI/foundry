@@ -1,4 +1,4 @@
-from foundry.xtract_method import *
+import time
 import h5py
 import glob
 import json
@@ -21,12 +21,13 @@ from foundry.models import (
     FoundrySpecification,
     FoundryDataset
 )
-from foundry.external_data_architectures import (
-    FoundryDataset_Torch
-)
+
 import logging
 import warnings
 import os
+import requests
+import shutil
+from collections import deque
 
 logging.disable(logging.INFO)
 
@@ -43,6 +44,7 @@ class Foundry(FoundryMetadata):
     dlhub_client: Any
     forge_client: Any
     connect_client: Any
+    transfer_client: Any
     index = ""
 
     xtract_tokens: Any
@@ -107,6 +109,8 @@ class Foundry(FoundryMetadata):
             data_mdf_authorizer=auths["data_mdf"],
             petrel_authorizer=auths["petrel"],
         )
+        
+        self.transfer_client = auths['transfer']
 
         if index == "mdf":
             test = False
@@ -619,14 +623,19 @@ class Foundry(FoundryMetadata):
         else:
 
             source_id = self.mdf["source_id"]
-            xtract_config = {
-                 "xtract_base_url": "http://xtractcrawler5-env.eba-akbhvznm.us-east-1.elasticbeanstalk.com/",
-                 "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
-                 "base_url": "https://data.materialsdatafacility.org",
-                 "folder_to_crawl": f"/foundry/{source_id}/",
-                 "grouper": "matio"
-                }
-            xtract_https_download(self, verbose=verbose, **xtract_config) # TODO: figure out better way than passing self?
+            https_config = {
+                "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
+                "base_url": "https://data.materialsdatafacility.org",
+                "folder_to_crawl": f"/foundry/{self.mdf['source_id']}/",
+                "source_id":self.mdf["source_id"]
+            }
+            
+            task_list = list(recursive_ls(self.transfer_client, 
+                                          https_config['source_ep_id'], 
+                                          https_config['folder_to_crawl']))
+            # TODO Add parallel
+            for task in task_list:
+                download_file(task, https_config)
 
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
@@ -650,7 +659,7 @@ class Foundry(FoundryMetadata):
 
         return self
 
-    def build(self, spec, globus=False, interval=3, file=False):
+    def build(self, spec, globus=False, interval=3, file=False, as_object=False):
         """Build a Foundry Data Package
         Args:
             spec (multiple): dict or str (relative filename) of the data package specification
@@ -725,7 +734,6 @@ class Foundry(FoundryMetadata):
                 key_list = key_list + k
             return key_list
 
-
     def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
         # Build the path to access the cached data
         if source_id:
@@ -739,7 +747,6 @@ class Foundry(FoundryMetadata):
             # Determine which file to load, defaults to config.dataframe_file
             if not file:
                 file = self.config.dataframe_file
-
 
             # Check to make sure the path can be created
             try:
@@ -805,22 +812,16 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
-    
-    def toTorch(self, raw=None, split=None):
-        """Convert Foundry Dataset to a PyTorch Dataset
+    def _get_inputs_targets(self, split: str = None):
+        """Get Inputs and Outputs from a Foundry Dataset
 
         Arguments:
-            raw (dict): The output of running ``f.load_data(as_hdf5=False)``
-                    Recommended that this is left as ``None``
+            split (string): Split to get inputs and outputs from.
                     **Default:** ``None``
-            split (string): Split to create PyTorch Dataset on.
-                    **Default:** ``None``
-
-        Returns: (FoundryDataset_Torch) PyTorch Dataset of all the data from the specified split
-
+        
+        Returns: (Tuple) Tuple of the inputs and outputs
         """
-        if not raw:
-            raw = self.load_data(as_hdf5=False)
+        raw = self.load_data(as_hdf5=False)
         
         if not split:
             split = self.dataset.splits[0].type
@@ -829,16 +830,23 @@ class Foundry(FoundryMetadata):
             inputs = []
             targets = []
             for key in self.dataset.keys:
+                # raw[split][key.type][key.key[0]] gets the data values for the given key.
+                #
+                # For example, if the key was coordinates and had type target, then 
+                # raw[split][key.type][key.key[0]] would return all the coordinates for each item
+                # and raw[split][key.type][key.key[0]].keys() are the indexes of the item.
                 if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
                     continue
 
+                # Get a numpy array of all the values for each item for that key
                 val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
                 if key.type == 'input':
                     inputs.append(val)
                 else:
                     targets.append(val)
+            
+            return (inputs, targets)
 
-            return FoundryDataset_Torch(inputs, targets)
         elif self.dataset.data_type.value == "tabular":
             inputs = []
             targets = []
@@ -847,10 +855,43 @@ class Foundry(FoundryMetadata):
                 df = raw[split][index]
                 for key in df.keys():
                     arr.append(df[key].values)
-
-            return FoundryDataset_Torch(inputs, targets)
+            
+            return (inputs, targets)
+            
         else:
             raise NotImplementedError
+
+    def to_torch(self, split: str = None):
+        """Convert Foundry Dataset to a PyTorch Dataset
+
+        Arguments:
+            split (string): Split to create PyTorch Dataset on.
+                    **Default:** ``None``
+
+        Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
+
+        """
+        from foundry.loaders.torch_wrapper import TorchDataset
+
+        inputs, targets = self._get_inputs_targets(split)
+        return TorchDataset(inputs, targets)
+
+    def to_tensorflow(self, split: str = None):
+        """Convert Foundry Dataset to a Tensorflow Sequence
+
+        Arguments:
+            split (string): Split to create Tensorflow Sequence on.
+                    **Default:** ``None``
+
+        Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split
+
+        """
+        from foundry.loaders.tf_wrapper import TensorflowSequence
+
+        inputs, targets = self._get_inputs_targets(split)
+        return TensorflowSequence(inputs, targets)
+
+
 def is_pandas_pytable(group):
     if 'axis0' in group.keys() and 'axis1' in group.keys():
         return True
@@ -863,3 +904,57 @@ def is_doi(string: str):
         return True
     else:
         return False
+
+
+def _get_files(tc, ep, queue, max_depth):
+    while queue:
+        abs_path, rel_path, depth = queue.pop()
+        path_prefix = rel_path + "/" if rel_path else ""
+
+        res = tc.operation_ls(ep, path=abs_path)
+
+        if depth < max_depth:
+            queue.extend(
+                (
+                    res["path"] + item["name"],
+                    path_prefix + item["name"],
+                    depth + 1,
+                )
+                for item in res["DATA"]
+                if item["type"] == "dir"
+            )
+        for item in res["DATA"]:
+            if item["type"]=='file':
+                item["name"] = path_prefix + item["name"]
+                item["path"] = abs_path.replace('/~/','/')
+                yield item
+
+
+def recursive_ls(tc, ep, path, max_depth=3):
+    queue = deque()
+    queue.append((path, "", 0))
+    yield from _get_files(tc, ep, queue, max_depth)
+
+
+def download_file(item, https_config):
+        url = f"{https_config['base_url']}{item['path']}{item['name']}"
+        
+        # removes data source (eg MDF) parent directories, leaving the split path only
+        datasplit_subpath = item["path"].replace("/foundry/","/")
+
+        # build destination path for data file
+        destination = os.path.join("data/", https_config['source_id'], item['name'])
+
+        parent_path = os.path.split(destination)[0]
+
+        # if parent directories don't exist, create them
+        if not os.path.exists(parent_path):
+            os.makedirs(parent_path)
+
+        response = requests.get(url)
+
+        # write file to local destination
+        with open(destination, "wb") as f:
+            f.write(response.content)
+
+        return {destination + " status": True}
