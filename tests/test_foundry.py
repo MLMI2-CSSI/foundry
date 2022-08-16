@@ -1,4 +1,6 @@
 import os, shutil
+import re
+import types
 import pytest
 from datetime import datetime
 import mdf_toolbox
@@ -44,6 +46,7 @@ pub_expected_title = "Iris Dataset"
 test_dataset = "foundry_experimental_band_gaps_v1.1"
 expected_title = "Graph Network Based Deep Learning of Band Gaps - Experimental Band Gaps"
 
+
 # Kept the Old metadata format in case we ever want to refer back
 old_test_metadata = {
     "inputs": ["sepal length (cm)", "sepal width (cm)", "petal length (cm)", "petal width (cm)"],
@@ -58,7 +61,7 @@ old_test_metadata = {
     "package_type": "tabular"
 }
 
-test_metadata = {
+pub_test_metadata = {
     "keys":[
         {
             "key": ["sepal length (cm)"],
@@ -116,11 +119,11 @@ test_metadata = {
     'n_items': 1000
 }
 
-# Globus endpoint for '_iris_dev'
-test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2Firis-dev%2F"
+# Globus endpoint for '_iris_dev' for test publication
+pub_test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2Firis-dev%2F"
 
 
-#Quick function to delete any downloaded test data
+# Quick function to delete any downloaded test data
 def _delete_test_data(foundry_obj):
     path = os.path.join(foundry_obj.config.local_cache_dir, test_dataset)
     if os.path.isdir(path):
@@ -184,19 +187,6 @@ def test_dataframe_load():
     _delete_test_data(f)
 
 
-def test_to_pytorch():
-    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    _delete_test_data(f)
-
-    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
-    raw = f.load_data()
-    ds = f.toTorch(raw=raw, split='train')
-
-    assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
-    assert len(raw['train'][0]) == len(ds)
-    _delete_test_data(f)
-
-
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR IS INTENDED
 def test_download_globus():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
@@ -234,7 +224,7 @@ def test_publish():
     short_name = "example_AS_iris_test_{:.0f}".format(timestamp)
     authors = ["A Scourtas"]
 
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
+    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name)
 
     # publish with short name
     assert res['success']
@@ -247,19 +237,51 @@ def test_publish():
     # assert res['source_id'] == "_test_scourtas_example_iris_publish_{:.0f}_v1.1".format(timestamp)
 
     # check that pushing same dataset without update flag fails
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name)
+    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name)
     assert not res['success']
 
     # check that using update flag allows us to update dataset
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=short_name, update=True)
+    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name, update=True)
     assert res['success']
 
     # check that using update flag for new dataset fails
     new_short_name = short_name + "_update"
-    res = f.publish(test_metadata, test_data_source, title, authors, short_name=new_short_name, update=True)
+    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=new_short_name, update=True)
     assert not res['success']
 
 
 def test_check_status():
     # TODO: the 'active messages' in MDF CC's check_status() don't appear to do anything? need to determine how to test
     pass
+
+
+def test_to_pytorch():
+    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
+    
+    _delete_test_data(f)
+
+    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
+    raw = f.load_data()
+
+    ds = f.to_torch(split='train')
+    
+    assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
+    assert len(raw['train'][0]) == len(ds)
+
+    _delete_test_data(f)
+
+
+def test_to_tensorflow():
+    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
+    
+    _delete_test_data(f)
+
+    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
+    raw = f.load_data()
+
+    ds = f.to_tensorflow(split='train')
+    
+    assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
+    assert len(raw['train'][0]) == len(ds)
+
+    _delete_test_data(f)
