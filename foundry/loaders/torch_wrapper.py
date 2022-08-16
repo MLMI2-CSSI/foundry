@@ -1,8 +1,7 @@
 import numpy as np
-import torch
 from torch.utils.data import Dataset
 
-class FoundryDataset_Torch(Dataset):
+class TorchDataset(Dataset):
     """Foundry Dataset Converted to Pytorch Format"""
 
     def __init__(self, inputs, targets):
@@ -15,13 +14,15 @@ class FoundryDataset_Torch(Dataset):
     def __getitem__(self, idx):
         item = {"input": [], "target": []}
         
+        # adds the correct item at index idx from each input from self.inputs to the item dictionary
         for input in self.inputs:
             item["input"].append(np.array(input[idx]))
         item["input"] = np.array(item["input"])
         
+        # adds the correct item at index idx from each target from self.targets to the item dictionary
         for target in self.targets:
             item["target"].append(np.array(target[idx]))
         item["target"] = np.array(item["target"])
         
         return item
-    
+        
