@@ -692,6 +692,9 @@ class Foundry(FoundryMetadata):
             # Determine which file to load, defaults to config.dataframe_file
             if not file:
                 file = self.config.dataframe_file
+            if path is None:
+                raise ValueError(f"Path to data file is invalid; check that dataset source_id is valid: "
+                                 f"{source_id or self.mdf['source_id']}")
             path_to_file = os.path.join(path, file)
 
             # Check to see whether file exists at path
