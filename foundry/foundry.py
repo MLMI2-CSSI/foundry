@@ -403,7 +403,7 @@ class Foundry(FoundryMetadata):
         res = self.connect_client.submit_dataset(update=update)
         return res
 
-    def publish_model(self, title, creators, short_name, servable_type, serv_options, affiliations, paper_doi):
+    def publish_model(self, title, creators, short_name, servable_type, serv_options, affiliations=None, paper_doi=None):
         """Simplified publishing method for servables
 
         Args:
