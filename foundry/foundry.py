@@ -403,7 +403,7 @@ class Foundry(FoundryMetadata):
         res = self.connect_client.submit_dataset(update=update)
         return res
 
-    def publish_model(self, title, creators, short_name, servable_type, serv_options):
+    def publish_model(self, title, creators, short_name, servable_type, serv_options, affiliations, paper_doi):
         """Simplified publishing method for servables
 
         Args:
@@ -419,13 +419,15 @@ class Foundry(FoundryMetadata):
             serv_options (dict): the servable_type specific arguments that are necessary for publishing. arguments can be found at
                                  https://dlhub-sdk.readthedocs.io/en/latest/source/dlhub_sdk.models.servables.html under the appropriate
                                  ``create_model`` signature. use the argument names as keys and their values as the values.
+            affiliations (list): list of affiliations for each author
+            paper_doi (str): DOI of a paper that describes the servable
         Returns:
             (string): task id of this submission, can be used to check for success
         Raises:
             ValueError: If the given servable_type is not in the list of acceptable types
             Exception: If the serv_options are incomplete or the request to publish results in an error
         """
-        return self.dlhub_client.easy_publish(title, creators, short_name, servable_type, serv_options)
+        return self.dlhub_client.easy_publish(title, creators, short_name, servable_type, serv_options, affiliations, paper_doi)
 
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
