@@ -1,13 +1,11 @@
-
 import time
 import h5py
 import glob
 import json
-import requests
 import mdf_toolbox
 from json2table import convert
+import numpy as np
 import pandas as pd
-from datetime import date
 from typing import Any
 import multiprocessing
 from mdf_connect_client import MDFConnectClient
@@ -16,20 +14,21 @@ from mdf_forge import Forge
 # from dlhub_sdk.models.servables.keras import KerasModel
 # from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
 from dlhub_sdk import DLHubClient
-from collections import namedtuple
 from joblib import Parallel, delayed
-from pydantic import AnyUrl, ValidationError
 from foundry.models import (
     FoundryMetadata,
     FoundryConfig,
-    FoundrySpecificationDataset,
     FoundrySpecification,
     FoundryDataset
 )
+
 import logging
+import warnings
 import os
+import requests
 import shutil
 from collections import deque
+
 logging.disable(logging.INFO)
 
 
@@ -167,9 +166,6 @@ class Foundry(FoundryMetadata):
         if metadata:
             res = metadata
 
-        if metadata:
-            res = metadata
-
         # MDF specific logic
         if is_doi(name) and not metadata:
             res = self.forge_client.match_resource_types("dataset")
@@ -182,11 +178,13 @@ class Foundry(FoundryMetadata):
             res = res.match_field("mdf.source_id", name).search()
 
         # unpack res, handle if empty
-        try:
-            # if search returns multiple results, this automatically uses first result
-            res = res[0]
-        except IndexError as e:
-            raise Exception("load: No metadata found for given dataset") from e
+        if len(res) == 0:
+            raise Exception(f"load: No metadata found for given dataset {name}")
+
+        # if search returns multiple results, this automatically uses first result, while warning the user
+        if len(res) > 1:
+            warnings.warn("Multiple datasets found for the given search query. Using first dataset")
+        res = res[0]
 
         try:
             res["dataset"] = res["projects"][self.config.metadata_key]
@@ -197,14 +195,13 @@ class Foundry(FoundryMetadata):
 
         # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
-
-        fdataset = FoundryDataset(**res['dataset'])
+        
         self.dc = res['dc']
         self.mdf = res['mdf']
-        self.dataset = fdataset
+        self.dataset = FoundryDataset(**res['dataset'])
 
 
-        if download is True:  # Add check for package existence
+        if download:  # Add check for package existence
             self.download(
                 interval=kwargs.get("interval", 10), globus=globus, verbose=verbose
             )
@@ -282,20 +279,24 @@ class Foundry(FoundryMetadata):
 
         return pd.concat(X_frames), pd.concat(y_frames)
 
-    def run(self, name, inputs, **kwargs):
+    def run(self, name, inputs, funcx_endpoint=None, **kwargs):
         """Run a model on data
 
         Args:
            name (str): DLHub model name
            inputs: Data to send to DLHub as inputs (should be JSON serializable)
+           funcx_endpoint (optional): UUID for the funcx endpoint to run the model on, if not the default (eg River)
 
         Returns
         -------
              Returns results after invocation via the DLHub service
         """
+        if funcx_endpoint is not None:
+            self.dlhub_client.fx_endpoint = funcx_endpoint
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
-    def load_data(self, source_id=None, as_hdf5=False):
+
+    def load_data(self, source_id=None, globus=True, as_hdf5=False):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
@@ -323,10 +324,10 @@ class Foundry(FoundryMetadata):
             if self.dataset.splits:
                 for split in self.dataset.splits:
                     data[split.label] = self._load_data(file=split.path,
-                                                        source_id=source_id, as_hdf5=as_hdf5)
+                                                        source_id=source_id, globus=globus, as_hdf5=as_hdf5)
                 return data
             else:
-                return {"data": self._load_data(source_id=source_id, as_hdf5=as_hdf5)}
+                return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
         except Exception as e:
             raise Exception(
                 "Metadata not loaded into Foundry object, make sure to call load()") from e
@@ -733,9 +734,7 @@ class Foundry(FoundryMetadata):
                 key_list = key_list + k
             return key_list
 
-
-    def _load_data(self, file=None, source_id=None, as_hdf5=False):
-
+    def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
         # Build the path to access the cached data
         if source_id:
             path = os.path.join(self.config.local_cache_dir, source_id)
@@ -748,7 +747,6 @@ class Foundry(FoundryMetadata):
             # Determine which file to load, defaults to config.dataframe_file
             if not file:
                 file = self.config.dataframe_file
-
 
             # Check to make sure the path can be created
             try:
@@ -814,6 +812,85 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
+    def _get_inputs_targets(self, split: str = None):
+        """Get Inputs and Outputs from a Foundry Dataset
+
+        Arguments:
+            split (string): Split to get inputs and outputs from.
+                    **Default:** ``None``
+        
+        Returns: (Tuple) Tuple of the inputs and outputs
+        """
+        raw = self.load_data(as_hdf5=False)
+        
+        if not split:
+            split = self.dataset.splits[0].type
+
+        if self.dataset.data_type.value == "hdf5":
+            inputs = []
+            targets = []
+            for key in self.dataset.keys:
+                # raw[split][key.type][key.key[0]] gets the data values for the given key.
+                #
+                # For example, if the key was coordinates and had type target, then 
+                # raw[split][key.type][key.key[0]] would return all the coordinates for each item
+                # and raw[split][key.type][key.key[0]].keys() are the indexes of the item.
+                if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
+                    continue
+
+                # Get a numpy array of all the values for each item for that key
+                val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
+                if key.type == 'input':
+                    inputs.append(val)
+                else:
+                    targets.append(val)
+            
+            return (inputs, targets)
+
+        elif self.dataset.data_type.value == "tabular":
+            inputs = []
+            targets = []
+
+            for index, arr in enumerate([inputs, targets]):
+                df = raw[split][index]
+                for key in df.keys():
+                    arr.append(df[key].values)
+            
+            return (inputs, targets)
+            
+        else:
+            raise NotImplementedError
+
+    def to_torch(self, split: str = None):
+        """Convert Foundry Dataset to a PyTorch Dataset
+
+        Arguments:
+            split (string): Split to create PyTorch Dataset on.
+                    **Default:** ``None``
+
+        Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
+
+        """
+        from foundry.loaders.torch_wrapper import TorchDataset
+
+        inputs, targets = self._get_inputs_targets(split)
+        return TorchDataset(inputs, targets)
+
+    def to_tensorflow(self, split: str = None):
+        """Convert Foundry Dataset to a Tensorflow Sequence
+
+        Arguments:
+            split (string): Split to create Tensorflow Sequence on.
+                    **Default:** ``None``
+
+        Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split
+
+        """
+        from foundry.loaders.tf_wrapper import TensorflowSequence
+
+        inputs, targets = self._get_inputs_targets(split)
+        return TensorflowSequence(inputs, targets)
+
 
 def is_pandas_pytable(group):
     if 'axis0' in group.keys() and 'axis1' in group.keys():
@@ -827,6 +904,8 @@ def is_doi(string: str):
         return True
     else:
         return False
+
+
 def _get_files(tc, ep, queue, max_depth):
     while queue:
         abs_path, rel_path, depth = queue.pop()
@@ -850,10 +929,12 @@ def _get_files(tc, ep, queue, max_depth):
                 item["path"] = abs_path.replace('/~/','/')
                 yield item
 
+
 def recursive_ls(tc, ep, path, max_depth=3):
     queue = deque()
     queue.append((path, "", 0))
     yield from _get_files(tc, ep, queue, max_depth)
+
 
 def download_file(item, https_config):
         url = f"{https_config['base_url']}{item['path']}{item['name']}"
