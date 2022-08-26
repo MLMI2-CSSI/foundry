@@ -2,7 +2,7 @@
 description: We'll take you from importing Foundry all the way to seeing your data.
 ---
 
-# Getting Started Loading Data
+# Getting Started - Loading Data
 
 ## Scientific Examples
 
@@ -45,6 +45,12 @@ f.load("10.18126/e73h-3w6n", globus=True)
 ```
 
 The [`load()` method](concepts/methods.md#.load) will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup (set `download` to `True` and `globus` to `False`) or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine (set `download` to `False` and `globus` to `True`).&#x20;
+
+{% hint style="success" %}
+All datasets are accessible via HTTPS and Globus. Using the load function, simply set `globus=True` to use Globus and `globus=False` to use HTTPS
+{% endhint %}
+
+
 
 The image below is what `f` looks like when printed in a notebook. This table contains the dataset's [metadata](concepts/foundry-datasets.md#descriptive-metadata).
 
