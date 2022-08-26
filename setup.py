@@ -6,8 +6,8 @@ packages = (setuptools.find_packages(),)
 # TODO: change dependencies to be looser
 setuptools.setup(
     name="foundry_ml",
-    version="0.2.2",
-    author="Aristana Scourtas, KJ Schmidt, Imogen Foster, Ribhav Bose, Zoa Katok, Ethan Truelove, Ian Foster, Ben Blaiszik",
+    version="0.3.0",
+    author="Aristana Scourtas, KJ Schmidt, Isaac Darling, Aadit Ambadkar, Imogen Foster, Ribhav Bose, Zoa Katok, Ethan Truelove, Ian Foster, Ben Blaiszik",
     author_email="blaiszik@uchicago.edu",
     packages=setuptools.find_packages(),
     description="Package to support simplified application of machine learning models to datasets in materials science",
@@ -16,7 +16,7 @@ setuptools.setup(
     install_requires=[
         "mdf_forge>=0.8.0",
         "globus-sdk>=3,<4",
-        "dlhub_sdk>=0.10.2",
+        "dlhub_sdk>=1.0.0",
         "numpy>=1.15.4",
         "pandas>=0.23.4",
         "pydantic>=1.4",
@@ -25,7 +25,7 @@ setuptools.setup(
         "joblib>=1.0.0",
         "json2table"
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",
