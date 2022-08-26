@@ -1,5 +1,5 @@
 globus-sdk>=3,<4
-dlhub_sdk>=0.10.2
+dlhub_sdk>=1.0.0
 requests>=2.18.4
 tqdm>=4.19.4
 six>=1.11.0
