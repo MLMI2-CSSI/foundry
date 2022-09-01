@@ -199,18 +199,22 @@ class Foundry(FoundryMetadata):
 
         return self
 
-    def list(self):
-        """List available Foundry data packages
+    def search(self, q=None, limit=None):
+        """Search available Foundry datasets
+        q (str): query string to match
+        limit (int): maximum number of results to return
 
         Returns
         -------
             (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication year, and DOI
         """
+        if not q:
+            q = None
         res = (
             self.forge_client.match_field(
                 "mdf.organizations", self.config.organization)
             .match_resource_types("dataset")
-            .search()
+            .search(q, limit=limit)
         )
 
         return pd.DataFrame(
@@ -219,14 +223,23 @@ class Foundry(FoundryMetadata):
                     "source_id": r["mdf"]["source_id"],
                     "name": r["dc"]["titles"][0]["title"],
                     "year": r["dc"].get("publicationYear", None),
-                    "DOI": r["dc"]["identifier"]["identifier"],
+                    "DOI": r["dc"].get("identifier", {}).get("identifier", None),
                 }
                 for r in res
             ]
         )
 
+    def list(self):
+        """List available Foundry datasets
+
+        Returns
+        -------
+            (pandas.DataFrame): DataFrame with summary list of Foundry datasets including name, title, publication year, and DOI
+        """
+        return self.search()
+
     def get_packages(self, paths=False):
-        """Get available local data packages
+        """Get available local datasets
 
         Args:
            paths (bool): If True return paths in addition to package, if False return package name only
