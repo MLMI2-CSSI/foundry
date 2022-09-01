@@ -23,6 +23,7 @@ from collections import deque
 
 logger = logging.getLogger(__name__)
 
+
 class Foundry(FoundryMetadata):
     """Foundry Client Base Class
     TODO:
@@ -743,14 +744,13 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
-
     def _get_inputs_targets(self, split: str = None):
         """Get Inputs and Outputs from a Foundry Dataset
 
         Arguments:
             split (string): Split to get inputs and outputs from.
                     **Default:** ``None``
-        
+
         Returns: (Tuple) Tuple of the inputs and outputs
         """
         raw = self.load_data(as_hdf5=False)
@@ -764,7 +764,7 @@ class Foundry(FoundryMetadata):
             for key in self.dataset.keys:
                 # raw[split][key.type][key.key[0]] gets the data values for the given key.
                 #
-                # For example, if the key was coordinates and had type target, then 
+                # For example, if the key was coordinates and had type target, then
                 # raw[split][key.type][key.key[0]] would return all the coordinates for each item
                 # and raw[split][key.type][key.key[0]].keys() are the indexes of the item.
                 if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
@@ -776,7 +776,7 @@ class Foundry(FoundryMetadata):
                     inputs.append(val)
                 else:
                     targets.append(val)
-            
+
             return (inputs, targets)
 
         elif self.dataset.data_type.value == "tabular":
@@ -787,9 +787,9 @@ class Foundry(FoundryMetadata):
                 df = raw[split][index]
                 for key in df.keys():
                     arr.append(df[key].values)
-            
+
             return (inputs, targets)
-            
+
         else:
             raise NotImplementedError
 
