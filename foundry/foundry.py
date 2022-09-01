@@ -1,4 +1,3 @@
-import time
 import h5py
 import glob
 import json
@@ -20,7 +19,6 @@ import logging
 import warnings
 import os
 import requests
-import shutil
 from collections import deque
 
 logger = logging.getLogger(__name__)
@@ -102,7 +100,7 @@ class Foundry(FoundryMetadata):
             data_mdf_authorizer=auths["data_mdf"],
             petrel_authorizer=auths["petrel"],
         )
-        
+
         self.transfer_client = auths['transfer']
 
         if index == "mdf":
@@ -115,7 +113,7 @@ class Foundry(FoundryMetadata):
             authorizer=auths["mdf_connect"], test=test
         )
 
-        ## TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
+        # TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
         self.dlhub_client = DLHubClient(
             dlh_authorizer=auths["dlhub"],
             search_authorizer=auths["search_authorizer"],
@@ -125,7 +123,6 @@ class Foundry(FoundryMetadata):
             openid_authorizer=auths['openid'],
             force_login=False,
         )
-
 
         self.xtract_tokens = {
             "auth_token": auths["petrel"].access_token,
@@ -188,11 +185,10 @@ class Foundry(FoundryMetadata):
 
         # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
-        
+
         self.dc = res['dc']
         self.mdf = res['mdf']
         self.dataset = FoundryDataset(**res['dataset'])
-
 
         if download:  # Add check for package existence
             self.download(
@@ -215,14 +211,13 @@ class Foundry(FoundryMetadata):
             .search()
         )
 
-
         return pd.DataFrame(
             [
                 {
                     "source_id": r["mdf"]["source_id"],
                     "name": r["dc"]["titles"][0]["title"],
                     "year": r["dc"].get("publicationYear", None),
-                    "DOI": r["dc"]["identifier"]["identifier"], 
+                    "DOI": r["dc"]["identifier"]["identifier"],
                 }
                 for r in res
             ]
@@ -257,7 +252,6 @@ class Foundry(FoundryMetadata):
         """
         if not packages:
             packages = self.get_packages()
-        f = Foundry()
 
         X_frames = []
         y_frames = []
@@ -587,14 +581,14 @@ class Foundry(FoundryMetadata):
                         split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
                         missing_files.append(split.path)
-                #if number of missing files is greater than zero, redownload with informative message
+                # if number of missing files is greater than zero, redownload with informative message
                 if len(missing_files) > 0:
                     logger.info(f"Dataset will be redownloaded, following files are missing: {missing_files}")
                 else:
                     return self
             else:
                 # in the case of no splits, ensure the directory contains at least one file
-                if(len(os.listdir(path)) >= 1):
+                if (len(os.listdir(path)) >= 1):
                     return self
                 else:
                     logger.info("Dataset will be redownloaded, expected file is missing")
@@ -611,17 +605,15 @@ class Foundry(FoundryMetadata):
                 download_datasets=True,
             )
         else:
-
-            source_id = self.mdf["source_id"]
             https_config = {
                 "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
                 "base_url": "https://data.materialsdatafacility.org",
                 "folder_to_crawl": f"/foundry/{self.mdf['source_id']}/",
-                "source_id":self.mdf["source_id"]
+                "source_id": self.mdf["source_id"]
             }
-            
-            task_list = list(recursive_ls(self.transfer_client, 
-                                          https_config['source_ep_id'], 
+
+            task_list = list(recursive_ls(self.transfer_client,
+                                          https_config['source_ep_id'],
                                           https_config['folder_to_crawl']))
             # TODO Add parallel
             for task in task_list:
@@ -633,7 +625,7 @@ class Foundry(FoundryMetadata):
             if self.dataset.splits:
                 missing_files = []
                 for split in self.dataset.splits:
-                    if split.path[0] == '/': # if absolute path, make it a relative path
+                    if split.path[0] == '/':  # if absolute path, make it a relative path
                         split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
                         # keeping track of all files not downloaded
@@ -642,7 +634,7 @@ class Foundry(FoundryMetadata):
                     raise FileNotFoundError(f"Downloaded directory does not contain the following files: {missing_files}")
 
             else:
-                if(len(os.listdir(path)) < 1):
+                if (len(os.listdir(path)) < 1):
                     raise FileNotFoundError("Downloaded directory does not contain the expected file")
         else:
             raise NotADirectoryError("Unable to create directory to download data")
@@ -718,7 +710,7 @@ class Foundry(FoundryMetadata):
                 except Exception as f:
                     logger.info(f"Cannot read {file} as JSONL: {f} \n", "Now attempting to read as CSV")
                     try:
-                        #Try to read as CSV instead
+                        # Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
                             path_to_file
                         )
@@ -751,6 +743,7 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
+
     def _get_inputs_targets(self, split: str = None):
         """Get Inputs and Outputs from a Foundry Dataset
 
@@ -761,7 +754,7 @@ class Foundry(FoundryMetadata):
         Returns: (Tuple) Tuple of the inputs and outputs
         """
         raw = self.load_data(as_hdf5=False)
-        
+
         if not split:
             split = self.dataset.splits[0].type
 
@@ -863,9 +856,9 @@ def _get_files(tc, ep, queue, max_depth):
                 if item["type"] == "dir"
             )
         for item in res["DATA"]:
-            if item["type"]=='file':
+            if item["type"] == 'file':
                 item["name"] = path_prefix + item["name"]
-                item["path"] = abs_path.replace('/~/','/')
+                item["path"] = abs_path.replace('/~/', '/')
                 yield item
 
 
@@ -876,24 +869,21 @@ def recursive_ls(tc, ep, path, max_depth=3):
 
 
 def download_file(item, https_config):
-        url = f"{https_config['base_url']}{item['path']}{item['name']}"
-        
-        # removes data source (eg MDF) parent directories, leaving the split path only
-        datasplit_subpath = item["path"].replace("/foundry/","/")
+    url = f"{https_config['base_url']}{item['path']}{item['name']}"
 
-        # build destination path for data file
-        destination = os.path.join("data/", https_config['source_id'], item['name'])
+    # build destination path for data file
+    destination = os.path.join("data/", https_config['source_id'], item['name'])
 
-        parent_path = os.path.split(destination)[0]
+    parent_path = os.path.split(destination)[0]
 
-        # if parent directories don't exist, create them
-        if not os.path.exists(parent_path):
-            os.makedirs(parent_path)
+    # if parent directories don't exist, create them
+    if not os.path.exists(parent_path):
+        os.makedirs(parent_path)
 
-        response = requests.get(url)
+    response = requests.get(url)
 
-        # write file to local destination
-        with open(destination, "wb") as f:
-            f.write(response.content)
+    # write file to local destination
+    with open(destination, "wb") as f:
+        f.write(response.content)
 
-        return {destination + " status": True}
+    return {destination + " status": True}
