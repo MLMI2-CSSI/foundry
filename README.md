@@ -1,14 +1,34 @@
-![](./assets/foundry.svg)
-
-Foundry is a Python package that simplifies the discovery and usage of machine-learning ready datasets in materials science and chemistry. Foundry provides software tools that make it easy to load these datasets and work with them in local or cloud environments. Further, Foundry provides a dataset specification, and defined curation flows, that allow users to create new datasets for the community to use through this same interface.
+<img src="./assets/foundry-purple.png" height="150"> 
 
 [![PyPI](https://img.shields.io/pypi/v/foundry_ml.svg)](https://pypi.python.org/pypi/foundry_ml)
-![GHA](https://github.com/MLMI2-CSSI/foundry/workflows/testing-work/badge.svg)
+[![tests](https://github.com/MLMI2-CSSI/foundry/actions/workflows/testing-work.yml/badge.svg)](https://github.com/MLMI2-CSSI/foundry/actions/workflows/testing-work.yml)
+
+Foundry simplifies the discovery and usage of ML-ready datasets in materials science and chemistry providing a simple API to access even complex datasets. 
+* Load ML-ready data with just a few lines of code
+* Work with datasets in local or cloud environments. 
+* Publish your own datasets with Foundry to promote community usage
+* (in progress) Run published ML models without no hassle
+
+
 
 # Documentation
 Information on how to install and use foundry can be found in our documentation [here](https://ai-materials-and-chemistry.gitbook.io/foundry/v/docs/).
 
 DLHub documentation for model publication and running information can be found [here](https://dlhub-sdk.readthedocs.io/en/latest/servable-publication.html).
+
+# Quick Start
+`pip install foundry_ml`
+
+```python
+from foundry import Foundry
+f = Foundry(index="mdf")
+
+
+f = f.load("10.18126/e73h-3w6n", globus=True)
+res = f.load_dataset()
+```
+
+[See full examples](./examples)
 
 # Primary Support
 This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure".
