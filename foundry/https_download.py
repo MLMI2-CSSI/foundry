@@ -6,6 +6,7 @@ import os
 import multiprocessing
 from joblib import Parallel, delayed
 
+
 # TODO: reassess if there's a better way than passing self in
 def xtract_https_download(foundryObj, verbose=False, **kwargs):
     source_id = foundryObj.mdf["source_id"]
