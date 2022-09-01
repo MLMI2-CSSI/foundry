@@ -22,7 +22,6 @@ from foundry.models import (
 from https_download import download_file, recursive_ls
 
 
-
 logger = logging.getLogger(__name__)
 
 
