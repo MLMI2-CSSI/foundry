@@ -19,7 +19,7 @@ from foundry.models import (
     FoundryConfig,
     FoundryDataset
 )
-from https_download import download_file, recursive_ls
+from foundry.https_download import download_file, recursive_ls
 
 
 logger = logging.getLogger(__name__)
