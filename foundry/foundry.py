@@ -7,18 +7,12 @@ from json2table import convert
 import numpy as np
 import pandas as pd
 from typing import Any
-import multiprocessing
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
-# from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
-# from dlhub_sdk.models.servables.keras import KerasModel
-# from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
 from dlhub_sdk import DLHubClient
-from joblib import Parallel, delayed
 from foundry.models import (
     FoundryMetadata,
     FoundryConfig,
-    FoundrySpecification,
     FoundryDataset
 )
 
@@ -29,8 +23,7 @@ import requests
 import shutil
 from collections import deque
 
-logging.disable(logging.INFO)
-
+logger = logging.getLogger(__name__)
 
 class Foundry(FoundryMetadata):
     """Foundry Client Base Class
@@ -295,7 +288,6 @@ class Foundry(FoundryMetadata):
             self.dlhub_client.fx_endpoint = funcx_endpoint
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
-
     def load_data(self, source_id=None, globus=True, as_hdf5=False):
         """Load in the data associated with the prescribed dataset
 
@@ -345,8 +337,6 @@ class Foundry(FoundryMetadata):
             buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
 
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
-        # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
-        # buf = f'{buf}<h3>DataCite</h3>{convert(self.dc)}'
         return buf
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
@@ -599,7 +589,7 @@ class Foundry(FoundryMetadata):
                         missing_files.append(split.path)
                 #if number of missing files is greater than zero, redownload with informative message
                 if len(missing_files) > 0:
-                    print(f"Dataset will be redownloaded, following files are missing: {missing_files}")
+                    logger.info(f"Dataset will be redownloaded, following files are missing: {missing_files}")
                 else:
                     return self
             else:
@@ -607,7 +597,7 @@ class Foundry(FoundryMetadata):
                 if(len(os.listdir(path)) >= 1):
                     return self
                 else:
-                    print("Dataset will be redownloaded, expected file is missing")
+                    logger.info("Dataset will be redownloaded, expected file is missing")
 
         res = self.forge_client.search(
             f"mdf.source_id:{self.mdf['source_id']}", advanced=True
@@ -659,51 +649,6 @@ class Foundry(FoundryMetadata):
 
         return self
 
-    def build(self, spec, globus=False, interval=3, file=False, as_object=False):
-        """Build a Foundry Data Package
-        Args:
-            spec (multiple): dict or str (relative filename) of the data package specification
-            globus (bool): if True use Globus to fetch datasets
-            interval (int): Polling interval on checking task status in seconds.
-            type (str): One of "file" or None
-
-        Returns
-        -------
-        (Foundry): self: for chaining
-        """
-        if as_object:
-            return [key for key in self.dataset.keys if key.type == type]
-        else:
-            keys = [key.key for key in self.dataset.keys if key.type == type]
-            key_list = []
-            for k in keys:
-                key_list = key_list + k
-            return key_list
-
-        print("Building Data Package")
-        num_cores = multiprocessing.cpu_count()
-
-        def start_download(ds, interval=interval, globus=False):
-            print(f"=== Fetching Data Package {ds.name} ===")
-            f = Foundry().load(ds.name, download=False)
-            f = f.download(interval=interval, globus=globus)
-            return {"success": True}
-
-        if file:
-            with open(file, "r") as fp:
-                fs = FoundrySpecification(**json.load(fp))
-        else:
-            fs = FoundrySpecification(**spec)
-
-        fs.remove_duplicate_dependencies()
-
-        results = Parallel(n_jobs=num_cores)(
-            delayed(start_download)(ds, interval=interval, globus=globus)
-            for ds in fs.dependencies
-        )
-
-        return self
-
     def get_keys(self, type=None, as_object=False):
         """Get keys for a Foundry dataset
 
@@ -742,22 +687,20 @@ class Foundry(FoundryMetadata):
             path = os.path.join(self.config.local_cache_dir,
                                 self.mdf["source_id"])
 
+        # Determine which file to load, defaults to config.dataframe_file
+        if not file:
+            file = self.config.dataframe_file
+        if path is None:
+            raise ValueError(f"Path to data file is invalid; check that dataset source_id is valid: "
+                             f"{source_id or self.mdf['source_id']}")
+        path_to_file = os.path.join(path, file)
+
+        # Check to see whether file exists at path
+        if not os.path.isfile(path_to_file):
+            raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
+
         # Handle Foundry-defined types.
         if self.dataset.data_type.value == "tabular":
-            # Determine which file to load, defaults to config.dataframe_file
-            if not file:
-                file = self.config.dataframe_file
-
-            # Check to make sure the path can be created
-            try:
-                path_to_file = os.path.join(path, file)
-            except Exception as e:
-                print(f"Unable to find path to file for download: {e}")
-                raise e
-
-            # Check to see whether file exists at path
-            if not os.path.isfile(path_to_file):
-                raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
             # If the file is not local, fetch the contents with Globus
             # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
@@ -766,21 +709,21 @@ class Foundry(FoundryMetadata):
                     path_to_file
                 )
             except Exception as e:
-                print(f"Reading {file} as JSON failed: {e} \n", "Now attempting to read as JSONL")
+                logger.info(f"Cannot read {file} as JSON: {e} \n", "Now attempting to read as JSONL")
                 try:
                     # Try to read individual lines instead
                     self.dataset.dataframe = pd.read_json(
                         path_to_file, lines=True
                     )
                 except Exception as f:
-                    print(f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
+                    logger.info(f"Cannot read {file} as JSONL: {f} \n", "Now attempting to read as CSV")
                     try:
                         #Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
                             path_to_file
                         )
                     except Exception as g:
-                        print(f"Reading {file} as CSV failed, unable to load data properly: {g}")
+                        logger.fatal(f"Cannot read {file} as CSV, failed to load data properly: {g}")
                         raise e
 
             return (
@@ -789,11 +732,7 @@ class Foundry(FoundryMetadata):
             )
 
         elif self.dataset.data_type.value == "hdf5":
-            if not file:
-                file = self.config.data_file
-
-            filepath = os.path.join(path, file)
-            f = h5py.File(filepath, "r")
+            f = h5py.File(path_to_file, "r")
             special_types = ["input", "target"]
             tmp_data = {s: {} for s in special_types}
             for s in special_types:
@@ -802,7 +741,7 @@ class Foundry(FoundryMetadata):
                         tmp_data[s][key] = f[key]
                     elif isinstance(f[key], h5py.Group):
                         if is_pandas_pytable(f[key]):
-                            df = pd.read_hdf(filepath, key)
+                            df = pd.read_hdf(path_to_file, key)
                             tmp_data[s][key] = df
                         else:
                             tmp_data[s][key] = f[key]
