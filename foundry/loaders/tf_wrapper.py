@@ -1,6 +1,6 @@
 import numpy as np
-
 from tensorflow.keras.utils import Sequence
+
 
 class TensorflowSequence(Sequence):
     """Foundry Dataset Converted to Tensorflow Format"""
