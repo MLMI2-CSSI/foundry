@@ -6,20 +6,22 @@ from json2table import convert
 import numpy as np
 import pandas as pd
 from typing import Any
+import logging
+import warnings
+import os
+
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 from dlhub_sdk import DLHubClient
+
 from foundry.models import (
     FoundryMetadata,
     FoundryConfig,
     FoundryDataset
 )
+from https_download import download_file, recursive_ls
 
-import logging
-import warnings
-import os
-import requests
-from collections import deque
+
 
 logger = logging.getLogger(__name__)
 
@@ -836,54 +838,3 @@ def is_doi(string: str):
         return True
     else:
         return False
-
-
-def _get_files(tc, ep, queue, max_depth):
-    while queue:
-        abs_path, rel_path, depth = queue.pop()
-        path_prefix = rel_path + "/" if rel_path else ""
-
-        res = tc.operation_ls(ep, path=abs_path)
-
-        if depth < max_depth:
-            queue.extend(
-                (
-                    res["path"] + item["name"],
-                    path_prefix + item["name"],
-                    depth + 1,
-                )
-                for item in res["DATA"]
-                if item["type"] == "dir"
-            )
-        for item in res["DATA"]:
-            if item["type"] == 'file':
-                item["name"] = path_prefix + item["name"]
-                item["path"] = abs_path.replace('/~/', '/')
-                yield item
-
-
-def recursive_ls(tc, ep, path, max_depth=3):
-    queue = deque()
-    queue.append((path, "", 0))
-    yield from _get_files(tc, ep, queue, max_depth)
-
-
-def download_file(item, https_config):
-    url = f"{https_config['base_url']}{item['path']}{item['name']}"
-
-    # build destination path for data file
-    destination = os.path.join("data/", https_config['source_id'], item['name'])
-
-    parent_path = os.path.split(destination)[0]
-
-    # if parent directories don't exist, create them
-    if not os.path.exists(parent_path):
-        os.makedirs(parent_path)
-
-    response = requests.get(url)
-
-    # write file to local destination
-    with open(destination, "wb") as f:
-        f.write(response.content)
-
-    return {destination + " status": True}
