@@ -1,0 +1,17 @@
+LICENSE
+README.md
+setup.py
+foundry/__init__.py
+foundry/foundry.py
+foundry/https_download.py
+foundry/models.py
+foundry/loaders/__init__.py
+foundry/loaders/tf_wrapper.py
+foundry/loaders/torch_wrapper.py
+foundry_ml.egg-info/PKG-INFO
+foundry_ml.egg-info/SOURCES.txt
+foundry_ml.egg-info/dependency_links.txt
+foundry_ml.egg-info/requires.txt
+foundry_ml.egg-info/top_level.txt
+tests/__init__.py
+tests/test_foundry.py

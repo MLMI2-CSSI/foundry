@@ -6,7 +6,7 @@ import mdf_toolbox
 from json2table import convert
 import numpy as np
 import pandas as pd
-from typing import Any
+from typing import Any, Callable, Optional
 import multiprocessing
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
@@ -208,12 +208,15 @@ class Foundry(FoundryMetadata):
 
         return self
 
-    def list(self):
+    def list(self, name_filter: Optional[Callable[[str], bool]] = None, year_filter: Optional[Callable[[np.int64], bool]] = None):
         """List available Foundry data packages
+        Args:
+            name_filter (callable): A function or lambda which takes in the name of the dataset and returns a boolean; if None, not used
+            year_filter (callable): A function or lambda which takes in the year of publication of the dataset and returns a boolean; if None, not used
 
         Returns
         -------
-            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication year, and DOI
+            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication year, and DOI, given the filters.
         """
         res = (
             self.forge_client.match_field(
@@ -222,8 +225,7 @@ class Foundry(FoundryMetadata):
             .search()
         )
 
-
-        return pd.DataFrame(
+        ret = pd.DataFrame(
             [
                 {
                     "source_id": r["mdf"]["source_id"],
@@ -234,6 +236,14 @@ class Foundry(FoundryMetadata):
                 for r in res
             ]
         )
+
+        if name_filter is not None:
+            ret = ret[ret.apply(lambda x: name_filter(x['name']), axis=1)]
+        if year_filter is not None:
+            ret = ret[ret.apply(lambda x: year_filter(x['year']), axis=1)]
+
+        return ret
+
 
     def get_packages(self, paths=False):
         """Get available local data packages
