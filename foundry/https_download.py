@@ -9,6 +9,12 @@ from collections import deque
 from joblib import Parallel, delayed
 
 
+def recursive_ls(tc, ep, path, max_depth=3):
+    queue = deque()
+    queue.append((path, "", 0))
+    yield from _get_files(tc, ep, queue, max_depth)
+
+
 def _get_files(tc, ep, queue, max_depth):
     while queue:
         abs_path, rel_path, depth = queue.pop()
@@ -31,12 +37,6 @@ def _get_files(tc, ep, queue, max_depth):
                 item["name"] = path_prefix + item["name"]
                 item["path"] = abs_path.replace('/~/', '/')
                 yield item
-
-
-def recursive_ls(tc, ep, path, max_depth=3):
-    queue = deque()
-    queue.append((path, "", 0))
-    yield from _get_files(tc, ep, queue, max_depth)
 
 
 def download_file(item, https_config):
