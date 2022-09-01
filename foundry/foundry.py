@@ -1,4 +1,3 @@
-import time
 import h5py
 import glob
 import json
@@ -7,33 +6,22 @@ from json2table import convert
 import numpy as np
 import pandas as pd
 from typing import Any
-import multiprocessing
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
-# from dlhub_sdk.utils.schemas import validate_against_dlhub_schema
-# from dlhub_sdk.models.servables.keras import KerasModel
-# from dlhub_sdk.models.servables.sklearn import ScikitLearnModel
 from dlhub_sdk import DLHubClient
-from joblib import Parallel, delayed
 from foundry.models import (
     FoundryMetadata,
     FoundryConfig,
-    FoundrySpecification,
     FoundryDataset
-)
-from foundry.external_data_architectures import (
-    FoundryDataset_Torch
 )
 
 import logging
 import warnings
 import os
 import requests
-import shutil
 from collections import deque
 
-logging.disable(logging.INFO)
-
+logger = logging.getLogger(__name__)
 
 class Foundry(FoundryMetadata):
     """Foundry Client Base Class
@@ -112,7 +100,7 @@ class Foundry(FoundryMetadata):
             data_mdf_authorizer=auths["data_mdf"],
             petrel_authorizer=auths["petrel"],
         )
-        
+
         self.transfer_client = auths['transfer']
 
         if index == "mdf":
@@ -125,7 +113,7 @@ class Foundry(FoundryMetadata):
             authorizer=auths["mdf_connect"], test=test
         )
 
-        ## TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
+        # TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
         self.dlhub_client = DLHubClient(
             dlh_authorizer=auths["dlhub"],
             search_authorizer=auths["search_authorizer"],
@@ -135,7 +123,6 @@ class Foundry(FoundryMetadata):
             openid_authorizer=auths['openid'],
             force_login=False,
         )
-
 
         self.xtract_tokens = {
             "auth_token": auths["petrel"].access_token,
@@ -198,11 +185,10 @@ class Foundry(FoundryMetadata):
 
         # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
         # we should find a way to abstract this.
-        
+
         self.dc = res['dc']
         self.mdf = res['mdf']
         self.dataset = FoundryDataset(**res['dataset'])
-
 
         if download:  # Add check for package existence
             self.download(
@@ -225,14 +211,13 @@ class Foundry(FoundryMetadata):
             .search()
         )
 
-
         return pd.DataFrame(
             [
                 {
                     "source_id": r["mdf"]["source_id"],
                     "name": r["dc"]["titles"][0]["title"],
                     "year": r["dc"].get("publicationYear", None),
-                    "DOI": r["dc"]["identifier"]["identifier"], 
+                    "DOI": r["dc"]["identifier"]["identifier"],
                 }
                 for r in res
             ]
@@ -267,7 +252,6 @@ class Foundry(FoundryMetadata):
         """
         if not packages:
             packages = self.get_packages()
-        f = Foundry()
 
         X_frames = []
         y_frames = []
@@ -297,7 +281,6 @@ class Foundry(FoundryMetadata):
         if funcx_endpoint is not None:
             self.dlhub_client.fx_endpoint = funcx_endpoint
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
-
 
     def load_data(self, source_id=None, globus=True, as_hdf5=False):
         """Load in the data associated with the prescribed dataset
@@ -348,8 +331,6 @@ class Foundry(FoundryMetadata):
             buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
 
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
-        # buf = f'{buf}<h3>MDF</h3>{convert(self.mdf)}'
-        # buf = f'{buf}<h3>DataCite</h3>{convert(self.dc)}'
         return buf
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
@@ -600,17 +581,17 @@ class Foundry(FoundryMetadata):
                         split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
                         missing_files.append(split.path)
-                #if number of missing files is greater than zero, redownload with informative message
+                # if number of missing files is greater than zero, redownload with informative message
                 if len(missing_files) > 0:
-                    print(f"Dataset will be redownloaded, following files are missing: {missing_files}")
+                    logger.info(f"Dataset will be redownloaded, following files are missing: {missing_files}")
                 else:
                     return self
             else:
                 # in the case of no splits, ensure the directory contains at least one file
-                if(len(os.listdir(path)) >= 1):
+                if (len(os.listdir(path)) >= 1):
                     return self
                 else:
-                    print("Dataset will be redownloaded, expected file is missing")
+                    logger.info("Dataset will be redownloaded, expected file is missing")
 
         res = self.forge_client.search(
             f"mdf.source_id:{self.mdf['source_id']}", advanced=True
@@ -624,17 +605,15 @@ class Foundry(FoundryMetadata):
                 download_datasets=True,
             )
         else:
-
-            source_id = self.mdf["source_id"]
             https_config = {
                 "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
                 "base_url": "https://data.materialsdatafacility.org",
                 "folder_to_crawl": f"/foundry/{self.mdf['source_id']}/",
-                "source_id":self.mdf["source_id"]
+                "source_id": self.mdf["source_id"]
             }
-            
-            task_list = list(recursive_ls(self.transfer_client, 
-                                          https_config['source_ep_id'], 
+
+            task_list = list(recursive_ls(self.transfer_client,
+                                          https_config['source_ep_id'],
                                           https_config['folder_to_crawl']))
             # TODO Add parallel
             for task in task_list:
@@ -646,7 +625,7 @@ class Foundry(FoundryMetadata):
             if self.dataset.splits:
                 missing_files = []
                 for split in self.dataset.splits:
-                    if split.path[0] == '/': # if absolute path, make it a relative path
+                    if split.path[0] == '/':  # if absolute path, make it a relative path
                         split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
                         # keeping track of all files not downloaded
@@ -655,55 +634,10 @@ class Foundry(FoundryMetadata):
                     raise FileNotFoundError(f"Downloaded directory does not contain the following files: {missing_files}")
 
             else:
-                if(len(os.listdir(path)) < 1):
+                if (len(os.listdir(path)) < 1):
                     raise FileNotFoundError("Downloaded directory does not contain the expected file")
         else:
             raise NotADirectoryError("Unable to create directory to download data")
-
-        return self
-
-    def build(self, spec, globus=False, interval=3, file=False, as_object=False):
-        """Build a Foundry Data Package
-        Args:
-            spec (multiple): dict or str (relative filename) of the data package specification
-            globus (bool): if True use Globus to fetch datasets
-            interval (int): Polling interval on checking task status in seconds.
-            type (str): One of "file" or None
-
-        Returns
-        -------
-        (Foundry): self: for chaining
-        """
-        if as_object:
-            return [key for key in self.dataset.keys if key.type == type]
-        else:
-            keys = [key.key for key in self.dataset.keys if key.type == type]
-            key_list = []
-            for k in keys:
-                key_list = key_list + k
-            return key_list
-
-        print("Building Data Package")
-        num_cores = multiprocessing.cpu_count()
-
-        def start_download(ds, interval=interval, globus=False):
-            print(f"=== Fetching Data Package {ds.name} ===")
-            f = Foundry().load(ds.name, download=False)
-            f = f.download(interval=interval, globus=globus)
-            return {"success": True}
-
-        if file:
-            with open(file, "r") as fp:
-                fs = FoundrySpecification(**json.load(fp))
-        else:
-            fs = FoundrySpecification(**spec)
-
-        fs.remove_duplicate_dependencies()
-
-        results = Parallel(n_jobs=num_cores)(
-            delayed(start_download)(ds, interval=interval, globus=globus)
-            for ds in fs.dependencies
-        )
 
         return self
 
@@ -737,7 +671,6 @@ class Foundry(FoundryMetadata):
                 key_list = key_list + k
             return key_list
 
-
     def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
         # Build the path to access the cached data
         if source_id:
@@ -746,23 +679,20 @@ class Foundry(FoundryMetadata):
             path = os.path.join(self.config.local_cache_dir,
                                 self.mdf["source_id"])
 
+        # Determine which file to load, defaults to config.dataframe_file
+        if not file:
+            file = self.config.dataframe_file
+        if path is None:
+            raise ValueError(f"Path to data file is invalid; check that dataset source_id is valid: "
+                             f"{source_id or self.mdf['source_id']}")
+        path_to_file = os.path.join(path, file)
+
+        # Check to see whether file exists at path
+        if not os.path.isfile(path_to_file):
+            raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
+
         # Handle Foundry-defined types.
         if self.dataset.data_type.value == "tabular":
-            # Determine which file to load, defaults to config.dataframe_file
-            if not file:
-                file = self.config.dataframe_file
-
-
-            # Check to make sure the path can be created
-            try:
-                path_to_file = os.path.join(path, file)
-            except Exception as e:
-                print(f"Unable to find path to file for download: {e}")
-                raise e
-
-            # Check to see whether file exists at path
-            if not os.path.isfile(path_to_file):
-                raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
             # If the file is not local, fetch the contents with Globus
             # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
@@ -771,21 +701,21 @@ class Foundry(FoundryMetadata):
                     path_to_file
                 )
             except Exception as e:
-                print(f"Reading {file} as JSON failed: {e} \n", "Now attempting to read as JSONL")
+                logger.info(f"Cannot read {file} as JSON: {e} \n", "Now attempting to read as JSONL")
                 try:
                     # Try to read individual lines instead
                     self.dataset.dataframe = pd.read_json(
                         path_to_file, lines=True
                     )
                 except Exception as f:
-                    print(f"Reading {file} as JSONL failed: {f} \n", "Now attempting to read as CSV")
+                    logger.info(f"Cannot read {file} as JSONL: {f} \n", "Now attempting to read as CSV")
                     try:
-                        #Try to read as CSV instead
+                        # Try to read as CSV instead
                         self.dataset.dataframe = pd.read_csv(
                             path_to_file
                         )
                     except Exception as g:
-                        print(f"Reading {file} as CSV failed, unable to load data properly: {g}")
+                        logger.fatal(f"Cannot read {file} as CSV, failed to load data properly: {g}")
                         raise e
 
             return (
@@ -794,11 +724,7 @@ class Foundry(FoundryMetadata):
             )
 
         elif self.dataset.data_type.value == "hdf5":
-            if not file:
-                file = self.config.data_file
-
-            filepath = os.path.join(path, file)
-            f = h5py.File(filepath, "r")
+            f = h5py.File(path_to_file, "r")
             special_types = ["input", "target"]
             tmp_data = {s: {} for s in special_types}
             for s in special_types:
@@ -807,7 +733,7 @@ class Foundry(FoundryMetadata):
                         tmp_data[s][key] = f[key]
                     elif isinstance(f[key], h5py.Group):
                         if is_pandas_pytable(f[key]):
-                            df = pd.read_hdf(filepath, key)
+                            df = pd.read_hdf(path_to_file, key)
                             tmp_data[s][key] = df
                         else:
                             tmp_data[s][key] = f[key]
@@ -817,23 +743,18 @@ class Foundry(FoundryMetadata):
         else:
             raise NotImplementedError
 
-    
-    def toTorch(self, raw=None, split=None):
-        """Convert Foundry Dataset to a PyTorch Dataset
+
+    def _get_inputs_targets(self, split: str = None):
+        """Get Inputs and Outputs from a Foundry Dataset
 
         Arguments:
-            raw (dict): The output of running ``f.load_data(as_hdf5=False)``
-                    Recommended that this is left as ``None``
+            split (string): Split to get inputs and outputs from.
                     **Default:** ``None``
-            split (string): Split to create PyTorch Dataset on.
-                    **Default:** ``None``
-
-        Returns: (FoundryDataset_Torch) PyTorch Dataset of all the data from the specified split
-
-        """
-        if not raw:
-            raw = self.load_data(as_hdf5=False)
         
+        Returns: (Tuple) Tuple of the inputs and outputs
+        """
+        raw = self.load_data(as_hdf5=False)
+
         if not split:
             split = self.dataset.splits[0].type
 
@@ -841,16 +762,23 @@ class Foundry(FoundryMetadata):
             inputs = []
             targets = []
             for key in self.dataset.keys:
+                # raw[split][key.type][key.key[0]] gets the data values for the given key.
+                #
+                # For example, if the key was coordinates and had type target, then 
+                # raw[split][key.type][key.key[0]] would return all the coordinates for each item
+                # and raw[split][key.type][key.key[0]].keys() are the indexes of the item.
                 if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
                     continue
 
+                # Get a numpy array of all the values for each item for that key
                 val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
                 if key.type == 'input':
                     inputs.append(val)
                 else:
                     targets.append(val)
+            
+            return (inputs, targets)
 
-            return FoundryDataset_Torch(inputs, targets)
         elif self.dataset.data_type.value == "tabular":
             inputs = []
             targets = []
@@ -859,10 +787,41 @@ class Foundry(FoundryMetadata):
                 df = raw[split][index]
                 for key in df.keys():
                     arr.append(df[key].values)
-
-            return FoundryDataset_Torch(inputs, targets)
+            
+            return (inputs, targets)
+            
         else:
             raise NotImplementedError
+
+    def to_torch(self, split: str = None):
+        """Convert Foundry Dataset to a PyTorch Dataset
+
+        Arguments:
+            split (string): Split to create PyTorch Dataset on.
+                    **Default:** ``None``
+
+        Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
+
+        """
+        from foundry.loaders.torch_wrapper import TorchDataset
+
+        inputs, targets = self._get_inputs_targets(split)
+        return TorchDataset(inputs, targets)
+
+    def to_tensorflow(self, split: str = None):
+        """Convert Foundry Dataset to a Tensorflow Sequence
+
+        Arguments:
+            split (string): Split to create Tensorflow Sequence on.
+                    **Default:** ``None``
+
+        Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split
+
+        """
+        from foundry.loaders.tf_wrapper import TensorflowSequence
+
+        inputs, targets = self._get_inputs_targets(split)
+        return TensorflowSequence(inputs, targets)
 
 
 def is_pandas_pytable(group):
@@ -897,9 +856,9 @@ def _get_files(tc, ep, queue, max_depth):
                 if item["type"] == "dir"
             )
         for item in res["DATA"]:
-            if item["type"]=='file':
+            if item["type"] == 'file':
                 item["name"] = path_prefix + item["name"]
-                item["path"] = abs_path.replace('/~/','/')
+                item["path"] = abs_path.replace('/~/', '/')
                 yield item
 
 
@@ -910,24 +869,21 @@ def recursive_ls(tc, ep, path, max_depth=3):
 
 
 def download_file(item, https_config):
-        url = f"{https_config['base_url']}{item['path']}{item['name']}"
-        
-        # removes data source (eg MDF) parent directories, leaving the split path only
-        datasplit_subpath = item["path"].replace("/foundry/","/")
+    url = f"{https_config['base_url']}{item['path']}{item['name']}"
 
-        # build destination path for data file
-        destination = os.path.join("data/", https_config['source_id'], item['name'])
+    # build destination path for data file
+    destination = os.path.join("data/", https_config['source_id'], item['name'])
 
-        parent_path = os.path.split(destination)[0]
+    parent_path = os.path.split(destination)[0]
 
-        # if parent directories don't exist, create them
-        if not os.path.exists(parent_path):
-            os.makedirs(parent_path)
+    # if parent directories don't exist, create them
+    if not os.path.exists(parent_path):
+        os.makedirs(parent_path)
 
-        response = requests.get(url)
+    response = requests.get(url)
 
-        # write file to local destination
-        with open(destination, "wb") as f:
-            f.write(response.content)
+    # write file to local destination
+    with open(destination, "wb") as f:
+        f.write(response.content)
 
-        return {destination + " status": True}
+    return {destination + " status": True}
