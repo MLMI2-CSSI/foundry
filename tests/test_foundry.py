@@ -1,6 +1,5 @@
-import os, shutil
-import re
-import types
+import os
+import shutil
 import pytest
 from datetime import datetime
 import mdf_toolbox
@@ -22,16 +21,16 @@ services = [
             "petrel",
             "transfer",
             "openid",
-            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",]
+            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"]
 
 if is_gha:
     auths = mdf_toolbox.confidential_login(client_id=client_id,
-                                        client_secret=client_secret,
-                                        services=services, make_clients=True)
+                                           client_secret=client_secret,
+                                           services=services, make_clients=True)
 
     search_auth = mdf_toolbox.confidential_login(client_id=client_id,
-                                            client_secret=client_secret,
-                                            services=["search"], make_clients=False)
+                                                 client_secret=client_secret,
+                                                 services=["search"], make_clients=False)
 else:
     auths = mdf_toolbox.login(services=services, make_clients=True)
     search_auth = mdf_toolbox.login(services=["search"], make_clients=False)
@@ -60,6 +59,7 @@ old_test_metadata = {
     "short_name": "iris_example",
     "package_type": "tabular"
 }
+
 
 pub_test_metadata = {
     "keys":[
