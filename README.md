@@ -1,4 +1,8 @@
-<img src="./assets/foundry-purple.png" height="150"> 
+
+<picture>
+  <source srcset="./assets/foundry-light.svg" height=175" media="(prefers-color-scheme: dark)">
+  <img src="./assets/foundry-dark.svg" height="175">
+</picture>
 
 [![PyPI](https://img.shields.io/pypi/v/foundry_ml.svg)](https://pypi.python.org/pypi/foundry_ml)
 [![tests](https://github.com/MLMI2-CSSI/foundry/actions/workflows/testing-work.yml/badge.svg)](https://github.com/MLMI2-CSSI/foundry/actions/workflows/testing-work.yml)
