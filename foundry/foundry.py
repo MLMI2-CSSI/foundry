@@ -200,7 +200,7 @@ class Foundry(FoundryMetadata):
         return self
 
     def search(self, q=None, limit=None):
-        """Search available Foundry data packages
+        """Search available Foundry datasets
         q (str): query string to match
         limit (int): maximum number of results to return
 
@@ -230,16 +230,16 @@ class Foundry(FoundryMetadata):
         )
 
     def list(self):
-        """List available Foundry data packages
+        """List available Foundry datasets
 
         Returns
         -------
-            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication year, and DOI
+            (pandas.DataFrame): DataFrame with summary list of Foundry datasets including name, title, publication year, and DOI
         """
         return self.search()
 
     def get_packages(self, paths=False):
-        """Get available local data packages
+        """Get available local datasets
 
         Args:
            paths (bool): If True return paths in addition to package, if False return package name only
