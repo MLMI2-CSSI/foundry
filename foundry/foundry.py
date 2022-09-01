@@ -208,9 +208,8 @@ class Foundry(FoundryMetadata):
         -------
             (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication year, and DOI
         """
-        if not q: 
+        if not q:
             q = None
-        
         res = (
             self.forge_client.match_field(
                 "mdf.organizations", self.config.organization)
@@ -224,12 +223,12 @@ class Foundry(FoundryMetadata):
                     "source_id": r["mdf"]["source_id"],
                     "name": r["dc"]["titles"][0]["title"],
                     "year": r["dc"].get("publicationYear", None),
-                    "DOI": r["dc"].get("identifier",{}).get("identifier",None),
+                    "DOI": r["dc"].get("identifier", {}).get("identifier", None),
                 }
                 for r in res
             ]
         )
-        
+
     def list(self):
         """List available Foundry data packages
 
