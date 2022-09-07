@@ -348,6 +348,16 @@ class Foundry(FoundryMetadata):
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         return buf
 
+    # TODO: integrate into MDF Connect Client
+    def https_upload(self):
+        """Temporary method to figure out specifics of HTTPS upload using Globus SDK
+        """
+        # Eagle UUID
+        endpoint_uuid = "f10a69a9-338c-4e5b-baa1-0dc92359ab47"
+        path = "/ascourtas/test_dir"
+        res = self.transfer_client.operation_mkdir(endpoint_uuid, path)
+        print(res)
+
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
                 publication_year=None, **kwargs,):
         """Submit a dataset for publication
