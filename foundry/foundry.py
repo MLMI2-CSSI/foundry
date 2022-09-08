@@ -13,6 +13,7 @@ import os
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 from dlhub_sdk import DLHubClient
+from globus_sdk import AuthClient
 
 from foundry.models import (
     FoundryMetadata,
@@ -38,6 +39,7 @@ class Foundry(FoundryMetadata):
     forge_client: Any
     connect_client: Any
     transfer_client: Any
+    auth_client: Any
     index = ""
 
     xtract_tokens: Any
@@ -104,6 +106,8 @@ class Foundry(FoundryMetadata):
         )
 
         self.transfer_client = auths['transfer']
+
+        self.auth_client = AuthClient(authorizer=auths['openid'])
 
         if index == "mdf":
             test = False
@@ -352,11 +356,34 @@ class Foundry(FoundryMetadata):
     def https_upload(self):
         """Temporary method to figure out specifics of HTTPS upload using Globus SDK
         """
-        # Eagle UUID
-        endpoint_uuid = "f10a69a9-338c-4e5b-baa1-0dc92359ab47"
-        path = "/ascourtas/test_dir"
-        res = self.transfer_client.operation_mkdir(endpoint_uuid, path)
+
+        # make target directory for file transfer (TODO: may be unnecessary)
+        endpoint_id = "f10a69a9-338c-4e5b-baa1-0dc92359ab47"  # Eagle UUID
+        path = "/ascourtas/test_dir/"  # NOTE: must end with "/"
+        # res = self.transfer_client.operation_mkdir(endpoint_id, path)
+
+        # set permissions for user
+        res = self.auth_client.oauth2_userinfo()
         print(res)
+        user_id = res.data["sub"]  # get the user primary ID (based on primary email set in Globus)
+        rule_data = {
+            "DATA_TYPE": "access",
+            "principal_type": "identity",
+            "principal": user_id,
+            "path": path,
+            "permissions": "rw",
+        }
+        # TODO: unset acl rule before function returns (limit to 200 acls)
+        ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
+        print(ret)
+
+        # upload folder of data files
+
+        # TODO: compare dlhub_sdk, mdfcc, and Forge implementations to see what makes the most sense for a PUT request
+
+        # get URL for endpoint location
+        endpoint = self.transfer_client.get_endpoint(endpoint_id)  # gets info for Eagle
+        https_base_url = endpoint['https_server']
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
                 publication_year=None, **kwargs,):
