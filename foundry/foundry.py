@@ -5,10 +5,12 @@ import mdf_toolbox
 from json2table import convert
 import numpy as np
 import pandas as pd
+import requests
 from typing import Any
 import logging
 import warnings
 import os
+import urllib
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
@@ -41,6 +43,7 @@ class Foundry(FoundryMetadata):
     transfer_client: Any
     auth_client: Any
     index = ""
+    auths: Any
 
     xtract_tokens: Any
 
@@ -63,9 +66,10 @@ class Foundry(FoundryMetadata):
         """
         super().__init__(**data)
         self.index = index
+        self.auths = None
 
         if authorizers:
-            auths = authorizers
+            self.auths = authorizers
         else:
             services = [
                     "data_mdf",
@@ -76,9 +80,10 @@ class Foundry(FoundryMetadata):
                     "dlhub",
                     "funcx",
                     "openid",
-                    "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
+                    "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
+                    "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPs
                 ]
-            auths = mdf_toolbox.login(
+            self.auths = mdf_toolbox.login(
                 services=services,
                 app_name="Foundry",
                 make_clients=True,
@@ -94,20 +99,20 @@ class Foundry(FoundryMetadata):
                 no_local_server=no_local_server,
             )
             # add special SearchAuthorizer object
-            auths['search_authorizer'] = search_auth['search']
+            self.auths['search_authorizer'] = search_auth['search']
 
         self.forge_client = Forge(
             index=index,
             services=None,
-            search_client=auths["search"],
-            transfer_client=auths["transfer"],
-            data_mdf_authorizer=auths["data_mdf"],
-            petrel_authorizer=auths["petrel"],
+            search_client=self.auths["search"],
+            transfer_client=self.auths["transfer"],
+            data_mdf_authorizer=self.auths["data_mdf"],
+            petrel_authorizer=self.auths["petrel"],
         )
 
-        self.transfer_client = auths['transfer']
+        self.transfer_client = self.auths['transfer']
 
-        self.auth_client = AuthClient(authorizer=auths['openid'])
+        self.auth_client = AuthClient(authorizer=self.auths['openid'])
 
         if index == "mdf":
             test = False
@@ -116,24 +121,24 @@ class Foundry(FoundryMetadata):
         # TODO: when release-ready, remove test=True
 
         self.connect_client = MDFConnectClient(
-            authorizer=auths["mdf_connect"], test=test
+            authorizer=self.auths["mdf_connect"], test=test
         )
 
         # TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
         self.dlhub_client = DLHubClient(
-            dlh_authorizer=auths["dlhub"],
-            search_authorizer=auths["search_authorizer"],
-            fx_authorizer=auths[
+            dlh_authorizer=self.auths["dlhub"],
+            search_authorizer=self.auths["search_authorizer"],
+            fx_authorizer=self.auths[
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
             ],
-            openid_authorizer=auths['openid'],
+            openid_authorizer=self.auths['openid'],
             force_login=False,
         )
 
         self.xtract_tokens = {
-            "auth_token": auths["petrel"].access_token,
-            "transfer_token": auths["transfer"].authorizer.access_token,
-            "funcx_token": auths[
+            "auth_token": self.auths["petrel"].access_token,
+            "transfer_token": self.auths["transfer"].authorizer.access_token,
+            "funcx_token": self.auths[
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
             ].access_token,
         }
@@ -355,11 +360,13 @@ class Foundry(FoundryMetadata):
     # TODO: integrate into MDF Connect Client
     def https_upload(self):
         """Temporary method to figure out specifics of HTTPS upload using Globus SDK
+
+        Returns: link globus returns
         """
 
         # make target directory for file transfer (TODO: may be unnecessary)
         endpoint_id = "f10a69a9-338c-4e5b-baa1-0dc92359ab47"  # Eagle UUID
-        path = "/ascourtas/test_dir/"  # NOTE: must end with "/"
+        path = "/ascourtas/test_dir/"  # NOTE: must start and end with "/"
         # res = self.transfer_client.operation_mkdir(endpoint_id, path)
 
         # set permissions for user
@@ -374,16 +381,53 @@ class Foundry(FoundryMetadata):
             "permissions": "rw",
         }
         # TODO: unset acl rule before function returns (limit to 200 acls)
-        ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
-        print(ret)
+        # TODO: try/except in case permission has already been set -- will throw TransferAPIError otherwise
+        # ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
+        # TODO: get id of acl rule for later deletion
+        # print(ret)
 
         # upload folder of data files
 
-        # TODO: compare dlhub_sdk, mdfcc, and Forge implementations to see what makes the most sense for a PUT request
-
+        # Get the authorization header token (string for the headers dict)
+        # header = self.transfer_client.authorizer.get_authorization_header()
+        auth_gcs = AuthClient(authorizer=self.auths["https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https"])  # scope that lets you HTTPS to specific endpoint
+        header = auth_gcs.authorizer.get_authorization_header()
         # get URL for endpoint location
         endpoint = self.transfer_client.get_endpoint(endpoint_id)  # gets info for Eagle
         https_base_url = endpoint['https_server']
+
+        # Submit data to DLHub service
+        # TODO: parallelize to send multiple PUTs at the same time
+        target_data_file = "/Users/aristanascourtas/Documents/Work/foundry/data/foundry_aflow_band_gaps_v1.1/Aflow_PBE_new.json"
+
+        endpoint_dest = os.path.join(https_base_url, path[1:])  # strip out leading slash of path
+        endpoint_dest = endpoint_dest + "Aflow_PBE_new.json"  # NOTE: needs to be path to file in final dest
+        # TODO: loop through many in folder
+        with open(target_data_file, 'rb') as f:
+            # TODO: add 'prepare' option
+            reply = requests.put(
+                endpoint_dest,
+                headers={"Authorization": header},
+                files={
+                    'file': ('Aflow_PBE_new.json', f, 'application/octet-stream')
+                }
+            )
+
+        # Return the task id
+        if reply.status_code != 200:
+            raise Exception(reply.text)
+        print(reply.json())
+
+
+        # pass this link and metadata to publish() as usual
+        return self.make_globus_link(endpoint_id, path)
+
+    def make_globus_link(self, endpoint_id, path):
+        # TODO Add docstrings
+
+        safe_path = urllib.parse.quote(path, safe="*")
+        link = f'https://app.globus.org/file-manager?origin_id={endpoint_id}&origin_path={safe_path}'
+        return link
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
                 publication_year=None, **kwargs,):
@@ -430,10 +474,14 @@ class Foundry(FoundryMetadata):
         self.connect_client.add_organization(self.config.organization)
         self.connect_client.set_project_block(
             self.config.metadata_key, foundry_metadata)
+        # TODO: for HTTPS upload, replace data_source with returned link
         self.connect_client.add_data_source(data_source)
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
         res = self.connect_client.submit_dataset(update=update)
+
+        # TODO: remove acl
+
         return res
 
     # TODO: come back and address DLHub code
