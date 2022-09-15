@@ -5,7 +5,8 @@
 </picture>
 
 [![PyPI](https://img.shields.io/pypi/v/foundry_ml.svg)](https://pypi.python.org/pypi/foundry_ml)
-[![tests](https://github.com/MLMI2-CSSI/foundry/actions/workflows/testing-work.yml/badge.svg)](https://github.com/MLMI2-CSSI/foundry/actions/workflows/testing-work.yml)
+[![tests](https://github.com/MLMI2-CSSI/foundry/actions/workflows/tests.yml/badge.svg)](https://github.com/MLMI2-CSSI/foundry/actions/workflows/tests.yml)
+
 
 Foundry simplifies the discovery and usage of ML-ready datasets in materials science and chemistry providing a simple API to access even complex datasets. 
 * Load ML-ready data with just a few lines of code
