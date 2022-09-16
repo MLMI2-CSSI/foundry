@@ -363,12 +363,11 @@ class Foundry(FoundryMetadata):
 
         Returns: link globus returns
         """
-        # TODO: remove print statements 
+        # TODO: remove print statements
 
         # make target directory for file transfer (TODO: may be unnecessary)
         endpoint_id = "f10a69a9-338c-4e5b-baa1-0dc92359ab47"  # Eagle UUID
-        path = "/ascourtas/test_dir/"  # NOTE: must start and end with "/"
-        # res = self.transfer_client.operation_mkdir(endpoint_id, path)
+        path = "/ascourtas/test_dir/ooglyboogly/yes"  # NOTE: must start and end with "/"
 
         # set permissions for user
         res = self.auth_client.oauth2_userinfo()
@@ -381,6 +380,7 @@ class Foundry(FoundryMetadata):
             "path": path,
             "permissions": "rw",
         }
+        rule_id = None
         try:
             ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
             print(ret)
@@ -407,6 +407,10 @@ class Foundry(FoundryMetadata):
         # TODO: change to f string for better handling
         # endpoint_dest = endpoint_dest + "Aflow_PBE_new.json"  # NOTE: needs to be path to file in final dest
         endpoint_dest = endpoint_dest + "https_test.json"
+
+        # add query param to prepare any missing directories in the path
+        endpoint_dest = endpoint_dest + "?prepare"
+
         # TODO: update permissions on dest folder such that any MDF user can write (right now only works for me and Ben)
         # TODO: loop through many in folder
         with open(target_data_file, 'rb') as f:
