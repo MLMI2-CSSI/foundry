@@ -380,11 +380,10 @@ class Foundry(FoundryMetadata):
             "path": path,
             "permissions": "rw",
         }
-        # TODO: unset acl rule before function returns (limit to 200 acls)
         # TODO: try/except in case permission has already been set -- will throw TransferAPIError otherwise
-        # ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
-        # TODO: get id of acl rule for later deletion
-        # print(ret)
+        ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
+        print(ret)
+        rule_id = ret["access_id"]
 
         # upload folder of data files
 
@@ -398,10 +397,14 @@ class Foundry(FoundryMetadata):
 
         # Submit data to DLHub service
         # TODO: parallelize to send multiple PUTs at the same time
-        target_data_file = "/Users/aristanascourtas/Documents/Work/foundry/data/foundry_aflow_band_gaps_v1.1/Aflow_PBE_new.json"
+        # target_data_file = "/Users/aristanascourtas/Documents/Work/foundry/data/foundry_aflow_band_gaps_v1.1/Aflow_PBE_new.json"
+        target_data_file = "/Users/aristanascourtas/Documents/Work/foundry/data/https_test.json"
 
         endpoint_dest = os.path.join(https_base_url, path[1:])  # strip out leading slash of path
-        endpoint_dest = endpoint_dest + "Aflow_PBE_new.json"  # NOTE: needs to be path to file in final dest
+        # TODO: change to f string for better handling
+        # endpoint_dest = endpoint_dest + "Aflow_PBE_new.json"  # NOTE: needs to be path to file in final dest
+        endpoint_dest = endpoint_dest + "https_test.json"
+        # TODO: update permissions on dest folder such that any MDF user can write (right now only works for me and Ben)
         # TODO: loop through many in folder
         with open(target_data_file, 'rb') as f:
             # TODO: add 'prepare' option
@@ -409,15 +412,19 @@ class Foundry(FoundryMetadata):
                 endpoint_dest,
                 headers={"Authorization": header},
                 files={
-                    'file': ('Aflow_PBE_new.json', f, 'application/octet-stream')
+                    'file': ('https_test.json', f, 'application/octet-stream')
+                    # 'file': ('Aflow_PBE_new.json', f, 'application/octet-stream')
                 }
             )
 
         # Return the task id
         if reply.status_code != 200:
             raise Exception(reply.text)
-        print(reply.json())
+        print(reply)
 
+        # delete ACL rule after transfer is complete (NOTE: will need to move to integrate into publish())
+        ret = self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
+        print(ret)
 
         # pass this link and metadata to publish() as usual
         return self.make_globus_link(endpoint_id, path)
