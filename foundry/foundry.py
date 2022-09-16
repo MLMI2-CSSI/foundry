@@ -15,7 +15,7 @@ import urllib
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 from dlhub_sdk import DLHubClient
-from globus_sdk import AuthClient
+from globus_sdk import AuthClient, TransferAPIError
 
 from foundry.models import (
     FoundryMetadata,
@@ -363,6 +363,7 @@ class Foundry(FoundryMetadata):
 
         Returns: link globus returns
         """
+        # TODO: remove print statements 
 
         # make target directory for file transfer (TODO: may be unnecessary)
         endpoint_id = "f10a69a9-338c-4e5b-baa1-0dc92359ab47"  # Eagle UUID
@@ -380,10 +381,12 @@ class Foundry(FoundryMetadata):
             "path": path,
             "permissions": "rw",
         }
-        # TODO: try/except in case permission has already been set -- will throw TransferAPIError otherwise
-        ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
-        print(ret)
-        rule_id = ret["access_id"]
+        try:
+            ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
+            print(ret)
+            rule_id = ret["access_id"]
+        except TransferAPIError as e:
+            logger.info(e.message)
 
         # upload folder of data files
 
@@ -423,8 +426,9 @@ class Foundry(FoundryMetadata):
         print(reply)
 
         # delete ACL rule after transfer is complete (NOTE: will need to move to integrate into publish())
-        ret = self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
-        print(ret)
+        if rule_id:
+            ret = self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
+            print(ret)
 
         # pass this link and metadata to publish() as usual
         return self.make_globus_link(endpoint_id, path)
