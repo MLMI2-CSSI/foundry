@@ -365,7 +365,6 @@ class Foundry(FoundryMetadata):
         """
         # TODO: remove print statements
 
-        # make target directory for file transfer (TODO: may be unnecessary)
         endpoint_id = "f10a69a9-338c-4e5b-baa1-0dc92359ab47"  # Eagle UUID
         dest_path = "/ascourtas/test_dir/ooglyboogly/yes"  # NOTE: must start and end with "/" # TODO test to see if this is still true
 
@@ -403,29 +402,31 @@ class Foundry(FoundryMetadata):
         # Submit data to DLHub service
         # TODO: parallelize to send multiple PUTs at the same time
         # TODO: change path assignment once integrated into publish()
-        target_data_filepath = "/Users/aristanascourtas/Documents/Work/foundry/data/https_test.json"
+        target_data_folderpath = "/Users/aristanascourtas/Documents/Work/foundry/data/https_test/"
 
-        target_data_filename = os.path.split(target_data_filepath)[1]  # grab just the filename
-        # add query param to prepare any missing directories in the path
-        # need to strip out leading "/" in dest_path for join to work
-        endpoint_dest = os.path.join(https_base_url, dest_path[1:], target_data_filename, "?prepare")
-
-        # TODO: use /tmp as destination folder
-        # TODO: loop through many in folder
-        with open(target_data_filepath, 'rb') as f:
-            # TODO: add 'prepare' option
-            reply = requests.put(
-                endpoint_dest,
-                headers={"Authorization": header},
-                files={
-                    'file': ('https_test.json', f, 'application/octet-stream')
-                }
-            )
-
-        # Return the task id
-        if reply.status_code != 200:
-            raise Exception(reply.text)
-        print(reply)
+        # upload each file in the designated data folder
+        for filename in os.listdir(target_data_folderpath):
+            # TODO: use /tmp as destination folder
+            # get local path to file to upload
+            target_data_filepath = os.path.join(target_data_folderpath, filename)
+            # get Globus endpoint path to write to
+            # add query param to prepare any missing directories in the Globus endpoint path
+            # need to strip out leading "/" in dest_path for join to work
+            endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename, "?prepare")
+            # upload via HTTPS
+            with open(target_data_filepath, 'rb') as f:
+                # TODO: add 'prepare' option
+                reply = requests.put(
+                    endpoint_dest,
+                    headers={"Authorization": header},
+                    files={
+                        'file': ('https_test.json', f, 'application/octet-stream')
+                    }
+                )
+            # Return the task id
+            if reply.status_code != 200:
+                raise Exception(reply.text)
+            print(reply)
 
         # delete ACL rule after transfer is complete (NOTE: will need to move to integrate into publish())
         if rule_id:
