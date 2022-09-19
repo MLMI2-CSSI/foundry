@@ -383,10 +383,22 @@ class Foundry(FoundryMetadata):
         # TODO: parallelize to send multiple PUTs at the same time
         # TODO: change path assignment once integrated into publish()
         target_data_folderpath = "/Users/aristanascourtas/Documents/Work/foundry/data/https_test/"
+        self._upload_folder(target_data_folderpath, https_base_url, dest_path)
 
+        # delete ACL rule after transfer is complete (NOTE: will need to move to integrate into publish())
+        if rule_id:
+            ret = self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
+            print(ret)
+
+        # pass this link and metadata to publish() as usual
+        return self.make_globus_link(endpoint_id, dest_path)
+
+    def _upload_folder(self, target_data_folderpath, https_base_url, dest_path):
         # Get the authorization header token (string for the headers dict) HTTPS upload
         auth_gcs = AuthClient(authorizer=self.auths["https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https"])  # scope that lets you HTTPS to specific endpoint
         header = auth_gcs.authorizer.get_authorization_header()
+
+        results = []
 
         # upload each file in the designated data folder
         for filename in os.listdir(target_data_folderpath):
@@ -409,14 +421,10 @@ class Foundry(FoundryMetadata):
             if reply.status_code != 200:
                 raise Exception(reply.text)
             print(reply)
+            # aggregate request result details
+            results.append(reply)
 
-        # delete ACL rule after transfer is complete (NOTE: will need to move to integrate into publish())
-        if rule_id:
-            ret = self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
-            print(ret)
-
-        # pass this link and metadata to publish() as usual
-        return self.make_globus_link(endpoint_id, dest_path)
+        return results
 
     def _create_access_rule(self, endpoint_id, dest_path):
         # get user info
