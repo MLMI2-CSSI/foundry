@@ -10,6 +10,7 @@ from typing import Any
 import logging
 import warnings
 import os
+from uuid import uuid4
 import urllib
 
 from mdf_connect_client import MDFConnectClient
@@ -366,7 +367,8 @@ class Foundry(FoundryMetadata):
         # TODO: remove print statements
 
         endpoint_id = "f10a69a9-338c-4e5b-baa1-0dc92359ab47"  # Eagle UUID
-        dest_path = "/ascourtas/test_dir/ooglyboogly/yes"  # NOTE: must start and end with "/" # TODO test to see if this is still true
+        publication_id = uuid4()
+        dest_path = os.path.join("/tmp", publication_id)  # NOTE: must start and end with "/" # TODO test to see if this is still true
 
         # get user info
         res = self.auth_client.oauth2_userinfo()
@@ -406,7 +408,6 @@ class Foundry(FoundryMetadata):
 
         # upload each file in the designated data folder
         for filename in os.listdir(target_data_folderpath):
-            # TODO: use /tmp as destination folder
             # get local path to file to upload
             target_data_filepath = os.path.join(target_data_folderpath, filename)
             # get Globus endpoint path to write to
@@ -415,7 +416,6 @@ class Foundry(FoundryMetadata):
             endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename, "?prepare")
             # upload via HTTPS
             with open(target_data_filepath, 'rb') as f:
-                # TODO: add 'prepare' option
                 reply = requests.put(
                     endpoint_dest,
                     headers={"Authorization": header},
