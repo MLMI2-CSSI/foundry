@@ -367,24 +367,26 @@ class Foundry(FoundryMetadata):
 
         # make target directory for file transfer (TODO: may be unnecessary)
         endpoint_id = "f10a69a9-338c-4e5b-baa1-0dc92359ab47"  # Eagle UUID
-        path = "/ascourtas/test_dir/ooglyboogly/yes"  # NOTE: must start and end with "/"
+        dest_path = "/ascourtas/test_dir/ooglyboogly/yes"  # NOTE: must start and end with "/" # TODO test to see if this is still true
 
-        # set permissions for user
+        # get user info
         res = self.auth_client.oauth2_userinfo()
         print(res)
         user_id = res.data["sub"]  # get the user primary ID (based on primary email set in Globus)
+        # create data blob needed to set new rule with Globus
         rule_data = {
             "DATA_TYPE": "access",
             "principal_type": "identity",
             "principal": user_id,
-            "path": path,
+            "path": dest_path,
             "permissions": "rw",
         }
+        # create new ACL rule (eg permission) for user to read/write to endpoint and path
         rule_id = None
         try:
             ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
             print(ret)
-            rule_id = ret["access_id"]
+            rule_id = ret["access_id"]  # rule_id is needed to delete the rule later
         except TransferAPIError as e:
             logger.info(e.message)
 
@@ -394,33 +396,29 @@ class Foundry(FoundryMetadata):
         # header = self.transfer_client.authorizer.get_authorization_header()
         auth_gcs = AuthClient(authorizer=self.auths["https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https"])  # scope that lets you HTTPS to specific endpoint
         header = auth_gcs.authorizer.get_authorization_header()
-        # get URL for endpoint location
+        # get URL for Globus endpoint location
         endpoint = self.transfer_client.get_endpoint(endpoint_id)  # gets info for Eagle
         https_base_url = endpoint['https_server']
 
         # Submit data to DLHub service
         # TODO: parallelize to send multiple PUTs at the same time
-        # target_data_file = "/Users/aristanascourtas/Documents/Work/foundry/data/foundry_aflow_band_gaps_v1.1/Aflow_PBE_new.json"
-        target_data_file = "/Users/aristanascourtas/Documents/Work/foundry/data/https_test.json"
+        # TODO: change path assignment once integrated into publish()
+        target_data_filepath = "/Users/aristanascourtas/Documents/Work/foundry/data/https_test.json"
 
-        endpoint_dest = os.path.join(https_base_url, path[1:])  # strip out leading slash of path
-        # TODO: change to f string for better handling
-        # endpoint_dest = endpoint_dest + "Aflow_PBE_new.json"  # NOTE: needs to be path to file in final dest
-        endpoint_dest = endpoint_dest + "https_test.json"
-
+        target_data_filename = os.path.split(target_data_filepath)[1]  # grab just the filename
         # add query param to prepare any missing directories in the path
-        endpoint_dest = endpoint_dest + "?prepare"
+        # need to strip out leading "/" in dest_path for join to work
+        endpoint_dest = os.path.join(https_base_url, dest_path[1:], target_data_filename, "?prepare")
 
-        # TODO: update permissions on dest folder such that any MDF user can write (right now only works for me and Ben)
+        # TODO: use /tmp as destination folder
         # TODO: loop through many in folder
-        with open(target_data_file, 'rb') as f:
+        with open(target_data_filepath, 'rb') as f:
             # TODO: add 'prepare' option
             reply = requests.put(
                 endpoint_dest,
                 headers={"Authorization": header},
                 files={
                     'file': ('https_test.json', f, 'application/octet-stream')
-                    # 'file': ('Aflow_PBE_new.json', f, 'application/octet-stream')
                 }
             )
 
@@ -435,7 +433,7 @@ class Foundry(FoundryMetadata):
             print(ret)
 
         # pass this link and metadata to publish() as usual
-        return self.make_globus_link(endpoint_id, path)
+        return self.make_globus_link(endpoint_id, dest_path)
 
     def make_globus_link(self, endpoint_id, path):
         # TODO Add docstrings
