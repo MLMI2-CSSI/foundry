@@ -358,20 +358,13 @@ class Foundry(FoundryMetadata):
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         return buf
 
-    # TODO: integrate into MDF Connect Client
-    def https_upload(self):
+    def https_upload(self, local_data_path, dest_path="/tmp", endpoint_id="f10a69a9-338c-4e5b-baa1-0dc92359ab47"):
         """Temporary method to figure out specifics of HTTPS upload using Globus SDK
+        TODO: add docstring
 
         Returns: link globus returns
         """
         # TODO: remove print statements
-
-        endpoint_id = "f10a69a9-338c-4e5b-baa1-0dc92359ab47"  # Eagle UUID
-        publication_id = uuid4()
-        dest_path = os.path.join("/tmp", publication_id)  # NOTE: must start and end with "/" # TODO test to see if this is still true
-
-        # create new ACL rule (eg permission) for user to read/write to endpoint and path
-        rule_id = self._create_access_rule(endpoint_id, dest_path)
 
         # upload folder of data files
 
@@ -381,50 +374,46 @@ class Foundry(FoundryMetadata):
 
         # Submit data to DLHub service
         # TODO: parallelize to send multiple PUTs at the same time
-        # TODO: change path assignment once integrated into publish()
-        target_data_folderpath = "/Users/aristanascourtas/Documents/Work/foundry/data/https_test/"
-        self._upload_folder(target_data_folderpath, https_base_url, dest_path)
-
-        # delete ACL rule after transfer is complete (NOTE: will need to move to integrate into publish())
-        if rule_id:
-            ret = self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
-            print(ret)
+        self._upload_folder(local_data_path, https_base_url, dest_path)
 
         # pass this link and metadata to publish() as usual
         return self.make_globus_link(endpoint_id, dest_path)
 
-    def _upload_folder(self, target_data_folderpath, https_base_url, dest_path):
+    def _upload_folder(self, local_data_path, https_base_url, dest_path):
+        results = []
+        # upload each file in the designated data folder
+        for filename in os.listdir(local_data_path):
+            # get local path to file to upload
+            filepath = os.path.join(local_data_path, filename)
+            result = self._upload_file(filepath, https_base_url, dest_path)
+            results.append(result)
+        return results
+
+    def _upload_file(self, filepath, https_base_url, dest_path):
         # Get the authorization header token (string for the headers dict) HTTPS upload
-        auth_gcs = AuthClient(authorizer=self.auths["https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https"])  # scope that lets you HTTPS to specific endpoint
+        # TODO: change endpoint ID in Globus scope to a param to pass
+        auth_gcs = AuthClient(authorizer=self.auths[
+            "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https"])  # scope that lets you HTTPS to specific endpoint
         header = auth_gcs.authorizer.get_authorization_header()
 
-        results = []
-
-        # upload each file in the designated data folder
-        for filename in os.listdir(target_data_folderpath):
-            # get local path to file to upload
-            target_data_filepath = os.path.join(target_data_folderpath, filename)
-            # get Globus endpoint path to write to
-            # add query param to prepare any missing directories in the Globus endpoint path
-            # need to strip out leading "/" in dest_path for join to work
-            endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename, "?prepare")
-            # upload via HTTPS
-            with open(target_data_filepath, 'rb') as f:
-                reply = requests.put(
-                    endpoint_dest,
-                    headers={"Authorization": header},
-                    files={
-                        'file': ('https_test.json', f, 'application/octet-stream')
-                    }
-                )
-            # Return the task id
-            if reply.status_code != 200:
-                raise Exception(reply.text)
-            print(reply)
-            # aggregate request result details
-            results.append(reply)
-
-        return results
+        # get Globus endpoint path to write to
+        # add query param to prepare any missing directories in the Globus endpoint path
+        filename = os.path.split(filepath)
+        # need to strip out leading "/" in dest_path for join to work
+        endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename, "?prepare")
+        # upload via HTTPS
+        with open(filepath, 'rb') as f:
+            reply = requests.put(
+                endpoint_dest,
+                headers={"Authorization": header},
+                files={
+                    'file': ('https_test.json', f, 'application/octet-stream')
+                }
+            )
+        # Return the task id
+        if reply.status_code != 200:
+            raise Exception(reply.text)
+        return reply
 
     def _create_access_rule(self, endpoint_id, dest_path):
         # get user info
@@ -456,15 +445,22 @@ class Foundry(FoundryMetadata):
         link = f'https://app.globus.org/file-manager?origin_id={endpoint_id}&origin_path={safe_path}'
         return link
 
-    def publish(self, foundry_metadata, data_source, title, authors, update=False,
+    def publish(self, foundry_metadata, title, authors, https=True, local_data_path=None, data_source=None, update=False,
                 publication_year=None, **kwargs,):
         """Submit a dataset for publication
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
-            data_source (string): Url for Globus endpoint
             title (string): Title of data package
             authors (list): List of data package author names e.g., Jack Black
                 or Nunez, Victoria
+            https (bool): If True, create an HTTPS PUT request to upload the data specified by 'local_data_path' to
+                a Globus endpoint (default is Eagle) before it is transferred to MDF. If False, the user must specify
+                a 'data_source' URL to the location of the data on their own Globus endpoint.
+                Default is True
+            local_data_path (string): Only used if 'https' is True. The folder path for the data the user wants to
+                upload from their local machine
+            data_source (string): Only used if 'https' is False. Url path for a data folder on a Globus endpoint; url
+                can be obtained through the Globus Webpage or SDK
             update (bool): True if this is an update to a prior data package
                 (default: self.config.metadata_file)
             publication_year (int): Year of dataset publication. If None, will
@@ -501,13 +497,26 @@ class Foundry(FoundryMetadata):
         self.connect_client.add_organization(self.config.organization)
         self.connect_client.set_project_block(
             self.config.metadata_key, foundry_metadata)
-        # TODO: for HTTPS upload, replace data_source with returned link
+        # TODO: break out into helper function?
+        # TODO: add checks to make sure user includes local_data_path if https is True, etc
+        if https:
+            # define upload destination
+            publication_id = uuid4()
+            dest_path = os.path.join("/tmp", publication_id)  # NOTE: must start and end with "/" # TODO test to see if this is still true
+            # create new ACL rule (eg permission) for user to read/write to endpoint and path
+            endpoint_id = "f10a69a9-338c-4e5b-baa1-0dc92359ab47"  # Eagle UUID
+            rule_id = self._create_access_rule(endpoint_id, dest_path)
+            # TODO: make local_data_path work for either a folder or a single file
+            data_source = self.https_upload(local_data_path=local_data_path, dest_path=dest_path, endpoint_id=endpoint_id)
+
         self.connect_client.add_data_source(data_source)
         self.connect_client.set_source_name(kwargs.get("short_name", title))
-
         res = self.connect_client.submit_dataset(update=update)
 
-        # TODO: remove acl
+        # delete ACL rule after transfer is complete
+        if https and rule_id:
+            ret = self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
+            print(ret)
 
         return res
 
