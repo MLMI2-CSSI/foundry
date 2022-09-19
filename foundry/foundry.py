@@ -370,33 +370,11 @@ class Foundry(FoundryMetadata):
         publication_id = uuid4()
         dest_path = os.path.join("/tmp", publication_id)  # NOTE: must start and end with "/" # TODO test to see if this is still true
 
-        # get user info
-        res = self.auth_client.oauth2_userinfo()
-        print(res)
-        user_id = res.data["sub"]  # get the user primary ID (based on primary email set in Globus)
-        # create data blob needed to set new rule with Globus
-        rule_data = {
-            "DATA_TYPE": "access",
-            "principal_type": "identity",
-            "principal": user_id,
-            "path": dest_path,
-            "permissions": "rw",
-        }
         # create new ACL rule (eg permission) for user to read/write to endpoint and path
-        rule_id = None
-        try:
-            ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
-            print(ret)
-            rule_id = ret["access_id"]  # rule_id is needed to delete the rule later
-        except TransferAPIError as e:
-            logger.info(e.message)
+        rule_id = self._create_access_rule(endpoint_id, dest_path)
 
         # upload folder of data files
 
-        # Get the authorization header token (string for the headers dict)
-        # header = self.transfer_client.authorizer.get_authorization_header()
-        auth_gcs = AuthClient(authorizer=self.auths["https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https"])  # scope that lets you HTTPS to specific endpoint
-        header = auth_gcs.authorizer.get_authorization_header()
         # get URL for Globus endpoint location
         endpoint = self.transfer_client.get_endpoint(endpoint_id)  # gets info for Eagle
         https_base_url = endpoint['https_server']
@@ -405,6 +383,10 @@ class Foundry(FoundryMetadata):
         # TODO: parallelize to send multiple PUTs at the same time
         # TODO: change path assignment once integrated into publish()
         target_data_folderpath = "/Users/aristanascourtas/Documents/Work/foundry/data/https_test/"
+
+        # Get the authorization header token (string for the headers dict) HTTPS upload
+        auth_gcs = AuthClient(authorizer=self.auths["https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https"])  # scope that lets you HTTPS to specific endpoint
+        header = auth_gcs.authorizer.get_authorization_header()
 
         # upload each file in the designated data folder
         for filename in os.listdir(target_data_folderpath):
@@ -435,6 +417,29 @@ class Foundry(FoundryMetadata):
 
         # pass this link and metadata to publish() as usual
         return self.make_globus_link(endpoint_id, dest_path)
+
+    def _create_access_rule(self, endpoint_id, dest_path):
+        # get user info
+        res = self.auth_client.oauth2_userinfo()
+        print(res)
+        user_id = res.data["sub"]  # get the user primary ID (based on primary email set in Globus)
+        # create data blob needed to set new rule with Globus
+        rule_data = {
+            "DATA_TYPE": "access",
+            "principal_type": "identity",
+            "principal": user_id,
+            "path": dest_path,
+            "permissions": "rw",
+        }
+        # create new ACL rule (eg permission) for user to read/write to endpoint and path
+        rule_id = None
+        try:
+            ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
+            print(ret)
+            rule_id = ret["access_id"]  # rule_id is needed to delete the rule later
+        except TransferAPIError as e:
+            logger.info(e.message)
+        return rule_id
 
     def make_globus_link(self, endpoint_id, path):
         # TODO Add docstrings
