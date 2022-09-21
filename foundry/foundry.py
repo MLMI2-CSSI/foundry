@@ -359,95 +359,6 @@ class Foundry(FoundryMetadata):
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         return buf
 
-    def https_upload(self, local_data_path, dest_path="/tmp", endpoint_id="82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"):
-        """Temporary method to figure out specifics of HTTPS upload using Globus SDK
-        TODO: add docstring
-
-        Returns: link globus returns
-        """
-        # TODO: remove print statements
-
-        # upload folder of data files
-
-        # get URL for Globus endpoint location
-        endpoint = self.transfer_client.get_endpoint(endpoint_id)  # gets info for NCSA endpoint
-        https_base_url = endpoint['https_server']
-
-        # Submit data to DLHub service
-        # TODO: parallelize to send multiple PUTs at the same time
-        # TODO: clean up params more?
-        self._upload_folder(local_data_path, https_base_url, dest_path, endpoint_id)
-
-        # pass this link and metadata to publish() as usual
-        return self.make_globus_link(endpoint_id, dest_path)
-
-    def _upload_folder(self, local_data_path, https_base_url, dest_path, endpoint_id):
-        results = []
-        # upload each file in the designated data folder
-        for filename in os.listdir(local_data_path):
-            # get local path to file to upload
-            filepath = os.path.join(local_data_path, filename)
-            result = self._upload_file(filepath, https_base_url, dest_path, endpoint_id)
-            results.append(result)
-        return results
-
-    def _upload_file(self, filepath, https_base_url, dest_path, endpoint_id):
-        # lets you HTTPS to specific endpoint (NCSA endpoint by default)
-        scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"
-        # Get the authorization header token (string for the headers dict) HTTPS upload
-        auth_gcs = AuthClient(authorizer=self.auths[scope])
-        header = auth_gcs.authorizer.get_authorization_header()
-
-        # get Globus endpoint path to write to
-        # add query param to prepare any missing directories in the Globus endpoint path
-        filename = os.path.split(filepath)[1]
-        # need to strip out leading "/" in dest_path for join to work
-        # endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename, "?prepare")
-        endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename)
-        # upload via HTTPS
-        with open(filepath, 'rb') as f:
-            reply = requests.put(
-                endpoint_dest,
-                headers={"Authorization": header},
-                files={
-                    'file': (filename, f, 'application/octet-stream')
-                }
-            )
-        # Return the task id
-        if reply.status_code != 200:
-            raise Exception(reply.text)
-        return reply
-
-    def _create_access_rule(self, endpoint_id, dest_path):
-        # get user info
-        res = self.auth_client.oauth2_userinfo()
-        print(res)
-        user_id = res.data["sub"]  # get the user primary ID (based on primary email set in Globus)
-        # create data blob needed to set new rule with Globus
-        rule_data = {
-            "DATA_TYPE": "access",
-            "principal_type": "identity",
-            "principal": user_id,
-            "path": dest_path,
-            "permissions": "rw",
-        }
-        # create new ACL rule (eg permission) for user to read/write to endpoint and path
-        rule_id = None
-        try:
-            ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
-            print(ret)
-            rule_id = ret["access_id"]  # rule_id is needed to delete the rule later
-        except TransferAPIError as e:
-            logger.info(e.message)
-        return rule_id
-
-    def make_globus_link(self, endpoint_id, path):
-        # TODO Add docstrings
-
-        safe_path = urllib.parse.quote(path, safe="*")
-        link = f'https://app.globus.org/file-manager?origin_id={endpoint_id}&origin_path={safe_path}'
-        return link
-
     def publish(self, foundry_metadata, title, authors, https=True, local_data_path=None, data_source=None, update=False,
                 publication_year=None, **kwargs,):
         """Submit a dataset for publication
@@ -508,7 +419,6 @@ class Foundry(FoundryMetadata):
             dest_path = os.path.join("/tmp", str(publication_id))  # NOTE: must start and end with "/" # TODO test to see if this is still true
 
             # create new ACL rule (eg permission) for user to read/write to endpoint and path
-            # TODO: switch to NCSA endpoint permanently
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
             # TODO: add directory recursion handling -- axe prepare
             self.transfer_client.operation_mkdir(endpoint_id=endpoint_id, path=dest_path)
@@ -529,6 +439,95 @@ class Foundry(FoundryMetadata):
             print(ret)
 
         return res
+
+    def _create_access_rule(self, endpoint_id, dest_path):
+        # get user info
+        res = self.auth_client.oauth2_userinfo()
+        print(res)
+        user_id = res.data["sub"]  # get the user primary ID (based on primary email set in Globus)
+        # create data blob needed to set new rule with Globus
+        rule_data = {
+            "DATA_TYPE": "access",
+            "principal_type": "identity",
+            "principal": user_id,
+            "path": dest_path,
+            "permissions": "rw",
+        }
+        # create new ACL rule (eg permission) for user to read/write to endpoint and path
+        rule_id = None
+        try:
+            ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
+            print(ret)
+            rule_id = ret["access_id"]  # rule_id is needed to delete the rule later
+        except TransferAPIError as e:
+            logger.info(e.message)
+        return rule_id
+
+    def https_upload(self, local_data_path, dest_path="/tmp", endpoint_id="82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"):
+        """Temporary method to figure out specifics of HTTPS upload using Globus SDK
+        TODO: add docstring
+
+        Returns: link globus returns
+        """
+        # TODO: remove print statements
+
+        # upload folder of data files
+
+        # get URL for Globus endpoint location
+        endpoint = self.transfer_client.get_endpoint(endpoint_id)  # gets info for NCSA endpoint
+        https_base_url = endpoint['https_server']
+
+        # Submit data to DLHub service
+        # TODO: parallelize to send multiple PUTs at the same time
+        # TODO: clean up params more?
+        self._upload_folder(local_data_path, https_base_url, dest_path, endpoint_id)
+
+        # pass this link and metadata to publish() as usual
+        return self.make_globus_link(endpoint_id, dest_path)
+
+    def _upload_folder(self, local_data_path, https_base_url, dest_path, endpoint_id):
+        results = []
+        # upload each file in the designated data folder
+        for filename in os.listdir(local_data_path):
+            # get local path to file to upload
+            filepath = os.path.join(local_data_path, filename)
+            result = self._upload_file(filepath, https_base_url, dest_path, endpoint_id)
+            results.append(result)
+        return results
+
+    def _upload_file(self, filepath, https_base_url, dest_path, endpoint_id):
+        # lets you HTTPS to specific endpoint (NCSA endpoint by default)
+        scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"
+        # Get the authorization header token (string for the headers dict) HTTPS upload
+        auth_gcs = AuthClient(authorizer=self.auths[scope])
+        header = auth_gcs.authorizer.get_authorization_header()
+
+        # get Globus endpoint path to write to
+        # add query param to prepare any missing directories in the Globus endpoint path
+        filename = os.path.split(filepath)[1]
+        # need to strip out leading "/" in dest_path for join to work
+        # endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename, "?prepare")
+        endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename)
+        # upload via HTTPS
+        with open(filepath, 'rb') as f:
+            reply = requests.put(
+                endpoint_dest,
+                headers={"Authorization": header},
+                files={
+                    'file': (filename, f, 'application/octet-stream')
+                }
+            )
+        # Return the task id
+        if reply.status_code != 200:
+            raise Exception(reply.text)
+        return reply
+
+    def make_globus_link(self, endpoint_id, path):
+        # TODO Add docstrings
+
+        safe_path = urllib.parse.quote(path, safe="*")
+        link = f'https://app.globus.org/file-manager?origin_id={endpoint_id}&origin_path={safe_path}'
+        return link
 
     # TODO: come back and address DLHub code
     #
