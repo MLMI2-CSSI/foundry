@@ -1,5 +1,4 @@
 import h5py
-import glob
 import json
 import mdf_toolbox
 from json2table import convert
@@ -13,6 +12,7 @@ import os
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 from dlhub_sdk import DLHubClient
+from .utils import is_pandas_pytable, is_doi
 
 from foundry.models import (
     FoundryMetadata,
@@ -237,49 +237,6 @@ class Foundry(FoundryMetadata):
             (pandas.DataFrame): DataFrame with summary list of Foundry datasets including name, title, publication year, and DOI
         """
         return self.search()
-
-    def get_packages(self, paths=False):
-        """Get available local datasets
-
-        Args:
-           paths (bool): If True return paths in addition to package, if False return package name only
-
-        Returns
-        -------
-            (list): List describing local Foundry packages
-        """
-        pkg_paths = glob.glob(self.config.local_cache_dir + "/*/")
-        if paths:
-            return [
-                {"path": path, "package": path.split("/")[-2]} for path in pkg_paths
-            ]
-        else:
-            return [path.split("/")[-2] for path in pkg_paths]
-
-    def collect_dataframes(self, packages=[]):
-        """Collect dataframes of local data packages
-        Args:
-           packages (list): List of packages to collect, defaults to all
-
-        Returns
-        -------
-            (tuple): Tuple of X(pandas.DataFrame), y(pandas.DataFrame)
-        """
-        if not packages:
-            packages = self.get_packages()
-
-        X_frames = []
-        y_frames = []
-
-        for package in packages:
-            self = self.load(package)
-            X, y = self.load_data()  # TODO: update how this is unpacked, out of date
-            X["source"] = package
-            y["source"] = package
-            X_frames.append(X)
-            y_frames.append(y)
-
-        return pd.concat(X_frames), pd.concat(y_frames)
 
     def run(self, name, inputs, funcx_endpoint=None, **kwargs):
         """Run a model on data
@@ -836,17 +793,3 @@ class Foundry(FoundryMetadata):
 
         inputs, targets = self._get_inputs_targets(split)
         return TensorflowSequence(inputs, targets)
-
-
-def is_pandas_pytable(group):
-    if 'axis0' in group.keys() and 'axis1' in group.keys():
-        return True
-    else:
-        return False
-
-
-def is_doi(string: str):
-    if string.startswith('10.') or string.startswith('https://doi.org/'):
-        return True
-    else:
-        return False
