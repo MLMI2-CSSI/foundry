@@ -1,5 +1,4 @@
 import h5py
-import glob
 import json
 import mdf_toolbox
 from json2table import convert
@@ -794,4 +793,3 @@ class Foundry(FoundryMetadata):
 
         inputs, targets = self._get_inputs_targets(split)
         return TensorflowSequence(inputs, targets)
-    

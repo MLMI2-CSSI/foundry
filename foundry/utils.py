@@ -1,5 +1,3 @@
-import pandas as pd
-
 def is_pandas_pytable(group):
     if 'axis0' in group.keys() and 'axis1' in group.keys():
         return True
