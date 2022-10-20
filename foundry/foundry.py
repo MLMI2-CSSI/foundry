@@ -13,6 +13,7 @@ from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 from dlhub_sdk import DLHubClient
 from .utils import is_pandas_pytable, is_doi
+from .utils import _read_csv, _read_json, _read_excel
 
 from foundry.models import (
     FoundryMetadata,
@@ -565,30 +566,23 @@ class Foundry(FoundryMetadata):
 
         # Handle Foundry-defined types.
         if self.dataset.data_type.value == "tabular":
-            # If the file is not local, fetch the contents with Globus
-            # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
-            try:
-                self.dataset.dataframe = pd.read_json(
-                    path_to_file
-                )
-            except Exception as e:
-                logger.info(f"Cannot read {file} as JSON: {e} \n", "Now attempting to read as JSONL")
+            read_fns = [(_read_json, {"lines": False, "path_to_file": path_to_file}),
+                        (_read_json, {"lines": True, "path_to_file": path_to_file}),
+                        (_read_csv, {"path_to_file": path_to_file}),
+                        (_read_excel, {"path_to_file": path_to_file})]
+
+            for fn, params in read_fns:
                 try:
-                    # Try to read individual lines instead
-                    self.dataset.dataframe = pd.read_json(
-                        path_to_file, lines=True
-                    )
-                except Exception as f:
-                    logger.info(f"Cannot read {file} as JSONL: {f} \n", "Now attempting to read as CSV")
-                    try:
-                        # Try to read as CSV instead
-                        self.dataset.dataframe = pd.read_csv(
-                            path_to_file
-                        )
-                    except Exception as g:
-                        logger.fatal(f"Cannot read {file} as CSV, failed to load data properly: {g}")
-                        raise e
+                    self.dataset.dataframe = fn(**params)
+                except Exception as e:
+                    logger.info(f"Unable to read file with {fn.__name__} with params {params}: {e}")
+                if self.dataset.dataframe is not None:
+                    logger.info(f"Succeeded with {fn.__name__} with params {params}")
+                    break
+            if self.dataset.dataframe is None:
+                logger.fatal(f"Cannot read {path_to_file} as tabular data, failed to load")
+                raise ValueError(f"Cannot read tabular data from {path_to_file}")
 
             return (
                 self.dataset.dataframe[self.get_keys("input")],
@@ -612,6 +606,7 @@ class Foundry(FoundryMetadata):
                     elif isinstance(f[key], h5py.Dataset):
                         tmp_data[s][key] = f[key][0:]
             return tmp_data
+
         else:
             raise NotImplementedError
 
