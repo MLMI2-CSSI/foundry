@@ -39,11 +39,13 @@ auths['search_authorizer'] = search_auth['search']
 
 # updated test dataset for publication
 pub_test_dataset = "_test_foundry_iris_dev_v2.1"
+
 pub_expected_title = "Iris Dataset"
 
 # test dataset for all other tests
-test_dataset = "foundry_experimental_band_gaps_v1.1"
-expected_title = "Graph Network Based Deep Learning of Band Gaps - Experimental Band Gaps"
+test_dataset = "elwood_md_v1.2"
+test_doi = "10.18126/8p6m-e135"
+expected_title = "Project Elwood: MD Simulated Monomer Properties"
 
 
 # Kept the Old metadata format in case we ever want to refer back
@@ -177,6 +179,20 @@ def test_dataframe_load():
     _delete_test_data(f)
 
     f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
+    res = f.load_data()
+    X, y = res['train']
+
+    assert len(X) > 1
+    assert isinstance(X, pd.DataFrame)
+    assert len(y) > 1
+    assert isinstance(y, pd.DataFrame)
+    _delete_test_data(f)
+
+def test_dataframe_load_doi():
+    f = Foundry(authorizers=auths)
+    _delete_test_data(f)
+
+    f = f.load(test_doi, download=True, globus=False, authorizers=auths)
     res = f.load_data()
     X, y = res['train']
 
