@@ -22,7 +22,10 @@ Information on how to install and use foundry can be found in our documentation 
 DLHub documentation for model publication and running information can be found [here](https://dlhub-sdk.readthedocs.io/en/latest/servable-publication.html).
 
 # Quick Start
+Install Foundry via command line with:
 `pip install foundry_ml`
+
+You can use the following code to import and instantiate Foundry, then load a dataset.
 
 ```python
 from foundry import Foundry
@@ -30,8 +33,30 @@ f = Foundry(index="mdf")
 
 
 f = f.load("10.18126/e73h-3w6n", globus=True)
-res = f.load_dataset()
 ```
+If running this code in a notebook, a table of metadata for the dataset will appear:
+
+<img width="903" alt="metadata" src="https://user-images.githubusercontent.com/16869564/197038472-0b6ae559-4a6b-4b20-88e5-679bb6eb4f5c.png">
+
+We can use the data with `f.load_data()` and specifying splits such as `train` for different segments of the dataset, then use matplotlib to visualize it.
+
+```python
+res = f.load_data()
+
+imgs = res['train']['input']['imgs']
+desc = res['train']['input']['metadata']
+coords = res['train']['target']['coords']
+
+n_images = 3
+offset = 150
+key_list = list(res['train']['input']['imgs'].keys())[0+offset:n_images+offset]
+
+fig, axs = plt.subplots(1, n_images, figsize=(20,20))
+for i in range(n_images):
+    axs[i].imshow(imgs[key_list[i]])
+    axs[i].scatter(coords[key_list[i]][:,0], coords[key_list[i]][:,1], s = 20, c = 'r', alpha=0.5)
+```
+<img width="595" alt="Screen Shot 2022-10-20 at 2 22 43 PM" src="https://user-images.githubusercontent.com/16869564/197039252-6d9c78ba-dc09-4037-aac2-d6f7e8b46851.png">
 
 [See full examples](./examples)
 
