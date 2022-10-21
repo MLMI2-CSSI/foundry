@@ -7,7 +7,8 @@ packages = (setuptools.find_packages(),)
 setuptools.setup(
     name="foundry_ml",
     version="0.4.0",
-    author="Aristana Scourtas, KJ Schmidt, Isaac Darling, Aadit Ambadkar, Braeden Cullen, Imogen Foster, Ribhav Bose, Zoa Katok, Ethan Truelove, Ian Foster, Ben Blaiszik",
+    author="""Aristana Scourtas, KJ Schmidt, Isaac Darling, Aadit Ambadkar, Braeden Cullen,
+            Imogen Foster, Ribhav Bose, Zoa Katok, Ethan Truelove, Ian Foster, Ben Blaiszik""",
     author_email="blaiszik@uchicago.edu",
     packages=setuptools.find_packages(),
     description="Package to support simplified application of machine learning models to datasets in materials science",
@@ -22,7 +23,6 @@ setuptools.setup(
         "pydantic>=1.4",
         "mdf_connect_client>=0.4.0",
         "h5py>=2.10.0",
-        "joblib>=1.0.0",
         "json2table"
     ],
     python_requires=">=3.7",
