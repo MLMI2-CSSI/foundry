@@ -3,7 +3,6 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 packages = (setuptools.find_packages(),)
-# TODO: change dependencies to be looser
 setuptools.setup(
     name="foundry_ml",
     version="0.4.0",
