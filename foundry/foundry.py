@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import h5py
 import json
 import mdf_toolbox
@@ -485,9 +486,9 @@ class Foundry(FoundryMetadata):
             task_list = list(recursive_ls(self.transfer_client,
                                           https_config['source_ep_id'],
                                           https_config['folder_to_crawl']))
-            # TODO Add parallel
             for task in task_list:
-                download_file(task, https_config)
+                with ThreadPoolExecutor() as executor:
+                    executor.submit(download_file, task, https_config)
 
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
