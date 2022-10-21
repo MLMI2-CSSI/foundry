@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
 import h5py
 import json
 import mdf_toolbox
@@ -9,6 +8,7 @@ from typing import Any
 import logging
 import warnings
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
@@ -303,6 +303,22 @@ class Foundry(FoundryMetadata):
 
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         return buf
+
+    def get_citation(self) -> str:
+        subjects = [subject['subject'] for subject in self.dc['subjects']]
+        doi_str = f"doi = {{{self.dc['identifier']['identifier']}}}"
+        url_str = f"url = {{https://doi.org/{self.dc['identifier']['identifier']}}}"
+        author_str = f"author = {{{' and '.join([creator['creatorName'] for creator in self.dc['creators']])}}}"
+        title_str = f"title = {{{self.dc['titles'][0]['title']}}}"
+        keywords_str = f"keywords = {{{', '.join(subjects)}}}"
+        publisher_str = f"publisher = {{{self.dc['publisher']}}}"
+        year_str = f"year = {{{self.dc['publicationYear']}}}"
+        bibtex = os.linesep.join([doi_str, url_str,
+                                  author_str, title_str,
+                                  keywords_str, publisher_str,
+                                  year_str])
+        bibtex = f"@misc{{https://doi.org/{self.dc['identifier']['identifier']}{os.linesep}{bibtex}}}"
+        return bibtex
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
                 publication_year=None, **kwargs,):
