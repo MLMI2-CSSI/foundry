@@ -64,7 +64,7 @@ old_test_metadata = {
 
 
 pub_test_metadata = {
-    "keys":[
+    "keys": [
         {
             "key": ["sepal length (cm)"],
             "type": "input",
@@ -158,6 +158,18 @@ def test_list():
     assert len(ds) > 0
 
 
+def test_search():
+    f = Foundry(authorizers=auths)
+    q = "Elwood"
+    ds = f.search(q)
+
+    assert isinstance(ds, pd.DataFrame)
+    assert len(ds) > 0
+    assert ds.iloc[0]['name'] is not None
+    assert ds.iloc[0]['source_id'] is not None
+    assert ds.iloc[0]['year'] is not None
+
+
 def test_metadata_pull():
     f = Foundry(authorizers=auths)
     assert f.dc == {}
@@ -188,6 +200,7 @@ def test_dataframe_load():
     assert isinstance(y, pd.DataFrame)
     _delete_test_data(f)
 
+
 def test_dataframe_load_doi():
     f = Foundry(authorizers=auths)
     _delete_test_data(f)
@@ -203,7 +216,7 @@ def test_dataframe_load_doi():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR IS INTENDED
+@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_download_globus():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
     _delete_test_data(f)
@@ -213,7 +226,7 @@ def test_download_globus():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR IS INTENDED
+@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_globus_dataframe_load():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
     _delete_test_data(f)
@@ -229,7 +242,7 @@ def test_globus_dataframe_load():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR IS INTENDED
+@pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
 def test_publish():
     # TODO: automate dealing with curation and cleaning after tests
 
@@ -273,14 +286,14 @@ def test_check_status():
 
 def test_to_pytorch():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    
+
     _delete_test_data(f)
 
     f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     raw = f.load_data()
 
     ds = f.to_torch(split='train')
-    
+
     assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
     assert len(raw['train'][0]) == len(ds)
 
@@ -289,14 +302,13 @@ def test_to_pytorch():
 
 def test_to_tensorflow():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    
-    _delete_test_data(f)
 
+    _delete_test_data(f)
     f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     raw = f.load_data()
 
     ds = f.to_tensorflow(split='train')
-    
+
     assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
     assert len(raw['train'][0]) == len(ds)
 

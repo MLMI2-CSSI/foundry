@@ -22,7 +22,6 @@ from foundry.models import (
 )
 from foundry.https_download import download_file, recursive_ls
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +33,6 @@ class Foundry(FoundryMetadata):
 
     """
 
-    # transfer_client: Any
     dlhub_client: Any
     forge_client: Any
     connect_client: Any
@@ -116,7 +114,6 @@ class Foundry(FoundryMetadata):
             authorizer=auths["mdf_connect"], test=test
         )
 
-        # TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
         self.dlhub_client = DLHubClient(
             dlh_authorizer=auths["dlhub"],
             search_authorizer=auths["search_authorizer"],
@@ -628,11 +625,6 @@ class Foundry(FoundryMetadata):
             inputs = []
             targets = []
             for key in self.dataset.keys:
-                # raw[split][key.type][key.key[0]] gets the data values for the given key.
-                #
-                # For example, if the key was coordinates and had type target, then
-                # raw[split][key.type][key.key[0]] would return all the coordinates for each item
-                # and raw[split][key.type][key.key[0]].keys() are the indexes of the item.
                 if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
                     continue
 
