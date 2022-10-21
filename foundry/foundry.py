@@ -23,6 +23,7 @@ from foundry.models import (
 )
 from foundry.https_download import download_file, recursive_ls
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -230,7 +231,6 @@ class Foundry(FoundryMetadata):
 
     def list(self):
         """List available Foundry datasets
-
         Returns
         -------
             (pandas.DataFrame): DataFrame with summary list of Foundry datasets including name, title, publication year, and DOI
@@ -620,7 +620,6 @@ class Foundry(FoundryMetadata):
                     elif isinstance(f[key], h5py.Dataset):
                         tmp_data[s][key] = f[key][0:]
             return tmp_data
-
         else:
             raise NotImplementedError
 
