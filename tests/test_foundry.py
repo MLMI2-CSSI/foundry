@@ -39,11 +39,13 @@ auths['search_authorizer'] = search_auth['search']
 
 # updated test dataset for publication
 pub_test_dataset = "_test_foundry_iris_dev_v2.1"
+
 pub_expected_title = "Iris Dataset"
 
 # test dataset for all other tests
-test_dataset = "foundry_experimental_band_gaps_v1.1"
-expected_title = "Graph Network Based Deep Learning of Band Gaps - Experimental Band Gaps"
+test_dataset = "elwood_md_v1.2"
+test_doi = "10.18126/8p6m-e135"
+expected_title = "Project Elwood: MD Simulated Monomer Properties"
 
 
 # Kept the Old metadata format in case we ever want to refer back
@@ -62,7 +64,7 @@ old_test_metadata = {
 
 
 pub_test_metadata = {
-    "keys":[
+    "keys": [
         {
             "key": ["sepal length (cm)"],
             "type": "input",
@@ -156,6 +158,18 @@ def test_list():
     assert len(ds) > 0
 
 
+def test_search():
+    f = Foundry(authorizers=auths)
+    q = "Elwood"
+    ds = f.search(q)
+
+    assert isinstance(ds, pd.DataFrame)
+    assert len(ds) > 0
+    assert ds.iloc[0]['name'] is not None
+    assert ds.iloc[0]['source_id'] is not None
+    assert ds.iloc[0]['year'] is not None
+
+
 def test_metadata_pull():
     f = Foundry(authorizers=auths)
     assert f.dc == {}
@@ -187,7 +201,22 @@ def test_dataframe_load():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR IS INTENDED
+def test_dataframe_load_doi():
+    f = Foundry(authorizers=auths)
+    _delete_test_data(f)
+
+    f = f.load(test_doi, download=True, globus=False, authorizers=auths)
+    res = f.load_data()
+    X, y = res['train']
+
+    assert len(X) > 1
+    assert isinstance(X, pd.DataFrame)
+    assert len(y) > 1
+    assert isinstance(y, pd.DataFrame)
+    _delete_test_data(f)
+
+
+@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_download_globus():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
     _delete_test_data(f)
@@ -197,7 +226,7 @@ def test_download_globus():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR IS INTENDED
+@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_globus_dataframe_load():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
     _delete_test_data(f)
@@ -213,7 +242,7 @@ def test_globus_dataframe_load():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR IS INTENDED
+@pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
 def test_publish():
     # TODO: automate dealing with curation and cleaning after tests
 
@@ -257,14 +286,14 @@ def test_check_status():
 
 def test_to_pytorch():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    
+
     _delete_test_data(f)
 
     f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     raw = f.load_data()
 
     ds = f.to_torch(split='train')
-    
+
     assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
     assert len(raw['train'][0]) == len(ds)
 
@@ -273,14 +302,13 @@ def test_to_pytorch():
 
 def test_to_tensorflow():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    
-    _delete_test_data(f)
 
+    _delete_test_data(f)
     f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     raw = f.load_data()
 
     ds = f.to_tensorflow(split='train')
-    
+
     assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
     assert len(raw['train'][0]) == len(ds)
 
