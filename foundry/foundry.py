@@ -1,5 +1,4 @@
 import h5py
-import glob
 import json
 import mdf_toolbox
 from json2table import convert
@@ -9,10 +8,13 @@ from typing import Any
 import logging
 import warnings
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 from dlhub_sdk import DLHubClient
+from .utils import is_pandas_pytable, is_doi
+from .utils import _read_csv, _read_json, _read_excel
 
 from foundry.models import (
     FoundryMetadata,
@@ -33,7 +35,6 @@ class Foundry(FoundryMetadata):
 
     """
 
-    # transfer_client: Any
     dlhub_client: Any
     forge_client: Any
     connect_client: Any
@@ -115,7 +116,6 @@ class Foundry(FoundryMetadata):
             authorizer=auths["mdf_connect"], test=test
         )
 
-        # TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
         self.dlhub_client = DLHubClient(
             dlh_authorizer=auths["dlhub"],
             search_authorizer=auths["search_authorizer"],
@@ -231,55 +231,11 @@ class Foundry(FoundryMetadata):
 
     def list(self):
         """List available Foundry datasets
-
         Returns
         -------
             (pandas.DataFrame): DataFrame with summary list of Foundry datasets including name, title, publication year, and DOI
         """
         return self.search()
-
-    def get_packages(self, paths=False):
-        """Get available local datasets
-
-        Args:
-           paths (bool): If True return paths in addition to package, if False return package name only
-
-        Returns
-        -------
-            (list): List describing local Foundry packages
-        """
-        pkg_paths = glob.glob(self.config.local_cache_dir + "/*/")
-        if paths:
-            return [
-                {"path": path, "package": path.split("/")[-2]} for path in pkg_paths
-            ]
-        else:
-            return [path.split("/")[-2] for path in pkg_paths]
-
-    def collect_dataframes(self, packages=[]):
-        """Collect dataframes of local data packages
-        Args:
-           packages (list): List of packages to collect, defaults to all
-
-        Returns
-        -------
-            (tuple): Tuple of X(pandas.DataFrame), y(pandas.DataFrame)
-        """
-        if not packages:
-            packages = self.get_packages()
-
-        X_frames = []
-        y_frames = []
-
-        for package in packages:
-            self = self.load(package)
-            X, y = self.load_data()  # TODO: update how this is unpacked, out of date
-            X["source"] = package
-            y["source"] = package
-            X_frames.append(X)
-            y_frames.append(y)
-
-        return pd.concat(X_frames), pd.concat(y_frames)
 
     def run(self, name, inputs, funcx_endpoint=None, **kwargs):
         """Run a model on data
@@ -348,6 +304,22 @@ class Foundry(FoundryMetadata):
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         return buf
 
+    def get_citation(self) -> str:
+        subjects = [subject['subject'] for subject in self.dc['subjects']]
+        doi_str = f"doi = {{{self.dc['identifier']['identifier']}}}"
+        url_str = f"url = {{https://doi.org/{self.dc['identifier']['identifier']}}}"
+        author_str = f"author = {{{' and '.join([creator['creatorName'] for creator in self.dc['creators']])}}}"
+        title_str = f"title = {{{self.dc['titles'][0]['title']}}}"
+        keywords_str = f"keywords = {{{', '.join(subjects)}}}"
+        publisher_str = f"publisher = {{{self.dc['publisher']}}}"
+        year_str = f"year = {{{self.dc['publicationYear']}}}"
+        bibtex = os.linesep.join([doi_str, url_str,
+                                  author_str, title_str,
+                                  keywords_str, publisher_str,
+                                  year_str])
+        bibtex = f"@misc{{https://doi.org/{self.dc['identifier']['identifier']}{os.linesep}{bibtex}}}"
+        return bibtex
+
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
                 publication_year=None, **kwargs,):
         """Submit a dataset for publication
@@ -399,131 +371,31 @@ class Foundry(FoundryMetadata):
         res = self.connect_client.submit_dataset(update=update)
         return res
 
-    # TODO: come back and address DLHub code
-    #
-    # def describe_model(self):
-    #     pass
-    #     # maybe have whole fxn for model describing? tbd
-    #
-    # def publish_model(self, options):
-    #     """Submit a model or function for publication
-    #     Args:
-    #         options: dict of all possible options
-    #     Options keys:
-    #         title (req)
-    #         authors (req)
-    #         short_name (req)
-    #         servable_type (req) ("static method", "class method",
-    #                        "keras", "pytorch", "tensorflow", "sklearn")
-    #         affiliations
-    #         domains
-    #         abstract
-    #         references
-    #         requirements (dict of library:version keypairs)
-    #         module (if Python method)
-    #         function  (if Python method)
-    #         inputs (not needed for TF) (dict of options)
-    #         outputs (not needed for TF)
-    #         methods (e.g. research methods)
-    #         DOI
-    #         publication_year (advanced)
-    #         version (advanced)
-    #         visibility (dict of users and groups, each a list)
-    #         funding reference
-    #         rights
-    #
-    #         TODO:
-    #         alternate identifier (to add an identifier of this artifact in another service)
-    #         add file
-    #         add directory
-    #         add files
-    #
-    #     """
-    #     # TODO: pick nicer way of handling defaults for things besides get (since if the DLHub default changes, we'd be
-    #     #   overwriting it
-    #
-    #     # TODO: add exception handling for key options
-    #
-    #     # TODO: make this work for any model type, with if-else
-    #     if options["servable"]["type"] == "sklearn":
-    #         model_info = ScikitLearnModel.create_model(options["servable"]["filepath"],
-    #                                                    options["servable"]["n_input_columns"],
-    #                                                    options["servable"].get(
-    #                                                        "classes", None),
-    #                                                    options["servable"].get(
-    #                                                        "serialization_method", "pickle")
-    #                                                    )
-    #     # TODO: fix weird M1 error with TF
-    #     elif options["servable"]['type'] == "keras":
-    #         model_info = KerasModel.create_model(options["servable"]["model_path"],
-    #                                              options["servable"].get(
-    #                                                  "output_names", None),
-    #                                              options["servable"].get(
-    #                                                  "arch_path", None),
-    #                                              options["servable"].get(
-    #                                                  "custom_objects", None),
-    #                                              options["servable"].get(
-    #                                                  "force_tf_keras", False)
-    #                                              )
-    #     else:
-    #         raise ValueError("Servable type '{}' is not recognized, please use one of the following types: \n"
-    #                          "'sklearn'\n"
-    #                          "'keras'\n"
-    #                          "'pytorch'\n"
-    #                          "'tensorflow'\n"
-    #                          "'static method'\n"
-    #                          "'class method'\n"
-    #                          .format(options["servable"]["type"]))
-    #     # publish it
-    #     model_info.set_name(options["short_name"])
-    #     model_info.set_title(options["title"])
-    #     # TODO: fix bug where if you put in name without comma, get list index out of range error
-    #     model_info.set_authors(
-    #         options["authors"], options.get("affiliations", []))
-    #     # TODO: dont pass in {} as default, overwrites everything -- should def document this
-    #     # TODO: consider whether that's desired functionality (should users be able to specify 1 or 2 requirements, but
-    #     #   the container still has other pre-loaded dependencies?
-    #     # model_info.add_requirements(options.get("requirements", {}))
-    #     model_info.set_domains(options.get("domains", []))
-    #     # TODO: can't default to empty strings, handle
-    #     # model_info.set_abstract(options.get("abstract", ""))
-    #     # model_info.set_methods(options.get("methods", ""))
-    #     # TODO: ask Ben if user should set this, check what happens if they dont
-    #     # model_info.set_version(kwargs.get("version", ""))
-    #
-    #     # TODO: add dict for rights
-    #     # model_info.add_rights()
-    #
-    #     # advanced use only (most users will not know DOI)
-    #     if options.get("doi"):
-    #         model_info.set_doi(options.get("doi"))
-    #     # advanced use only
-    #     if options.get("publication_year"):
-    #         model_info.set_publication_year(options.get("publication_year"))
-    #
-    #     # TODO: parse dict of lists
-    #     # model_info.set_visibility()
-    #
-    #     # TODO: parse dict of references (need to loop)
-    #     # model_info.add_related_identifier()
-    #
-    #     # TODO: parse dict of options (need to loop)
-    #     # model_info.add_funding_reference()
-    #
-    #     # TODO: pass dict of data_type, description, shape (opt), item_type (opt) and kwargs
-    #     # model_info.set_inputs()
-    #     # model_info.set_outputs()
-    #
-    #     try:
-    #         validate_against_dlhub_schema(model_info.to_dict(), 'servable')
-    #         print("DLHub schema successfully validated")
-    #     except Exception as e:
-    #         print("Failed to validate schema properly: {}".format(e))
-    #         raise e
-    #
-    #     res = self.dlhub_client.publish_servable(model_info)
-    #
-    #     return res
+    def publish_model(self, title, creators, short_name, servable_type, serv_options, affiliations=None, paper_doi=None):
+        """Simplified publishing method for servables
+
+        Args:
+            title (string): title for the servable
+            creators (string | list): either the creator's name (FamilyName, GivenName) or a list of the creators' names
+            short_name (string): shorthand name for the servable
+            servable_type (string): the type of the servable, must be a member of ("static_method",
+                                                                                   "class_method",
+                                                                                   "keras",
+                                                                                   "pytorch",
+                                                                                   "tensorflow",
+                                                                                   "sklearn")
+            serv_options (dict): the servable_type specific arguments that are necessary for publishing. arguments can be found at
+                                 https://dlhub-sdk.readthedocs.io/en/latest/source/dlhub_sdk.models.servables.html under the appropriate
+                                 ``create_model`` signature. use the argument names as keys and their values as the values.
+            affiliations (list): list of affiliations for each author
+            paper_doi (str): DOI of a paper that describes the servable
+        Returns:
+            (string): task id of this submission, can be used to check for success
+        Raises:
+            ValueError: If the given servable_type is not in the list of acceptable types
+            Exception: If the serv_options are incomplete or the request to publish results in an error
+        """
+        return self.dlhub_client.easy_publish(title, creators, short_name, servable_type, serv_options, affiliations, paper_doi)
 
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
@@ -630,9 +502,9 @@ class Foundry(FoundryMetadata):
             task_list = list(recursive_ls(self.transfer_client,
                                           https_config['source_ep_id'],
                                           https_config['folder_to_crawl']))
-            # TODO Add parallel
             for task in task_list:
-                download_file(task, https_config)
+                with ThreadPoolExecutor() as executor:
+                    executor.submit(download_file, task, https_config)
 
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
@@ -708,30 +580,23 @@ class Foundry(FoundryMetadata):
 
         # Handle Foundry-defined types.
         if self.dataset.data_type.value == "tabular":
-            # If the file is not local, fetch the contents with Globus
-            # Check if the contents are local
             # TODO: Add hashes and versioning to metadata and checking to the file
-            try:
-                self.dataset.dataframe = pd.read_json(
-                    path_to_file
-                )
-            except Exception as e:
-                logger.info(f"Cannot read {file} as JSON: {e} \n", "Now attempting to read as JSONL")
+            read_fns = [(_read_json, {"lines": False, "path_to_file": path_to_file}),
+                        (_read_json, {"lines": True, "path_to_file": path_to_file}),
+                        (_read_csv, {"path_to_file": path_to_file}),
+                        (_read_excel, {"path_to_file": path_to_file})]
+
+            for fn, params in read_fns:
                 try:
-                    # Try to read individual lines instead
-                    self.dataset.dataframe = pd.read_json(
-                        path_to_file, lines=True
-                    )
-                except Exception as f:
-                    logger.info(f"Cannot read {file} as JSONL: {f} \n", "Now attempting to read as CSV")
-                    try:
-                        # Try to read as CSV instead
-                        self.dataset.dataframe = pd.read_csv(
-                            path_to_file
-                        )
-                    except Exception as g:
-                        logger.fatal(f"Cannot read {file} as CSV, failed to load data properly: {g}")
-                        raise e
+                    self.dataset.dataframe = fn(**params)
+                except Exception as e:
+                    logger.info(f"Unable to read file with {fn.__name__} with params {params}: {e}")
+                if self.dataset.dataframe is not None:
+                    logger.info(f"Succeeded with {fn.__name__} with params {params}")
+                    break
+            if self.dataset.dataframe is None:
+                logger.fatal(f"Cannot read {path_to_file} as tabular data, failed to load")
+                raise ValueError(f"Cannot read tabular data from {path_to_file}")
 
             return (
                 self.dataset.dataframe[self.get_keys("input")],
@@ -776,11 +641,6 @@ class Foundry(FoundryMetadata):
             inputs = []
             targets = []
             for key in self.dataset.keys:
-                # raw[split][key.type][key.key[0]] gets the data values for the given key.
-                #
-                # For example, if the key was coordinates and had type target, then
-                # raw[split][key.type][key.key[0]] would return all the coordinates for each item
-                # and raw[split][key.type][key.key[0]].keys() are the indexes of the item.
                 if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
                     continue
 
@@ -836,17 +696,3 @@ class Foundry(FoundryMetadata):
 
         inputs, targets = self._get_inputs_targets(split)
         return TensorflowSequence(inputs, targets)
-
-
-def is_pandas_pytable(group):
-    if 'axis0' in group.keys() and 'axis1' in group.keys():
-        return True
-    else:
-        return False
-
-
-def is_doi(string: str):
-    if string.startswith('10.') or string.startswith('https://doi.org/'):
-        return True
-    else:
-        return False
