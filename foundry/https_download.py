@@ -3,12 +3,27 @@ import json
 import time
 import os
 import multiprocessing
-import requests
 from collections import deque
+
+import requests
+from globus_sdk import TransferClient
 from joblib import Parallel, delayed
 
 
-def recursive_ls(tc, ep, path, max_depth=3):
+def recursive_ls(tc: TransferClient, ep: str, path: str, max_depth: int = 3):
+    """Find all files in a Globus directory recursively
+
+    Args:
+        tc: TransferClient authorized to access the directory
+        ep: Endpoint on which the files reside
+        path: Path to the files being downloaded
+        max_depth: Maximum recurse depth
+
+    Yields:
+        Dictionaries describing the location of the files. Each includes at least
+            "name": Name of the file
+            "path": Absolute path to the file's location
+    """
     queue = deque()
     queue.append((path, "", 0))
     yield from _get_files(tc, ep, queue, max_depth)
@@ -38,7 +53,14 @@ def _get_files(tc, ep, queue, max_depth):
                 yield item
 
 
+# TODO (wardlt): Avoid passing dictionaries, as documenting their content is tedious
 def download_file(item, https_config):
+    """Download a file to disk
+
+    Args:
+        item: Dictionary defining the path to the file
+        https_config: Configuration defining the URL of the server and the name of the dataset
+    """
     url = f"{https_config['base_url']}{item['path']}{item['name']}"
 
     # build destination path for data file

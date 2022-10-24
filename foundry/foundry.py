@@ -444,19 +444,20 @@ class Foundry(FoundryMetadata):
         self.config = FoundryConfig(**kwargs)
         return self
 
-    def download(self, globus: bool = True, interval: int = 20) -> 'Foundry':
+    def download(self, globus: bool = True, interval: int = 20, parallel_https: int = 4, verbose: bool = False) -> 'Foundry':
         """Download a Foundry dataset
         
         Args:
-            globus (bool): if True, use Globus to download the data else try HTTPS
-            interval (float): How often to wait before checking Globus transfer status
+            globus: if True, use Globus to download the data else try HTTPS
+            interval: How often to wait before checking Globus transfer status
+            parallel_https: Number of files to download in parallel if using HTTPS
+            verbose: Produce more debug messages to screen
 
         Returns:
             self, for chaining
         """
         # Check if the dir already exists
         path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
-
         if os.path.isdir(path):
             # if directory is present, but doesn't have the correct number of files inside,
             # dataset will attempt to redownload
@@ -472,10 +473,12 @@ class Foundry(FoundryMetadata):
                 if len(missing_files) > 0:
                     logger.info(f"Dataset will be redownloaded, following files are missing: {missing_files}")
                 else:
+                    logger.info("Dataset has already been downloaded and contains all the desired files")
                     return self
             else:
                 # in the case of no splits, ensure the directory contains at least one file
                 if len(os.listdir(path)) >= 1:
+                    logger.info("Dataset has already been downloaded and contains all the desired files")
                     return self
                 else:
                     logger.info("Dataset will be redownloaded, expected file is missing")
@@ -499,12 +502,11 @@ class Foundry(FoundryMetadata):
                 "source_id": self.mdf["source_id"]
             }
 
-            task_list = list(recursive_ls(self.transfer_client,
+            task_generator = recursive_ls(self.transfer_client,
                                           https_config['source_ep_id'],
-                                          https_config['folder_to_crawl']))
-            for task in task_list:
-                with ThreadPoolExecutor() as executor:
-                    executor.submit(download_file, task, https_config)
+                                          https_config['folder_to_crawl'])
+            with ThreadPoolExecutor(parallel_https) as executor:
+                executor.map(lambda x: download_file(x, https_config), task_generator)
 
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
