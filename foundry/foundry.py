@@ -25,7 +25,6 @@ from foundry.models import (
 )
 from foundry.https_download import download_file, recursive_ls
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +45,7 @@ class Foundry(FoundryMetadata):
     xtract_tokens: Any
 
     def __init__(
-        self, no_browser=False, no_local_server=False, index="mdf", authorizers=None, **data
+            self, no_browser=False, no_local_server=False, index="mdf", authorizers=None, **data
     ):
         """Initialize a Foundry client
         Args:
@@ -69,16 +68,16 @@ class Foundry(FoundryMetadata):
             auths = authorizers
         else:
             services = [
-                    "data_mdf",
-                    "mdf_connect",
-                    "search",
-                    "petrel",
-                    "transfer",
-                    "dlhub",
-                    "funcx",
-                    "openid",
-                    "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
-                ]
+                "data_mdf",
+                "mdf_connect",
+                "search",
+                "petrel",
+                "transfer",
+                "dlhub",
+                "funcx",
+                "openid",
+                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
+            ]
             auths = mdf_toolbox.login(
                 services=services,
                 app_name="Foundry",
@@ -323,7 +322,7 @@ class Foundry(FoundryMetadata):
         return bibtex
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
-                publication_year=None, **kwargs,):
+                publication_year=None, **kwargs, ):
         """Submit a dataset for publication
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
@@ -448,7 +447,7 @@ class Foundry(FoundryMetadata):
 
     def download(self, globus: bool = True, interval: int = 20, parallel_https: int = 4, verbose: bool = False) -> 'Foundry':
         """Download a Foundry dataset
-        
+
         Args:
             globus: if True, use Globus to download the data else try HTTPS
             interval: How often to wait before checking Globus transfer status
