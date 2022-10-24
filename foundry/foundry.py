@@ -8,11 +8,13 @@ from typing import Any
 import logging
 import warnings
 import os
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 from dlhub_sdk import DLHubClient
+from tqdm.auto import tqdm
+
 from .utils import is_pandas_pytable, is_doi
 from .utils import _read_csv, _read_json, _read_excel
 
@@ -22,7 +24,6 @@ from foundry.models import (
     FoundryDataset
 )
 from foundry.https_download import download_file, recursive_ls
-
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ class Foundry(FoundryMetadata):
     xtract_tokens: Any
 
     def __init__(
-        self, no_browser=False, no_local_server=False, index="mdf", authorizers=None, **data
+            self, no_browser=False, no_local_server=False, index="mdf", authorizers=None, **data
     ):
         """Initialize a Foundry client
         Args:
@@ -67,16 +68,16 @@ class Foundry(FoundryMetadata):
             auths = authorizers
         else:
             services = [
-                    "data_mdf",
-                    "mdf_connect",
-                    "search",
-                    "petrel",
-                    "transfer",
-                    "dlhub",
-                    "funcx",
-                    "openid",
-                    "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
-                ]
+                "data_mdf",
+                "mdf_connect",
+                "search",
+                "petrel",
+                "transfer",
+                "dlhub",
+                "funcx",
+                "openid",
+                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
+            ]
             auths = mdf_toolbox.login(
                 services=services,
                 app_name="Foundry",
@@ -321,7 +322,7 @@ class Foundry(FoundryMetadata):
         return bibtex
 
     def publish(self, foundry_metadata, data_source, title, authors, update=False,
-                publication_year=None, **kwargs,):
+                publication_year=None, **kwargs, ):
         """Submit a dataset for publication
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
@@ -444,19 +445,20 @@ class Foundry(FoundryMetadata):
         self.config = FoundryConfig(**kwargs)
         return self
 
-    def download(self, globus=True, verbose=False, **kwargs):
+    def download(self, globus: bool = True, interval: int = 20, parallel_https: int = 4, verbose: bool = False) -> 'Foundry':
         """Download a Foundry dataset
-        Args:
-            globus (bool): if True, use Globus to download the data else try HTTPS
-            verbose (bool): if True print out debug information during the download
 
-        Returns
-        -------
-        (Foundry): self: for chaining
+        Args:
+            globus: if True, use Globus to download the data else try HTTPS
+            interval: How often to wait before checking Globus transfer status
+            parallel_https: Number of files to download in parallel if using HTTPS
+            verbose: Produce more debug messages to screen
+
+        Returns:
+            self, for chaining
         """
         # Check if the dir already exists
         path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
-
         if os.path.isdir(path):
             # if directory is present, but doesn't have the correct number of files inside,
             # dataset will attempt to redownload
@@ -472,10 +474,12 @@ class Foundry(FoundryMetadata):
                 if len(missing_files) > 0:
                     logger.info(f"Dataset will be redownloaded, following files are missing: {missing_files}")
                 else:
+                    logger.info("Dataset has already been downloaded and contains all the desired files")
                     return self
             else:
                 # in the case of no splits, ensure the directory contains at least one file
-                if (len(os.listdir(path)) >= 1):
+                if len(os.listdir(path)) >= 1:
+                    logger.info("Dataset has already been downloaded and contains all the desired files")
                     return self
                 else:
                     logger.info("Dataset will be redownloaded, expected file is missing")
@@ -488,7 +492,7 @@ class Foundry(FoundryMetadata):
                 res,
                 dest=self.config.local_cache_dir,
                 dest_ep=self.config.destination_endpoint,
-                interval=kwargs.get("interval", 20),
+                interval=interval,
                 download_datasets=True,
             )
         else:
@@ -499,12 +503,21 @@ class Foundry(FoundryMetadata):
                 "source_id": self.mdf["source_id"]
             }
 
-            task_list = list(recursive_ls(self.transfer_client,
+            # Begin finding files to download
+            task_generator = recursive_ls(self.transfer_client,
                                           https_config['source_ep_id'],
-                                          https_config['folder_to_crawl']))
-            for task in task_list:
-                with ThreadPoolExecutor() as executor:
-                    executor.submit(download_file, task, https_config)
+                                          https_config['folder_to_crawl'])
+            with ThreadPoolExecutor(parallel_https) as executor:
+                # First submit all files
+                futures = [executor.submit(lambda x: download_file(x, https_config), f)
+                           for f in tqdm(task_generator, disable=not verbose, desc="Finding files")]
+
+                # Check that they completed successfully
+                for result in tqdm(as_completed(futures), disable=not verbose, desc="Downloading files"):
+                    if result.exception() is not None:
+                        for f in futures:
+                            f.cancel()
+                        raise result.exception()
 
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
@@ -521,7 +534,7 @@ class Foundry(FoundryMetadata):
                     raise FileNotFoundError(f"Downloaded directory does not contain the following files: {missing_files}")
 
             else:
-                if (len(os.listdir(path)) < 1):
+                if len(os.listdir(path)) < 1:
                     raise FileNotFoundError("Downloaded directory does not contain the expected file")
         else:
             raise NotADirectoryError("Unable to create directory to download data")

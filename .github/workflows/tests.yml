@@ -33,15 +33,11 @@ jobs:
         env:
           GLOBUS_CONFIG: "${{ secrets.GLOBUS_CONFIG }}"
 
-
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest
-          pip install pytest-cov~=2.12.1
-          pip install jsonschema
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements.txt
+          pip install -r test-requirements.txt
 
       - name: Lint with flake8
         run: |
