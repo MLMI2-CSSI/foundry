@@ -8,11 +8,13 @@ from typing import Any
 import logging
 import warnings
 import os
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 from dlhub_sdk import DLHubClient
+from tqdm.auto import tqdm
+
 from .utils import is_pandas_pytable, is_doi
 from .utils import _read_csv, _read_json, _read_excel
 
@@ -502,11 +504,21 @@ class Foundry(FoundryMetadata):
                 "source_id": self.mdf["source_id"]
             }
 
+            # Begin finding files to download
             task_generator = recursive_ls(self.transfer_client,
                                           https_config['source_ep_id'],
                                           https_config['folder_to_crawl'])
             with ThreadPoolExecutor(parallel_https) as executor:
-                executor.map(lambda x: download_file(x, https_config), task_generator)
+                # First submit all files
+                futures = [executor.submit(lambda x: download_file(x, https_config), f)
+                           for f in tqdm(task_generator, disable=not verbose, desc="Finding files")]
+
+                # Check that they completed successfully
+                for result in tqdm(as_completed(futures), disable=not verbose, desc="Downloading files"):
+                    if result.exception() is not None:
+                        for f in futures:
+                            f.cancel()
+                        raise result.exception()
 
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):

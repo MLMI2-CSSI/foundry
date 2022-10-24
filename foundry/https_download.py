@@ -78,6 +78,7 @@ def download_file(item, https_config):
     with open(destination, "wb") as f:
         f.write(response.content)
 
+    # TODO (wardlt): Should we just return the key?
     return {destination + " status": True}
 
 
