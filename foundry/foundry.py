@@ -444,15 +444,15 @@ class Foundry(FoundryMetadata):
         self.config = FoundryConfig(**kwargs)
         return self
 
-    def download(self, globus=True, verbose=False, **kwargs):
+    def download(self, globus: bool = True, interval: int = 20) -> 'Foundry':
         """Download a Foundry dataset
+        
         Args:
             globus (bool): if True, use Globus to download the data else try HTTPS
-            verbose (bool): if True print out debug information during the download
+            interval (float): How often to wait before checking Globus transfer status
 
-        Returns
-        -------
-        (Foundry): self: for chaining
+        Returns:
+            self, for chaining
         """
         # Check if the dir already exists
         path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
@@ -475,7 +475,7 @@ class Foundry(FoundryMetadata):
                     return self
             else:
                 # in the case of no splits, ensure the directory contains at least one file
-                if (len(os.listdir(path)) >= 1):
+                if len(os.listdir(path)) >= 1:
                     return self
                 else:
                     logger.info("Dataset will be redownloaded, expected file is missing")
@@ -488,7 +488,7 @@ class Foundry(FoundryMetadata):
                 res,
                 dest=self.config.local_cache_dir,
                 dest_ep=self.config.destination_endpoint,
-                interval=kwargs.get("interval", 20),
+                interval=interval,
                 download_datasets=True,
             )
         else:
@@ -521,7 +521,7 @@ class Foundry(FoundryMetadata):
                     raise FileNotFoundError(f"Downloaded directory does not contain the following files: {missing_files}")
 
             else:
-                if (len(os.listdir(path)) < 1):
+                if len(os.listdir(path)) < 1:
                     raise FileNotFoundError("Downloaded directory does not contain the expected file")
         else:
             raise NotADirectoryError("Unable to create directory to download data")
