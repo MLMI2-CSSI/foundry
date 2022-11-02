@@ -416,20 +416,25 @@ class Foundry(FoundryMetadata):
         if https:
             # define upload destination
             publication_id = uuid4()
+            # publication_id = "test/yes/muchtest"
+            # publication_id = "test2"
             dest_path = os.path.join("/tmp", str(publication_id))  # NOTE: must start and end with "/" # TODO test to see if this is still true
 
             # create new ACL rule (eg permission) for user to read/write to endpoint and path
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
             # TODO: add directory recursion handling -- axe prepare
-            self.transfer_client.operation_mkdir(endpoint_id=endpoint_id, path=dest_path)
+            try:
+                self.transfer_client.operation_mkdir(endpoint_id=endpoint_id, path=dest_path)
+            except TransferAPIError as e:
+                raise IOError(f"Path {dest_path} already exists for another dataset, cannot overwrite") from e
+
             rule_id = self._create_access_rule(endpoint_id, dest_path)
-            # TODO: make local_data_path work for either a folder or a single file
             data_source = self.https_upload(local_data_path=local_data_path, dest_path=dest_path, endpoint_id=endpoint_id)
 
         self.connect_client.add_data_source(data_source)
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
-        # TODO: remove
+        # TODO: remove commenting out
         # res = self.connect_client.submit_dataset(update=update)
         res = None
 
@@ -480,7 +485,12 @@ class Foundry(FoundryMetadata):
         # Submit data to DLHub service
         # TODO: parallelize to send multiple PUTs at the same time
         # TODO: clean up params more?
-        self._upload_folder(local_data_path, https_base_url, dest_path, endpoint_id)
+        if os.path.isdir(local_data_path):
+            self._upload_folder(local_data_path, https_base_url, dest_path, endpoint_id)
+        elif os.path.isfile(local_data_path):
+            self._upload_file(local_data_path, https_base_url, dest_path, endpoint_id)
+        else:
+            raise IOError(f"Data path '{local_data_path}' is of unknown type")
 
         # pass this link and metadata to publish() as usual
         return self.make_globus_link(endpoint_id, dest_path)
@@ -506,8 +516,8 @@ class Foundry(FoundryMetadata):
         # add query param to prepare any missing directories in the Globus endpoint path
         filename = os.path.split(filepath)[1]
         # need to strip out leading "/" in dest_path for join to work
-        # endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename, "?prepare")
         endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename)
+
         # upload via HTTPS
         with open(filepath, 'rb') as f:
             reply = requests.put(

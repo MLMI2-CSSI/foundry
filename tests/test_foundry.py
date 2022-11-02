@@ -213,6 +213,11 @@ def test_globus_dataframe_load():
     _delete_test_data(f)
 
 
+def test_https_upload():
+    f = Foundry(authorizers=auths)
+    local_data_path = "/Users/aristanascourtas/Documents/Work/foundry/data/https_test/"
+    f.https_upload()
+
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed online")  # PLEASE CONFIRM THIS BEHAVIOR IS INTENDED
 def test_publish():
     # TODO: automate dealing with curation and cleaning after tests
