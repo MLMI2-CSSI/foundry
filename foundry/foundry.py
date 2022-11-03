@@ -416,7 +416,7 @@ class Foundry(FoundryMetadata):
         if https:
             # define upload destination
             publication_id = uuid4()
-            # publication_id = "test/yes/muchtest"
+            # publication_id = "test_prep"
             # publication_id = "test2"
             dest_path = os.path.join("/tmp", str(publication_id))  # NOTE: must start and end with "/" # TODO test to see if this is still true
 
@@ -495,17 +495,32 @@ class Foundry(FoundryMetadata):
         # pass this link and metadata to publish() as usual
         return self.make_globus_link(endpoint_id, dest_path)
 
-    def _upload_folder(self, local_data_path, https_base_url, dest_path, endpoint_id):
+    def _upload_folder(self, local_data_path, https_base_url, parent_dest_path, endpoint_id):
         results = []
-        # upload each file in the designated data folder
-        for filename in os.listdir(local_data_path):
+        # dest_path can be either the parent path or a subdirectory path, depending on presence of subdirs
+        dest_path = parent_dest_path
+
+        # walk through each file/subfolder in the designated local data folder
+        for root, directories, files in os.walk(local_data_path):
+            if root is not local_data_path:
+                # get the subdirectory relative paths in the local data folder to write them to our destination path
+                subpath = os.path.relpath(root, local_data_path)
+                dest_path = os.path.join(parent_dest_path, subpath)
+            # create subdirectories if necessary
+                try:
+                    self.transfer_client.operation_mkdir(endpoint_id=endpoint_id, path=dest_path)
+                except TransferAPIError as e:
+                    raise IOError(f"Error while creating subdirectory in {parent_dest_path}: {e.message}") from e
             # get local path to file to upload
-            filepath = os.path.join(local_data_path, filename)
-            result = self._upload_file(filepath, https_base_url, dest_path, endpoint_id)
-            results.append(result)
+            for filename in files:
+                filepath = os.path.join(root, filename)
+                # upload to destination path
+                result = self._upload_file(filepath, https_base_url, dest_path, endpoint_id)
+                results.append(result)
         return results
 
     def _upload_file(self, filepath, https_base_url, dest_path, endpoint_id):
+        # TODO: change filepath to local_path?
         # lets you HTTPS to specific endpoint (NCSA endpoint by default)
         scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"
         # Get the authorization header token (string for the headers dict) HTTPS upload
@@ -513,7 +528,6 @@ class Foundry(FoundryMetadata):
         header = auth_gcs.authorizer.get_authorization_header()
 
         # get Globus endpoint path to write to
-        # add query param to prepare any missing directories in the Globus endpoint path
         filename = os.path.split(filepath)[1]
         # need to strip out leading "/" in dest_path for join to work
         endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename)
