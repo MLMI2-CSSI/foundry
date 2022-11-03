@@ -497,24 +497,26 @@ class Foundry(FoundryMetadata):
 
     def _upload_folder(self, local_data_path, https_base_url, parent_dest_path, endpoint_id):
         results = []
-        # dest_path can be either the parent path or a subdirectory path, depending on presence of subdirs
+        # initialize destination path as the parent destination path
         dest_path = parent_dest_path
 
-        # walk through each file/subfolder in the designated local data folder
+        # walk through each child directory in the designated local data folder
         for root, directories, files in os.walk(local_data_path):
+            # update destination path if we have walked into a child directory
             if root is not local_data_path:
-                # get the subdirectory relative paths in the local data folder to write them to our destination path
+                # get the child directory relative path
                 subpath = os.path.relpath(root, local_data_path)
+                # update destination path to include child directories (ie subpaths)
                 dest_path = os.path.join(parent_dest_path, subpath)
-            # create subdirectories if necessary
+            # create child directories on endpoint
                 try:
                     self.transfer_client.operation_mkdir(endpoint_id=endpoint_id, path=dest_path)
                 except TransferAPIError as e:
-                    raise IOError(f"Error while creating subdirectory in {parent_dest_path}: {e.message}") from e
+                    raise IOError(f"Error while creating child directory {dest_path}: {e.message}") from e
             # get local path to file to upload
             for filename in files:
                 filepath = os.path.join(root, filename)
-                # upload to destination path
+                # upload file to destination path on endpoint
                 result = self._upload_file(filepath, https_base_url, dest_path, endpoint_id)
                 results.append(result)
         return results
@@ -530,7 +532,7 @@ class Foundry(FoundryMetadata):
         # get Globus endpoint path to write to
         filename = os.path.split(filepath)[1]
         # need to strip out leading "/" in dest_path for join to work
-        endpoint_dest = os.path.join(https_base_url, dest_path[1:], filename)
+        endpoint_dest = os.path.join(https_base_url, dest_path.lstrip("/"), filename)
 
         # upload via HTTPS
         with open(filepath, 'rb') as f:
