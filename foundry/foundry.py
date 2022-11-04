@@ -126,7 +126,6 @@ class Foundry(FoundryMetadata):
             authorizer=self.auths["mdf_connect"], test=test
         )
 
-        # TODO: come back to add in DLHub functionality after globus-sdk>=3.0 supported
         self.dlhub_client = DLHubClient(
             dlh_authorizer=self.auths["dlhub"],
             search_authorizer=self.auths["search_authorizer"],
@@ -411,39 +410,37 @@ class Foundry(FoundryMetadata):
         self.connect_client.add_organization(self.config.organization)
         self.connect_client.set_project_block(
             self.config.metadata_key, foundry_metadata)
-        # TODO: break out into helper function?
         # TODO: add checks to make sure user includes local_data_path if https is True, etc
         if https:
-            # define upload destination
-            publication_id = uuid4()
-            # publication_id = "test_prep"
-            # publication_id = "test2"
-            dest_path = os.path.join("/tmp", str(publication_id))  # NOTE: must start and end with "/" # TODO test to see if this is still true
-
-            # create new ACL rule (eg permission) for user to read/write to endpoint and path
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
-            # TODO: add directory recursion handling -- axe prepare
-            try:
-                self.transfer_client.operation_mkdir(endpoint_id=endpoint_id, path=dest_path)
-            except TransferAPIError as e:
-                raise IOError(f"Path {dest_path} already exists for another dataset, cannot overwrite") from e
-
+            # define upload destination
+            dest_path = self._create_dest_folder(endpoint_id)
+            # create new ACL rule (eg permission) for user to read/write to endpoint and path
             rule_id = self._create_access_rule(endpoint_id, dest_path)
+            # upload data to endpoint
             data_source = self.https_upload(local_data_path=local_data_path, dest_path=dest_path, endpoint_id=endpoint_id)
-
         self.connect_client.add_data_source(data_source)
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
-        # TODO: remove commenting out
+        # TODO: remove commenting out, delete res = None
         # res = self.connect_client.submit_dataset(update=update)
         res = None
 
-        # delete ACL rule after transfer is complete
+        # if uploaded by HTTPS, delete ACL rule after dataset submission is complete
         if https and rule_id:
             ret = self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
             print(ret)
 
         return res
+
+    def _create_dest_folder(self, endpoint_id):
+        publication_id = uuid4()
+        dest_path = os.path.join("/tmp", str(publication_id))  # NOTE: must start and end with "/"
+        try:
+            self.transfer_client.operation_mkdir(endpoint_id=endpoint_id, path=dest_path)
+        except TransferAPIError as e:
+            raise IOError(f"Path {dest_path} already exists for another dataset, cannot overwrite") from e
+        return dest_path
 
     def _create_access_rule(self, endpoint_id, dest_path):
         # get user info
@@ -472,19 +469,13 @@ class Foundry(FoundryMetadata):
         """Temporary method to figure out specifics of HTTPS upload using Globus SDK
         TODO: add docstring
 
-        Returns: link globus returns
+        Returns: Globus data source URL
         """
-        # TODO: remove print statements
-
-        # upload folder of data files
-
         # get URL for Globus endpoint location
         endpoint = self.transfer_client.get_endpoint(endpoint_id)  # gets info for NCSA endpoint
         https_base_url = endpoint['https_server']
 
-        # Submit data to DLHub service
-        # TODO: parallelize to send multiple PUTs at the same time
-        # TODO: clean up params more?
+        # Submit data (folders of files or an independent file) to be written to endpoint
         if os.path.isdir(local_data_path):
             self._upload_folder(local_data_path, https_base_url, dest_path, endpoint_id)
         elif os.path.isfile(local_data_path):
@@ -492,7 +483,7 @@ class Foundry(FoundryMetadata):
         else:
             raise IOError(f"Data path '{local_data_path}' is of unknown type")
 
-        # pass this link and metadata to publish() as usual
+        # pass back this data_source link for MDF
         return self.make_globus_link(endpoint_id, dest_path)
 
     def _upload_folder(self, local_data_path, https_base_url, parent_dest_path, endpoint_id):
@@ -522,7 +513,6 @@ class Foundry(FoundryMetadata):
         return results
 
     def _upload_file(self, filepath, https_base_url, dest_path, endpoint_id):
-        # TODO: change filepath to local_path?
         # lets you HTTPS to specific endpoint (NCSA endpoint by default)
         scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"
         # Get the authorization header token (string for the headers dict) HTTPS upload
