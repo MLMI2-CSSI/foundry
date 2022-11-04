@@ -358,7 +358,7 @@ class Foundry(FoundryMetadata):
             buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
         return buf
 
-    def publish(self, foundry_metadata, title, authors, https=True, local_data_path=None, data_source=None, update=False,
+    def publish(self, foundry_metadata, title, authors, https_data_path=None, globus_data_source=None, update=False,
                 publication_year=None, **kwargs,):
         """Submit a dataset for publication
         Args:
@@ -396,6 +396,10 @@ class Foundry(FoundryMetadata):
             of dataset. Contains `source_id`, which can be used to check the
             status of the submission
         """
+        if (https_data_path and globus_data_source) or \
+                (https_data_path is None and globus_data_source is None):
+            raise ValueError("Must assign either `https_data_path` or `globus_data_source`")
+
         self.connect_client.create_dc_block(
             title=title,
             authors=authors,
@@ -410,16 +414,21 @@ class Foundry(FoundryMetadata):
         self.connect_client.add_organization(self.config.organization)
         self.connect_client.set_project_block(
             self.config.metadata_key, foundry_metadata)
-        # TODO: add checks to make sure user includes local_data_path if https is True, etc
-        if https:
+
+        # upload via HTTPS if specified
+        if https_data_path:
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
             # define upload destination
             dest_path = self._create_dest_folder(endpoint_id)
             # create new ACL rule (eg permission) for user to read/write to endpoint and path
             rule_id = self._create_access_rule(endpoint_id, dest_path)
             # upload data to endpoint
-            data_source = self.https_upload(local_data_path=local_data_path, dest_path=dest_path, endpoint_id=endpoint_id)
-        self.connect_client.add_data_source(data_source)
+            globus_data_source = self._https_upload(local_data_path=https_data_path, dest_path=dest_path,
+                                                   endpoint_id=endpoint_id)
+
+        # set Globus data source URL with MDF
+        self.connect_client.add_data_source(globus_data_source)
+        # set dataset name using the title if a an abbreviated short_name isn't specified
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
         # TODO: remove commenting out, delete res = None
@@ -427,9 +436,8 @@ class Foundry(FoundryMetadata):
         res = None
 
         # if uploaded by HTTPS, delete ACL rule after dataset submission is complete
-        if https and rule_id:
-            ret = self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
-            print(ret)
+        if https_data_path and rule_id:
+            self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
 
         return res
 
@@ -445,7 +453,6 @@ class Foundry(FoundryMetadata):
     def _create_access_rule(self, endpoint_id, dest_path):
         # get user info
         res = self.auth_client.oauth2_userinfo()
-        print(res)
         user_id = res.data["sub"]  # get the user primary ID (based on primary email set in Globus)
         # create data blob needed to set new rule with Globus
         rule_data = {
@@ -459,13 +466,12 @@ class Foundry(FoundryMetadata):
         rule_id = None
         try:
             ret = self.transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
-            print(ret)
             rule_id = ret["access_id"]  # rule_id is needed to delete the rule later
         except TransferAPIError as e:
-            logger.info(e.message)
+            logger.error(e.message)  # NOTE: known issue where user can still write to endpoint if this fails
         return rule_id
 
-    def https_upload(self, local_data_path, dest_path="/tmp", endpoint_id="82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"):
+    def _https_upload(self, local_data_path, dest_path="/tmp", endpoint_id="82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"):
         """Temporary method to figure out specifics of HTTPS upload using Globus SDK
         TODO: add docstring
 
