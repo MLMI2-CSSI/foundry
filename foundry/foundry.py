@@ -332,8 +332,9 @@ class Foundry(FoundryMetadata):
         bibtex = f"@misc{{https://doi.org/{self.dc['identifier']['identifier']}{os.linesep}{bibtex}}}"
         return bibtex
 
-    def publish_dataset(self, foundry_metadata, title, authors, https_data_path=None, globus_data_source=None, update=False,
-                publication_year=None, test=False, **kwargs,):
+    def publish_dataset(
+            self, foundry_metadata, title, authors, https_data_path=None, globus_data_source=None, update=False,
+            publication_year=None, test=False, **kwargs,):
         """Submit a dataset for publication
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
