@@ -359,26 +359,29 @@ class Foundry(FoundryMetadata):
         return buf
 
     def publish(self, foundry_metadata, title, authors, https_data_path=None, globus_data_source=None, update=False,
-                publication_year=None, **kwargs,):
+                publication_year=None, test=False, **kwargs,):
         """Submit a dataset for publication
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
             title (string): Title of data package
             authors (list): List of data package author names e.g., Jack Black
                 or Nunez, Victoria
-            https (bool): If True, create an HTTPS PUT request to upload the data specified by 'local_data_path' to
-                a Globus endpoint (default is NCSA endpoint) before it is transferred to MDF. If False, the user must
-                specify a 'data_source' URL to the location of the data on their own Globus endpoint.
-                Default is True
-            local_data_path (string): Only used if 'https' is True. The folder path for the data the user wants to
-                upload from their local machine
-            data_source (string): Only used if 'https' is False. Url path for a data folder on a Globus endpoint; url
-                can be obtained through the Globus Webpage or SDK
+            https_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
+                request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
+                transferred to MDF. If None, the user must specify a 'globus_data_source' URL to the location of the
+                data on their own Globus endpoint. User must choose either `globus_data_source` or `https_data_path` to
+                publish their data.
+            globus_data_source (str): Url path for a data folder on a Globus endpoint; url can be obtained through
+                the Globus Web UI or SDK. If None, the user must specify an 'https_data_path' pointing to the location
+                of the data on their local machine. User must choose either `globus_data_source` or `https_data_path` to
+                publish their data.
             update (bool): True if this is an update to a prior data package
                 (default: self.config.metadata_file)
             publication_year (int): Year of dataset publication. If None, will
                 be set to the current calendar year by MDF Connect Client.
                 (default: $current_year)
+            test (bool): If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).
+                Default is False.
 
         Keyword Args:
             affiliations (list): List of author affiliations
@@ -420,7 +423,7 @@ class Foundry(FoundryMetadata):
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
             # define upload destination
             dest_path = self._create_dest_folder(endpoint_id)
-            # create new ACL rule (eg permission) for user to read/write to endpoint and path
+            # create new ACL rule (ie permission) for user to read/write to endpoint and path
             rule_id = self._create_access_rule(endpoint_id, dest_path)
             # upload data to endpoint
             globus_data_source = self._https_upload(local_data_path=https_data_path, dest_path=dest_path,
@@ -431,9 +434,12 @@ class Foundry(FoundryMetadata):
         # set dataset name using the title if a an abbreviated short_name isn't specified
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
-        # TODO: remove commenting out, delete res = None
-        # res = self.connect_client.submit_dataset(update=update)
-        res = None
+        # do not submit to MDF if this is just a test
+        if not test:
+            # Globus Transfer the data from the data source to the MDF endpoint
+            res = self.connect_client.submit_dataset(update=update)
+        else:
+            res = None
 
         # if uploaded by HTTPS, delete ACL rule after dataset submission is complete
         if https_data_path and rule_id:
@@ -441,9 +447,19 @@ class Foundry(FoundryMetadata):
 
         return res
 
-    def _create_dest_folder(self, endpoint_id):
+    def _create_dest_folder(self, endpoint_id, parent_dir="/tmp"):
+        """Create a destination folder for the data on a Globus endpoint
+        Args:
+            endpoint_id (str): A UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
+                the SDK.
+            parent_dir (str): The parent directory that all publications via HTTPS will be written to. Default is '/tmp'
+        Returns
+        -------
+            (str): Path on Globus endpoint to write to
+        """
+        # use a random UUID for each dataset publication
         publication_id = uuid4()
-        dest_path = os.path.join("/tmp", str(publication_id))  # NOTE: must start and end with "/"
+        dest_path = os.path.join(parent_dir, str(publication_id))  # NOTE: must start and end with "/"
         try:
             self.transfer_client.operation_mkdir(endpoint_id=endpoint_id, path=dest_path)
         except TransferAPIError as e:
@@ -451,6 +467,15 @@ class Foundry(FoundryMetadata):
         return dest_path
 
     def _create_access_rule(self, endpoint_id, dest_path):
+        """Create an ACL rule (ie permission) for the user to read/write to the given destination on a Globus endpoint
+        Args:
+            endpoint_id (str): A UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
+                the SDK.
+            dest_path (str): The path to the existing folder on the given Globus endpoint.
+        Returns
+        -------
+            (str): The ID for the ACL rule (necessary to delete it in the future)
+        """
         # get user info
         res = self.auth_client.oauth2_userinfo()
         user_id = res.data["sub"]  # get the user primary ID (based on primary email set in Globus)
@@ -472,10 +497,15 @@ class Foundry(FoundryMetadata):
         return rule_id
 
     def _https_upload(self, local_data_path, dest_path="/tmp", endpoint_id="82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"):
-        """Temporary method to figure out specifics of HTTPS upload using Globus SDK
-        TODO: add docstring
-
-        Returns: Globus data source URL
+        """Upload a dataset via HTTPS to a Globus endpoint
+        Args:
+            local_data_path (str): The path to the local data to upload. Can be relative or absolute.
+            dest_path (str): The path to the destination folder on the Globus endpoint. Default is "/tmp".
+            endpoint_id (str): A UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
+                the SDK. Default is the NCSA UUID '82f1b5c6-6e9b-11e5-ba47-22000b92c6ec'.
+        Returns
+        -------
+            (str): Globus data source URL (ie the URL that points to the data on a Globus endpoint)
         """
         # get URL for Globus endpoint location
         endpoint = self.transfer_client.get_endpoint(endpoint_id)  # gets info for NCSA endpoint
@@ -489,10 +519,22 @@ class Foundry(FoundryMetadata):
         else:
             raise IOError(f"Data path '{local_data_path}' is of unknown type")
 
-        # pass back this data_source link for MDF
+        # return the data source URL for publication to MDF
         return self.make_globus_link(endpoint_id, dest_path)
 
     def _upload_folder(self, local_data_path, https_base_url, parent_dest_path, endpoint_id):
+        """Upload a folder to a Globus endpoint using HTTPS
+        Args:
+            local_data_path (str): The path to the local data to upload. Can be relative or absolute.
+            https_base_url (str): The URL for a given Globus endpoint.
+            parent_dest_path (str): The path to the parent folder to be written to on the given endpoint. The contents
+                of 'local_data_path' will be written here, including subdirectories.
+            endpoint_id (str): The UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
+                the SDK. This must be the same endpoint pointed to by the https_base_url.
+        Returns
+        -------
+            (list): A list of all of the HTTPS PUT request results (dicts) from the uploads
+        """
         results = []
         # initialize destination path as the parent destination path
         dest_path = parent_dest_path
@@ -519,6 +561,17 @@ class Foundry(FoundryMetadata):
         return results
 
     def _upload_file(self, filepath, https_base_url, dest_path, endpoint_id):
+        """Upload an individual file to a Globus endpoint using HTTPS PUT
+        Args:
+            filepath (str): The path to the local file to upload.
+            https_base_url (str): The URL for a given Globus endpoint.
+            dest_path (str): The path to the folder to be written to on the given endpoint.
+            endpoint_id (str): The UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
+                the SDK. This must be the same endpoint pointed to by the https_base_url.
+        Returns
+        -------
+            (dict): The HTTPS response dict from a PUT request
+        """
         # lets you HTTPS to specific endpoint (NCSA endpoint by default)
         scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"
         # Get the authorization header token (string for the headers dict) HTTPS upload
@@ -539,14 +592,22 @@ class Foundry(FoundryMetadata):
                     'file': (filename, f, 'application/octet-stream')
                 }
             )
-        # Return the task id
         if reply.status_code != 200:
-            raise Exception(reply.text)
+            raise IOError(f"Error on HTTPS PUT, got response {reply.status_code}: {reply.text}")
+        # Return the response
         return reply
 
     def make_globus_link(self, endpoint_id, path):
-        # TODO Add docstrings
-
+        """Create the Globus data source URL for a given datapath on an endpoint
+        Args:
+            endpoint_id (str): The UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
+                the SDK.
+            path (str): The path to the dataset folder on the given endpoint.
+        Returns
+        -------
+            (str): The Globus data source URL (ie the URL that points to the data on a Globus endpoint)
+        """
+        # make sure the path has the "/"s encoded properly for a URL
         safe_path = urllib.parse.quote(path, safe="*")
         link = f'https://app.globus.org/file-manager?origin_id={endpoint_id}&origin_path={safe_path}'
         return link
