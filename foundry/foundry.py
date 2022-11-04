@@ -334,8 +334,8 @@ class Foundry(FoundryMetadata):
         try:
             if self.dataset.splits:
                 for split in self.dataset.splits:
-                    data[split.label] = self._load_data(file=split.path,
-                                                        source_id=source_id, globus=globus, as_hdf5=as_hdf5)
+                    data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
+                                                        as_hdf5=as_hdf5)
                 return data
             else:
                 return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
@@ -427,7 +427,7 @@ class Foundry(FoundryMetadata):
             rule_id = self._create_access_rule(endpoint_id, dest_path)
             # upload data to endpoint
             globus_data_source = self._https_upload(local_data_path=https_data_path, dest_path=dest_path,
-                                                   endpoint_id=endpoint_id)
+                                                    endpoint_id=endpoint_id)
 
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
