@@ -1,7 +1,9 @@
+import json
 import os
 import shutil
 import pytest
 from datetime import datetime
+import numpy as np
 import mdf_toolbox
 import pandas as pd
 from mdf_forge import Forge
@@ -21,7 +23,10 @@ services = [
             "petrel",
             "transfer",
             "openid",
-            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"]
+            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
+            "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
+            "https://auth.globus.org/scopes/82f1b5c6-6e9b-11e5-ba47-22000b92c6ec/https",  # NCSA HTTPS
+    ]
 
 if is_gha:
     auths = mdf_toolbox.confidential_login(client_id=client_id,
@@ -242,9 +247,49 @@ def test_globus_dataframe_load():
     _delete_test_data(f)
 
 
-def test_https_upload():
-    f = Foundry(authorizers=auths)
+def test_publish_with_https():
+    """System test assessing the end-to-end publication of a dataset via HTTPS
+    """
+    # TODO: make separate unit tests
+    f = Foundry(index="mdf-test", authorizers=auths)
+    timestamp = datetime.now().timestamp()
+    title = "https_publish_test_{:.0f}".format(timestamp)
+    short_name = "https_pub_{:.0f}".format(timestamp)
+    authors = ["A Scourtas"]
+    local_path = "./data/https_test"
+
+    # create test JSON to upload (if it doesn't already exist)
+    _write_test_data(local_path)
+
+    res = f.publish_dataset(pub_test_metadata, title, authors, https_data_path=local_path,
+                      short_name=short_name)
+
+    assert res['success']
+    assert res['source_id'] == f"_test_{short_name}_v1.1"
+
+def test_https_upload_private():
+    """Test the _https_upload() functionality on its own.
+    """
+    # TODO: create method that's more unit-testable
     pass
+
+
+def _write_test_data(dest_path="./data/https_test"):
+    # data = {}
+    # for i in range(10):
+    #     data[str(i)] = np.random.random(100).tolist()
+
+    # Create random JSON data
+    data = pd.DataFrame(np.random.rand(100, 4), columns=list('ABCD'))
+    res = data.to_json(orient="records")
+
+    # Make data directory
+    os.makedirs(dest_path, exist_ok=True)
+    data_filepath = os.path.join(dest_path, "test_data.json")
+
+    # Write data to JSON file
+    with open(data_filepath, "w+") as f:
+        json.dump(res, f, indent=4)
 
 
 @pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
@@ -258,7 +303,8 @@ def test_publish():
     short_name = "example_AS_iris_test_{:.0f}".format(timestamp)
     authors = ["A Scourtas"]
 
-    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name)
+    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source,
+                            short_name=short_name)
 
     # publish with short name
     assert res['success']

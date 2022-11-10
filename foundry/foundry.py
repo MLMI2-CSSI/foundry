@@ -395,6 +395,7 @@ class Foundry(FoundryMetadata):
 
         # upload via HTTPS if specified
         if https_data_path:
+            # TODO: break out into a separate function so it's more testable? upload_to_endpoint() or similar
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
             # define upload destination
             dest_path = self._create_dest_folder(endpoint_id)
@@ -406,7 +407,7 @@ class Foundry(FoundryMetadata):
 
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
-        # set dataset name using the title if a an abbreviated short_name isn't specified
+        # set dataset name using the title if an abbreviated short_name isn't specified
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
         # do not submit to MDF if this is just a test
