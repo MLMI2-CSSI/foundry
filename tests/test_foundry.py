@@ -267,6 +267,7 @@ def test_publish_with_https():
     assert res['success']
     assert res['source_id'] == f"_test_{short_name}_v1.1"
 
+
 def test_https_upload_private():
     """Test the _https_upload() functionality on its own.
     """
@@ -293,7 +294,7 @@ def _write_test_data(dest_path="./data/https_test"):
 
 
 @pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
-def test_publish():
+def test_publish_with_globus():
     # TODO: automate dealing with curation and cleaning after tests
 
     f = Foundry(authorizers=auths, index="mdf-test", no_browser=True, no_local_server=True)
