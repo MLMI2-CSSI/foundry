@@ -283,7 +283,7 @@ class Foundry(FoundryMetadata):
            as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
 
         Returns
-        -------s
+        -------
              (tuple): Tuple of X, y values
         """
         data = {}
@@ -395,15 +395,8 @@ class Foundry(FoundryMetadata):
 
         # upload via HTTPS if specified
         if https_data_path:
-            # TODO: break out into a separate function so it's more testable? upload_to_endpoint() or similar
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
-            # define upload destination
-            dest_path = self._create_dest_folder(endpoint_id)
-            # create new ACL rule (ie permission) for user to read/write to endpoint and path
-            rule_id = self._create_access_rule(endpoint_id, dest_path)
-            # upload data to endpoint
-            globus_data_source = self._https_upload(local_data_path=https_data_path, dest_path=dest_path,
-                                                    endpoint_id=endpoint_id)
+            globus_data_source, rule_id = self._upload_to_endpoint(https_data_path, endpoint_id)
 
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
@@ -422,6 +415,30 @@ class Foundry(FoundryMetadata):
             self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
 
         return res
+
+    def _upload_to_endpoint(self, local_data_path, endpoint_id="82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"):
+        """Upload local data to a Globus endpoint using HTTPS PUT requests. Data can be a folder or an individual file.
+            Note that the ACL rule created in this method must later be deleted after the dataset is submitted to MDF.
+        Args:
+            local_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
+                request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
+                transferred to MDF.
+            endpoint_id (str): Globus endpoint ID to upload the data to. Default is NCSA endpoint.
+
+        Returns
+        -------
+        (str) Globus data source URL: URL pointing to the data on the Globus endpoint
+        (str) rule_id: Globus ACL rule ID for the uploaded data. Used to delete the rule after the dataset is submitted
+            to MDF.
+        """
+        # define upload destination
+        dest_path = self._create_dest_folder(endpoint_id)
+        # create new ACL rule (ie permission) for user to read/write to endpoint and path
+        rule_id = self._create_access_rule(endpoint_id, dest_path)
+        # upload data to endpoint
+        globus_data_source = self._https_upload(local_data_path=local_data_path, dest_path=dest_path,
+                                                endpoint_id=endpoint_id)
+        return globus_data_source, rule_id
 
     def _create_dest_folder(self, endpoint_id, parent_dir="/tmp"):
         """Create a destination folder for the data on a Globus endpoint
