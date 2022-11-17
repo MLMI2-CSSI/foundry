@@ -1,7 +1,7 @@
 
 <picture>
-  <source srcset="https://raw.githubusercontent.com/cyschneck/foundry/main/assets/foundry-light.png" height=175" media="(prefers-color-scheme: dark)">
-  <img src="https://raw.githubusercontent.com/cyschneck/foundry/main/assets/foundry-dark.png" height="175">
+  <source srcset="https://raw.githubusercontent.com/MLMI2-CSSI/foundry/main/assets/foundry-light.png" height=175" media="(prefers-color-scheme: dark)">
+  <img src="https://raw.githubusercontent.com/MLMI2-CSSI/foundry/main/assets/foundry-dark.png" height="175">
 </picture>
 
 [![PyPI](https://img.shields.io/pypi/v/foundry_ml.svg)](https://pypi.python.org/pypi/foundry_ml)
