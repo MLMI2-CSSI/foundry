@@ -2,8 +2,11 @@ import json
 import os
 import shutil
 import pytest
+from filecmp import cmp
 from datetime import datetime
+from math import floor
 import numpy as np
+import requests
 import mdf_toolbox
 import pandas as pd
 from mdf_forge import Forge
@@ -268,14 +271,48 @@ def test_publish_with_https():
     assert res['source_id'] == f"_test_{short_name}_v1.1"
 
 
-def test_https_upload_private():
-    """Test the _https_upload() functionality on its own.
-    """
-    # TODO: create method that's more unit-testable
+def test_ACL_creation_and_deletion():
     pass
 
 
-def _write_test_data(dest_path="./data/https_test"):
+def test_upload_to_endpoint():
+    """Test the _upload_to_endpoint() functionality on its own.
+    """
+    endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
+    dest_parent = "/tmp"
+    dest_child = f"test_{floor(datetime.now().timestamp())}"
+    local_path = "./data/https_test"
+    filename = "test_data.json"
+
+    f = Foundry(index="mdf-test", authorizers=auths)
+    # create test JSON to upload (if it doesn't already exist)
+    _write_test_data(local_path, filename)
+    # upload via HTTPS to NCSA endpoint
+    globus_data_source, rule_id = f._upload_to_endpoint(local_path, endpoint_id, dest_parent=dest_parent,
+                                                        dest_child=dest_child)
+
+    expected_data_source = f'https://app.globus.org/file-manager?origin_id=' \
+           f'82f1b5c6-6e9b-11e5-ba47-22000b92c6ec&origin_path=%2Ftmp%2F{dest_child}'
+    # confirm data source link was created properly, with correct folders
+    assert globus_data_source == expected_data_source
+
+    mdf_url = f"https://data.materialsdatafacility.org/tmp/{dest_child}/{filename}"
+    # TODO: this is asking for auth but idk why I can't just grab it? not sure how to auth from here
+    response = requests.get(mdf_url)
+    # check that we get a valid response back (note that this could be a UI error, returned as HTML)
+    assert response.status_code == 200
+    # check that contents are as expected
+    tmp_file = "./data/tmp_data.json"
+    with open(tmp_file, "wb") as f:
+        f.write(response.content)
+    assert cmp(tmp_file, os.path.join(local_path, filename))
+
+    # delete ACL rule for user
+    if rule_id is not None:
+        res = f.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
+
+
+def _write_test_data(dest_path="./data/https_test", filename="test_data.json"):
     # data = {}
     # for i in range(10):
     #     data[str(i)] = np.random.random(100).tolist()
@@ -286,7 +323,7 @@ def _write_test_data(dest_path="./data/https_test"):
 
     # Make data directory
     os.makedirs(dest_path, exist_ok=True)
-    data_filepath = os.path.join(dest_path, "test_data.json")
+    data_filepath = os.path.join(dest_path, filename)
 
     # Write data to JSON file
     with open(data_filepath, "w+") as f:

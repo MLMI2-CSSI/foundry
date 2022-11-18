@@ -416,7 +416,8 @@ class Foundry(FoundryMetadata):
 
         return res
 
-    def _upload_to_endpoint(self, local_data_path, endpoint_id="82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"):
+    def _upload_to_endpoint(self, local_data_path, endpoint_id="82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
+                            dest_parent=None, dest_child=None):
         """Upload local data to a Globus endpoint using HTTPS PUT requests. Data can be a folder or an individual file.
             Note that the ACL rule created in this method must later be deleted after the dataset is submitted to MDF.
         Args:
@@ -432,7 +433,7 @@ class Foundry(FoundryMetadata):
             to MDF.
         """
         # define upload destination
-        dest_path = self._create_dest_folder(endpoint_id)
+        dest_path = self._create_dest_folder(endpoint_id, parent_dir=dest_parent, child_dir=dest_child)
         # create new ACL rule (ie permission) for user to read/write to endpoint and path
         rule_id = self._create_access_rule(endpoint_id, dest_path)
         # upload data to endpoint
@@ -440,23 +441,30 @@ class Foundry(FoundryMetadata):
                                                 endpoint_id=endpoint_id)
         return globus_data_source, rule_id
 
-    def _create_dest_folder(self, endpoint_id, parent_dir="/tmp"):
+    def _create_dest_folder(self, endpoint_id, parent_dir=None, child_dir=None):
         """Create a destination folder for the data on a Globus endpoint
         Args:
             endpoint_id (str): A UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
                 the SDK.
-            parent_dir (str): The parent directory that all publications via HTTPS will be written to. Default is '/tmp'
+            parent_dir (str): Set to '/tmp' when default is None. The parent directory that all publications via HTTPS
+                will be written to.
+            child_dir (str): Set to a random UUID when default is None. The child directory that the data will be
+                written to.
         Returns
         -------
             (str): Path on Globus endpoint to write to
         """
-        # use a random UUID for each dataset publication
-        publication_id = uuid4()
-        dest_path = os.path.join(parent_dir, str(publication_id))  # NOTE: must start and end with "/"
+        # use a random UUID for each dataset publication, unless specified otherwise
+        if child_dir is None:
+            child_dir = uuid4()  # the publication ID forms the name of the child directory
+        if parent_dir is None:
+            parent_dir = "/tmp"
+        dest_path = os.path.join(parent_dir, str(child_dir))  # NOTE: must start and end with "/"
+
         try:
             self.transfer_client.operation_mkdir(endpoint_id=endpoint_id, path=dest_path)
         except TransferAPIError as e:
-            raise IOError(f"Path {dest_path} already exists for another dataset, cannot overwrite") from e
+            raise IOError(f"Error from Globus API while creating destination folder: {e.message}") from e
         return dest_path
 
     def _create_access_rule(self, endpoint_id, dest_path):
@@ -576,6 +584,7 @@ class Foundry(FoundryMetadata):
         # need to strip out leading "/" in dest_path for join to work
         endpoint_dest = os.path.join(https_base_url, dest_path.lstrip("/"), filename)
 
+        # TODO: fix PUT
         # upload via HTTPS
         with open(filepath, 'rb') as f:
             reply = requests.put(
