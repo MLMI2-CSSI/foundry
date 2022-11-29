@@ -5,14 +5,13 @@ from json2table import convert
 import numpy as np
 import pandas as pd
 import requests
-from typing import Any
+from typing import Union, Any, Optional, Tuple, Dict, List
 import logging
 import warnings
 import os
 from uuid import uuid4
 import urllib
 from concurrent.futures import ThreadPoolExecutor
-
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
@@ -333,9 +332,12 @@ class Foundry(FoundryMetadata):
         return bibtex
 
     def publish_dataset(
-            self, foundry_metadata, title, authors, https_data_path=None, globus_data_source=None, update=False,
-            publication_year=None, test=False, **kwargs,):
-        """Submit a dataset for publication
+            self, foundry_metadata: Dict[str, Any], title: str, authors: List[str], https_data_path: str = None,
+            globus_data_source: str = None, update: bool = False, publication_year: int = None, test: bool = False,
+            **kwargs: Dict[str, Any],) -> Dict[str, Any]:
+        """Submit a dataset for publication; can choose to submit via HTTPS using `https_data_path` or via Globus
+            Transfer using the `globus_data_source` argument. Only one upload method may be specified.
+
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
             title (string): Title of data package
@@ -416,8 +418,8 @@ class Foundry(FoundryMetadata):
 
         return res
 
-    def _upload_to_endpoint(self, local_data_path, endpoint_id="82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
-                            dest_parent=None, dest_child=None):
+    def _upload_to_endpoint(self, local_data_path: str, endpoint_id: str = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
+                            dest_parent: str = None, dest_child: str = None) -> Tuple[str, str]:
         """Upload local data to a Globus endpoint using HTTPS PUT requests. Data can be a folder or an individual file.
             Note that the ACL rule created in this method must later be deleted after the dataset is submitted to MDF.
         Args:
@@ -441,7 +443,7 @@ class Foundry(FoundryMetadata):
                                                 endpoint_id=endpoint_id)
         return globus_data_source, rule_id
 
-    def _create_dest_folder(self, endpoint_id, parent_dir=None, child_dir=None):
+    def _create_dest_folder(self, endpoint_id: str, parent_dir: str = None, child_dir: str = None) -> str:
         """Create a destination folder for the data on a Globus endpoint
         Args:
             endpoint_id (str): A UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
@@ -467,7 +469,7 @@ class Foundry(FoundryMetadata):
             raise IOError(f"Error from Globus API while creating destination folder: {e.message}") from e
         return dest_path
 
-    def _create_access_rule(self, endpoint_id, dest_path):
+    def _create_access_rule(self, endpoint_id: str, dest_path: str) -> str:
         """Create an ACL rule (ie permission) for the user to read/write to the given destination on a Globus endpoint
         Args:
             endpoint_id (str): A UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
@@ -497,7 +499,8 @@ class Foundry(FoundryMetadata):
             logger.error(e.message)  # NOTE: known issue where user can still write to endpoint if this fails
         return rule_id
 
-    def _https_upload(self, local_data_path, dest_path="/tmp", endpoint_id="82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"):
+    def _https_upload(self, local_data_path: str, dest_path: str = "/tmp",
+                      endpoint_id: str = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec") -> str:
         """Upload a dataset via HTTPS to a Globus endpoint
         Args:
             local_data_path (str): The path to the local data to upload. Can be relative or absolute.
@@ -523,7 +526,8 @@ class Foundry(FoundryMetadata):
         # return the data source URL for publication to MDF
         return self.make_globus_link(endpoint_id, dest_path)
 
-    def _upload_folder(self, local_data_path, https_base_url, parent_dest_path, endpoint_id):
+    def _upload_folder(self, local_data_path: str, https_base_url: str, parent_dest_path: str, endpoint_id: str) \
+            -> List[Dict[str, Any]]:
         """Upload a folder to a Globus endpoint using HTTPS
         Args:
             local_data_path (str): The path to the local data to upload. Can be relative or absolute.
@@ -534,7 +538,7 @@ class Foundry(FoundryMetadata):
                 the SDK. This must be the same endpoint pointed to by the https_base_url.
         Returns
         -------
-            (list): A list of all of the HTTPS PUT request results (dicts) from the uploads
+            (list): A list of all the HTTPS PUT request results (dicts) from the uploads
         """
         results = []
         # initialize destination path as the parent destination path
@@ -561,7 +565,7 @@ class Foundry(FoundryMetadata):
                 results.append(result)
         return results
 
-    def _upload_file(self, filepath, https_base_url, dest_path, endpoint_id):
+    def _upload_file(self, filepath: str, https_base_url: str, dest_path: str, endpoint_id: str) -> Dict[str, Any]:
         """Upload an individual file to a Globus endpoint using HTTPS PUT
         Args:
             filepath (str): The path to the local file to upload.
@@ -596,7 +600,7 @@ class Foundry(FoundryMetadata):
         # Return the response
         return reply
 
-    def make_globus_link(self, endpoint_id, path):
+    def make_globus_link(self, endpoint_id: str, path: str) -> str:
         """Create the Globus data source URL for a given datapath on an endpoint
         Args:
             endpoint_id (str): The UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or

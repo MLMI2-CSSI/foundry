@@ -251,9 +251,9 @@ def test_globus_dataframe_load():
 
 
 def test_publish_with_https():
-    """System test assessing the end-to-end publication of a dataset via HTTPS
+    """System test: Assess the end-to-end publication of a dataset via HTTPS
     """
-    # TODO: make separate unit tests
+
     f = Foundry(index="mdf-test", authorizers=auths)
     timestamp = datetime.now().timestamp()
     title = "https_publish_test_{:.0f}".format(timestamp)
@@ -271,12 +271,8 @@ def test_publish_with_https():
     assert res['source_id'] == f"_test_{short_name}_v1.1"
 
 
-def test_ACL_creation_and_deletion():
-    pass
-
-
 def test_upload_to_endpoint():
-    """Test the _upload_to_endpoint() HTTPS functionality on its own, without publishing to MDF
+    """Unit test: Test the _upload_to_endpoint() HTTPS functionality on its own, without publishing to MDF
     """
     endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
     dest_parent = "/tmp"
@@ -323,6 +319,10 @@ def _write_test_data(dest_path="./data/https_test", filename="test_data.json"):
     # Write data to JSON file
     with open(data_filepath, "w+") as f:
         json.dump(res, f, indent=4)
+
+
+def test_ACL_creation_and_deletion():
+    pass
 
 
 @pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
