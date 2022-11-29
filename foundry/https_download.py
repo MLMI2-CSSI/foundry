@@ -1,3 +1,10 @@
+"""
+https_download.py
+
+Methods to download files from a Globus endpoint using Xtract (HTTPS). Now deprecated as of Aug 2022
+
+"""
+
 import urllib3
 import json
 import time

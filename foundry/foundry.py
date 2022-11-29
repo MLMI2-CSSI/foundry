@@ -5,7 +5,8 @@ from json2table import convert
 import numpy as np
 import pandas as pd
 import requests
-from typing import Union, Any, Optional, Tuple, Dict, List
+from requests import Response
+from typing import Any, Tuple, Dict, List
 import logging
 import warnings
 import os
@@ -565,7 +566,7 @@ class Foundry(FoundryMetadata):
                 results.append(result)
         return results
 
-    def _upload_file(self, filepath: str, https_base_url: str, dest_path: str, endpoint_id: str) -> Dict[str, Any]:
+    def _upload_file(self, filepath: str, https_base_url: str, dest_path: str, endpoint_id: str) -> Response:
         """Upload an individual file to a Globus endpoint using HTTPS PUT
         Args:
             filepath (str): The path to the local file to upload.
@@ -575,7 +576,7 @@ class Foundry(FoundryMetadata):
                 the SDK. This must be the same endpoint pointed to by the https_base_url.
         Returns
         -------
-            (dict): The HTTPS response dict from a PUT request
+            (Response): The HTTPS response object from a PUT request via `requests` package
         """
         # lets you HTTPS to specific endpoint (NCSA endpoint by default)
         scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"
