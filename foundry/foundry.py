@@ -543,7 +543,7 @@ class Foundry(FoundryMetadata):
         # walk through each child directory in the designated local data folder
         for root, directories, files in os.walk(local_data_path):
             # update destination path if we have walked into a child directory
-            if root is not local_data_path:
+            if root != local_data_path:
                 # get the child directory relative path
                 subpath = os.path.relpath(root, local_data_path)
                 # update destination path to include child directories (ie subpaths)
