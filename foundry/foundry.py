@@ -584,15 +584,12 @@ class Foundry(FoundryMetadata):
         # need to strip out leading "/" in dest_path for join to work
         endpoint_dest = os.path.join(https_base_url, dest_path.lstrip("/"), filename)
 
-        # TODO: fix PUT
-        # upload via HTTPS
+        # upload via HTTPS as arbitrary binary content type
         with open(filepath, 'rb') as f:
             reply = requests.put(
                 endpoint_dest,
-                headers={"Authorization": header},
-                files={
-                    'file': (filename, f, 'application/octet-stream')
-                }
+                data=f,
+                headers={"Authorization": header, "Content-Type": "application/octet-stream"}
             )
         if reply.status_code != 200:
             raise IOError(f"Error on HTTPS PUT, got response {reply.status_code}: {reply.text}")

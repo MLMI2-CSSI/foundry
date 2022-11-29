@@ -276,7 +276,7 @@ def test_ACL_creation_and_deletion():
 
 
 def test_upload_to_endpoint():
-    """Test the _upload_to_endpoint() functionality on its own.
+    """Test the _upload_to_endpoint() HTTPS functionality on its own, without publishing to MDF
     """
     endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
     dest_parent = "/tmp"
@@ -297,11 +297,10 @@ def test_upload_to_endpoint():
     assert globus_data_source == expected_data_source
 
     mdf_url = f"https://data.materialsdatafacility.org/tmp/{dest_child}/{filename}"
-    # TODO: this is asking for auth but idk why I can't just grab it? not sure how to auth from here
     response = requests.get(mdf_url)
-    # check that we get a valid response back (note that this could be a UI error, returned as HTML)
+    # check that we get a valid response back (note that a 200 could be a UI error, returned as HTML)
     assert response.status_code == 200
-    # check that contents are as expected
+    # check that contents of response are as expected
     tmp_file = "./data/tmp_data.json"
     with open(tmp_file, "wb") as f:
         f.write(response.content)
@@ -313,10 +312,6 @@ def test_upload_to_endpoint():
 
 
 def _write_test_data(dest_path="./data/https_test", filename="test_data.json"):
-    # data = {}
-    # for i in range(10):
-    #     data[str(i)] = np.random.random(100).tolist()
-
     # Create random JSON data
     data = pd.DataFrame(np.random.rand(100, 4), columns=list('ABCD'))
     res = data.to_json(orient="records")
