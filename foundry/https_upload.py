@@ -6,7 +6,7 @@ Private utility methods to upload files and/or folders to Globus using HTTPS ins
 Authors:
     Aristana Scourtas
 
-Last modified 8/22/22 by Aristana Scourtas
+Last modified 11/30/22 by Aristana Scourtas
 """
 
 import logging
