@@ -4,7 +4,6 @@ import mdf_toolbox
 from json2table import convert
 import numpy as np
 import pandas as pd
-from requests import put, Response
 from typing import Any, Dict, List
 import logging
 import warnings

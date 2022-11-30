@@ -11,7 +11,7 @@ Last modified 8/22/22 by Aristana Scourtas
 
 import logging
 import os
-import requests
+from requests import put, Response
 from typing import Any, Tuple, Dict, List
 from uuid import uuid4
 
@@ -173,7 +173,7 @@ def _upload_folder(self, local_data_path: str, https_base_url: str, parent_dest_
     return results
 
 
-def _upload_file(self, filepath: str, https_base_url: str, dest_path: str, endpoint_id: str) -> Dict[str, Any]:
+def _upload_file(self, filepath: str, https_base_url: str, dest_path: str, endpoint_id: str) -> Response:
     """Upload an individual file to a Globus endpoint using HTTPS PUT
     Args:
         filepath (str): The path to the local file to upload.
@@ -183,7 +183,7 @@ def _upload_file(self, filepath: str, https_base_url: str, dest_path: str, endpo
             the SDK. This must be the same endpoint pointed to by the https_base_url.
     Returns
     -------
-        (dict): The HTTPS response dict from a PUT request
+        (Response): The `requests` HTTPS response object from a PUT request
     """
     # lets you HTTPS to specific endpoint (NCSA endpoint by default)
     scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"
@@ -198,7 +198,7 @@ def _upload_file(self, filepath: str, https_base_url: str, dest_path: str, endpo
 
     # upload via HTTPS as arbitrary binary content type
     with open(filepath, 'rb') as f:
-        reply = requests.put(
+        reply = put(
             endpoint_dest,
             data=f,
             headers={"Authorization": header, "Content-Type": "application/octet-stream"}
