@@ -414,8 +414,8 @@ class Foundry(FoundryMetadata):
             res = None
 
         # if uploaded by HTTPS, delete ACL rule after dataset submission is complete
-        if https_data_path and rule_id:
-            self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
+        # if https_data_path and rule_id:
+        #     self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
 
         return res
 
@@ -438,7 +438,7 @@ class Foundry(FoundryMetadata):
         # define upload destination
         dest_path = self._create_dest_folder(endpoint_id, parent_dir=dest_parent, child_dir=dest_child)
         # create new ACL rule (ie permission) for user to read/write to endpoint and path
-        rule_id = self._create_access_rule(endpoint_id, dest_path)
+        rule_id = "" #self._create_access_rule(endpoint_id, dest_path)
         # upload data to endpoint
         globus_data_source = self._https_upload(local_data_path=local_data_path, dest_path=dest_path,
                                                 endpoint_id=endpoint_id)
