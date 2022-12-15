@@ -14,6 +14,7 @@ from foundry import Foundry
 from dlhub_sdk import DLHubClient
 from mdf_connect_client import MDFConnectClient
 
+
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 is_gha = os.getenv("GITHUB_ACTIONS")
@@ -267,8 +268,7 @@ def test_publish_with_https():
     res = f.publish_dataset(pub_test_metadata, title, authors, https_data_path=local_path,
                       short_name=short_name)
 
-    print(res)
-    assert res
+    raise TypeError(f"{json.dumps(res)}")
     assert res['success']
     assert res['source_id'] == f"_test_{short_name}_v1.1"
 
