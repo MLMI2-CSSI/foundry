@@ -250,7 +250,7 @@ def test_globus_dataframe_load():
     assert isinstance(y, pd.DataFrame)
     _delete_test_data(f)
 
-
+@pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
 def test_publish_with_https():
     """System test: Assess the end-to-end publication of a dataset via HTTPS
     """
@@ -268,7 +268,6 @@ def test_publish_with_https():
     res = f.publish_dataset(pub_test_metadata, title, authors, https_data_path=local_path,
                       short_name=short_name)
 
-    raise TypeError(f"{json.dumps(res)}")
     assert res['success']
     assert res['source_id'] == f"_test_{short_name}_v1.1"
 
