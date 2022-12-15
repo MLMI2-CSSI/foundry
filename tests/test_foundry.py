@@ -267,6 +267,8 @@ def test_publish_with_https():
     res = f.publish_dataset(pub_test_metadata, title, authors, https_data_path=local_path,
                       short_name=short_name)
 
+    print(res)
+    assert res
     assert res['success']
     assert res['source_id'] == f"_test_{short_name}_v1.1"
 
