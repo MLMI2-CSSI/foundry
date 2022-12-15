@@ -298,13 +298,13 @@ def test_upload_to_endpoint():
     assert response.status_code == 200
     # check that contents of response are as expected
     tmp_file = "./data/tmp_data.json"
-    with open(tmp_file, "wb") as f:
-        f.write(response.content)
+    with open(tmp_file, "wb") as fl:
+        fl.write(response.content)
     assert cmp(tmp_file, os.path.join(local_path, filename))
 
     # delete ACL rule for user
-    if rule_id is not None:
-        res = f.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
+    # if rule_id is not None:
+    #     res = f.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
 
 
 def _write_test_data(dest_path="./data/https_test", filename="test_data.json"):
@@ -350,16 +350,16 @@ def test_publish_with_globus():
     # assert res['source_id'] == "_test_scourtas_example_iris_publish_{:.0f}_v1.1".format(timestamp)
 
     # check that pushing same dataset without update flag fails
-    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name)
+    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=short_name)
     assert not res['success']
 
     # check that using update flag allows us to update dataset
-    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name, update=True)
+    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=short_name, update=True)
     assert res['success']
 
     # check that using update flag for new dataset fails
     new_short_name = short_name + "_update"
-    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=new_short_name, update=True)
+    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=new_short_name,  update=True)
     assert not res['success']
 
 
