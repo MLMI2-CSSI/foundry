@@ -8,7 +8,6 @@ from typing import Any, Dict, List
 import logging
 import warnings
 import os
-import urllib
 from concurrent.futures import ThreadPoolExecutor
 
 from mdf_connect_client import MDFConnectClient
@@ -415,21 +414,6 @@ class Foundry(FoundryMetadata):
         #     self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
 
         return res
-
-    def make_globus_link(self, endpoint_id: str, path: str) -> str:
-        """Create the Globus data source URL for a given datapath on an endpoint
-        Args:
-            endpoint_id (str): The UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
-                the SDK.
-            path (str): The path to the dataset folder on the given endpoint.
-        Returns
-        -------
-            (str): The Globus data source URL (ie the URL that points to the data on a Globus endpoint)
-        """
-        # make sure the path has the "/"s encoded properly for a URL
-        safe_path = urllib.parse.quote(path, safe="*")
-        link = f'https://app.globus.org/file-manager?origin_id={endpoint_id}&origin_path={safe_path}'
-        return link
 
     def publish_model(self, title, creators, short_name, servable_type, serv_options, affiliations=None, paper_doi=None):
         """Simplified publishing method for servables
