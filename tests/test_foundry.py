@@ -11,7 +11,7 @@ import mdf_toolbox
 import pandas as pd
 from mdf_forge import Forge
 from foundry import Foundry
-from foundry.https_upload import _upload_to_endpoint
+from foundry.https_upload import upload_to_endpoint
 from dlhub_sdk import DLHubClient
 from mdf_connect_client import MDFConnectClient
 
@@ -287,11 +287,11 @@ def test_upload_to_endpoint():
     # create test JSON to upload (if it doesn't already exist)
     _write_test_data(local_path, filename)
     # upload via HTTPS to NCSA endpoint
-    globus_data_source, rule_id = f._upload_to_endpoint(local_path, endpoint_id, dest_parent=dest_parent,
-                                                        dest_child=dest_child)
+    globus_data_source, _ = upload_to_endpoint(f.auths, local_path, endpoint_id, dest_parent=dest_parent,
+                                               dest_child=dest_child)
 
-    expected_data_source = f'https://app.globus.org/file-manager?origin_id=' \
-           f'82f1b5c6-6e9b-11e5-ba47-22000b92c6ec&origin_path=%2Ftmp%2F{dest_child}'
+    expected_data_source = f"https://app.globus.org/file-manager?origin_id=" \
+           f"82f1b5c6-6e9b-11e5-ba47-22000b92c6ec&origin_path=%2Ftmp%2F{dest_child}"
     # confirm data source link was created properly, with correct folders
     assert globus_data_source == expected_data_source
 
