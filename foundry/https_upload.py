@@ -44,7 +44,7 @@ def upload_to_endpoint(auths: dict, local_data_path: str, endpoint_id: str = "82
     # create new ACL rule (ie permission) for user to read/write to endpoint and path
     rule_id = ""  # self._create_access_rule(endpoint_id, dest_path)
     # upload data to endpoint
-    globus_data_source = _https_upload(local_data_path=local_data_path, dest_path=dest_path,
+    globus_data_source = _https_upload(auths, local_data_path=local_data_path, dest_path=dest_path,
                                        endpoint_id=endpoint_id)
     return globus_data_source, rule_id
 
@@ -132,9 +132,9 @@ def _https_upload(auths: dict, local_data_path: str, dest_path: str = "/tmp",
 
     # Submit data (folders of files or an independent file) to be written to endpoint
     if os.path.isdir(local_data_path):
-        _upload_folder(local_data_path, https_base_url, dest_path, endpoint_id)
+        _upload_folder(auths, local_data_path, https_base_url, dest_path, endpoint_id)
     elif os.path.isfile(local_data_path):
-        _upload_file(local_data_path, https_base_url, dest_path, endpoint_id)
+        _upload_file(auths, local_data_path, https_base_url, dest_path, endpoint_id)
     else:
         raise IOError(f"Data path '{local_data_path}' is of unknown type")
 
@@ -179,7 +179,7 @@ def _upload_folder(auths: dict, local_data_path: str, https_base_url: str, paren
         for filename in files:
             filepath = os.path.join(root, filename)
             # upload file to destination path on endpoint
-            result = _upload_file(filepath, https_base_url, dest_path, endpoint_id)
+            result = _upload_file(auths, filepath, https_base_url, dest_path, endpoint_id)
             results.append(result)
     return results
 
