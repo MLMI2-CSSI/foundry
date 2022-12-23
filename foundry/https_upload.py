@@ -140,7 +140,7 @@ def _https_upload(auths: dict, local_data_path: str, dest_path: str = "/tmp",
         raise IOError(f"Data path '{local_data_path}' is of unknown type")
 
     # return the data source URL for publication to MDF
-    return make_globus_link(endpoint_id, dest_path)
+    return _make_globus_link(endpoint_id, dest_path)
 
 
 def _upload_folder(auths: dict, local_data_path: str, https_base_url: str, parent_dest_path: str, endpoint_id: str) \
@@ -222,7 +222,7 @@ def _upload_file(auths: dict, filepath: str, https_base_url: str, dest_path: str
     return reply
 
 
-def make_globus_link(endpoint_id: str, path: str) -> str:
+def _make_globus_link(endpoint_id: str, path: str) -> str:
     """Create the Globus data source URL for a given datapath on an endpoint
     Args:
         endpoint_id (str): The UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
