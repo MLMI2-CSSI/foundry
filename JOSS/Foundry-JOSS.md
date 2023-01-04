@@ -42,10 +42,10 @@ bibliography: paper.bib
 # Summary
 
 Machine learning and data science approaches are becoming critical to scientific and technological
-advancement, with thousands of new scientific publications yearly and countless private companies re-
-lying on ML as critical aspects of their business models. For this growth to translate into applications
-and scientific impact, both datasets and models need to be easily accessible for training, retraining, re-
-producing, and verifying usefulness on chosen tasks. Unfortunately, the discovery of datasets, models,
+advancement, with thousands of new scientific publications yearly and countless private companies 
+relying on ML as critical aspects of their business models. For this growth to translate into applications
+and scientific impact, both datasets and models need to be easily accessible for training, retraining, 
+reproducing, and verifying usefulness on chosen tasks. Unfortunately, the discovery of datasets, models,
 and the underlying code is a challenge and often impossible task if they are not published openly.
 
 To overcome this challenge, we introduce Foundry, a service to enable researchers a simple path to publish
@@ -58,8 +58,8 @@ of materials science and chemistry.
 
 # Statement of need
 
-The application of machine learning to science, engineering, and industry-relevant problems is a crit-
-ical, well-recognized component of cross-department U.S. AI strategy, proposed as a new engine to
+The application of machine learning to science, engineering, and industry-relevant problems is a critical,
+well-recognized component of cross-department U.S. AI strategy, proposed as a new engine to
 drive new technological innovation and economic prosperity across numerous diverse sectors. Yet, the
 processes by which data and trained models are made available and the methods that used to measure
 the fitness of these models remains decentralized, without standards, and scattered with a few notable
