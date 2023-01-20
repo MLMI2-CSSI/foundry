@@ -1,7 +1,7 @@
 # Foundry
 
 ---
-title: 'Foundry - Software and Services to Simplify Access to Machine
+title: 'Foundry-ML - Software and Services to Simplify Access to Machine
 Learning Datasets and Models in Materials Science'
 
 tags:
@@ -17,47 +17,67 @@ fill out the equal-contrib part. There are other selections to choose from
 -->
 
 authors:
+   - name: KJ Schmidt
+    orcid: 0000-0000-0000-0000
+    equal-contrib: true 
+    affiliation: "1, 2"
   - name: Aristana Scourtas
     orcid: 0000-0000-0000-0000
     equal-contrib: true
-    affiliation: "1, 2"
-  - name: KJ Schmidt
-    orcid: 0000-0000-0000-0000
-    equal-contrib: true 
     affiliation: "1, 2"
   - name: Marcus Schwarting
     orcid: 0000-0000-0000-0000
     equal-contrib: true
     affiliation: 3
+  - name: Isaac Darling
+    orcid: 0000-0000-0000-0000
+    equal-contrib: true
+    affiliation: 3
+  - name: Ethan Truelove
+    orcid: 0000-0000-0000-0000
+    equal-contrib: true
+    affiliation: 3
+  - name: Aadit Ambadkar
+    orcid: 0000-0000-0000-0000
+    equal-contrib: true
+    affiliation: 1
+  - name: Ribhav Bose
+    orcid: 0000-0000-0000-0000
+    equal-contrib: true
+    affiliation: 1
+  - name: Zoa Katok
+    orcid: 0000-0000-0000-0000
+    equal-contrib: true
+    affiliation: 1
   - name: Jingrui Wei
     orcid: 0000-0000-0000-0000
     equal-contrib: true
     affiliation: 4  
-    - name: Xiangguo Li
+  - name: Xiangguo Li
     orcid: 0000-0-0000-0000
     equal-contrib: true
     affiliation: 4  
-    - name: Ryan Jacobs
+  - name: Ryan Jacobs
     orcid: 0000-0000-0000-0000
     equal-contrib: true
     affiliation: 4 
-    - name: Michael Ferris
+  - name: Michael Ferris
     orcid: 0000-0000-0000-0000
     equal-contrib: true
     affiliation: 5  
-    - name: Paul Voyles
+  - name: Paul Voyles
     orcid: 0000-0000-0000-0000
     equal-contrib: true
     affiliation: 4
-     - name: Dane Morgan
+  - name: Dane Morgan
     orcid: 0000-0000-0000-0000
     equal-contrib: true
     affiliation: 4
-     - name: Ian Foster
+  - name: Ian Foster
     orcid: 0000-0000-0000-0000
     equal-contrib: true
     affiliation: "1, 2, 3"
-     - name: Ben Blaiszik
+  - name: Ben Blaiszik
     orcid: 0000-0000-0000-0000
     equal-contrib: true
     affiliation: "1, 2"
@@ -93,44 +113,63 @@ bibliography: paper.bib
 
 Machine learning and data science approaches are becoming critical to scientific and technological
 advancement, with thousands of new scientific publications yearly[?] and countless private companies relying on ML as critical aspects of their business models[?]. For this growth to translate into applications
-and scientific impact, both datasets and models need to be easily accessible for training, retraining, reproducing, and verifying usefulness on chosen tasks. Unfortunately, the discovery of datasets, models,
-and the underlying code is a challenge and often impossible task if they are not published openly[1].
+and scientific impact, datasets need to be easily accessible for training, retraining, reproducing, and verifying usefulness on chosen tasks. Unfortunately, the discovery of datasets, models, and the underlying code is a challenge and often impossible task if they are not published openly[1].
+<!-- Add references to -->
 
-To overcome this challenge, we introduce Foundry, a service to enable researchers a simple path to publish
-and discover datasets for machine learning in science and to link these datasets to predictive models.
-Foundry is a synthesis of service capabilities from the Materials Data Facility[2] and DLHub[3], layered
-with Python software tooling, standardized metadata, and a file structure specification to meet the
-needs of the machine learning community.
+To overcome this challenge, we introduce Foundry-ML, a service to enable researchers a simple path to publish
+and discover datasets for machine learning in science. Foundry-ML is a synthesis of service capabilities from 
+the Materials Data Facility[2] and DLHub[3], layered with Python software tooling, standardized metadata, and 
+a file structure specification to meet the needs of the machine learning community.
 
 # Statement of need
 
-The application of machine learning to science, engineering, and industry-relevant problems is a critical, well-recognized component of cross-department U.S. AI strategy, proposed as a new engine to
-drive new technological innovation and economic prosperity across numerous diverse sectors. Yet, the
-processes by which data and trained models are made available and the methods that used to measure
-the fitness of these models remains decentralized, without standards, and scattered with a few notable
-exceptions. This in turn makes it costly, and frequently impossible to 1)
-identify models for a specific application, understanding it’s domain of relevance and quantitative 
-performance; 2) reproduce work without expending months of effort; and 3) build upon previous results
-without starting from scratch. While a number of separate services can be used and combined to fulfill
-portions of the requisite workflow, Foundry offers end-to-end coverage from dataset publication,
-model publication and deployment for inference on distributed computing, and benchmark challenge
-creation.
+The application of open science and machine learning to science, engineering, and industry-relevant problems is a critical, well-recognized component of cross-department U.S. AI strategy. In particular, these are proposed as a new engine to drive new technological innovation and economic prosperity across diverse sectors. Yet, the processes by which high-quality datasets remains decentralized, without standards, and scattered with a few notable
+exceptions. With Foundry-ML, we provide 1) a simple Python interface that allows users to access structured ML-ready materials science 
+and chemistry datasets with just a few lines of code and 2) a place where users can publish their own ML-ready datasets in a self-service manner.
 
-Foundry focuses on accessibility, reproducibility, and collaboration within research. Users can upload large datasets and models to Foundry, making them easy to share, use, and discover by the rest of the scientific community.
+<!-- Add screenshot of web user interface -->
+![Foundry Website UI for browsing Datasets. This figure shows a web user interface for browsing available datasets with summary information about the datasets.\label{fig 1}](foundry-datasets.png)
 
-For researchers looking to discover machine learning models and machine learning ready datasets, Foundry provides a curated collection of both. Users can access any Foundry dataset without barriers. All datasets are listed on the website with full instructions on how to use them. We believe in access to high quality data, so all of the datasets go through a curation process where an actual person assesses the data.
+* Foundry-ML focuses on accessibility, reproducibility, and collaboration within research. Users can upload large datasets and models to Foundry, making them easy to share, use, and discover by the rest of the scientific community \autoref{Figure 1}.
 
-With interpretability in mind, we created required metadata that is completed by the authors of each dataset. All metadata is formatted the same way, so it's easy to understand across all of our content. Reproducibility efforts on the data side become almost trivial.
+* Foundry-ML provides a curated collection of machine learning ready datasets. Users can access any Foundry dataset without barriers. All datasets are listed on the website with full instructions on how to use them. We believe in access to high quality data, so all of the datasets go through a curation process where an actual person assesses the data.
 
-Foundry's infrastructure is designed for sharing large files, making collaboration easy.
+* With interpretability in mind, we created required metadata that is completed by the authors of each dataset. All metadata is formatted the same way, so it's easy to understand across all of our content. Reproducibility efforts on the data side become almost trivial.
 
-Foundry is designed to be domain agnostic,
-which allows our software to be a part of solving problems across scientific domains.
-It has been successfully used by graduate students and researchers at the University of Wisconsin[4], MIT[5], and
-the University of Chicago[6].
-The level of accessibility, ease of use, and compute resources enable Foundry to further
-exciting developments science.
+Foundry-ML's infrastructure built with MDF and Globus is designed for sharing large files, making collaboration easy.
 
+While the example presented here come from the domains of materials science and chemistry, Foundry-ML is designed to be domain agnostic. This
+will allow the same software to be a part of solving similar problems across scientific domains.
+
+As of Q1 2023, we have collected and made available 30 datasets in the Foundry format with examples ranging from tabular data 
+<!-- Fix these refs (e.g., Zeolite, Logan's work...)  -->
+to image sets 
+<!-- Fix these refs (Northwestern, Wisconsin, ARPA-E.. ) -->
+
+It has been successfully used in educational curricula
+<!-- Cite Northwestern NanoHub -->
+<!-- @misc { 35361,
+	title = {Machine Learning in Materials Science: Image Analysis Using Convolutional Neural Networks in MatCNN},
+	month = {Nov},
+	url = {https://nanohub.org/resources/35361},
+	year = {2021},
+	author = {Stan , Tiberiu and James , Jim and Pruyne , Nathan and Schwarting , Marcus and Yeom , Jiwon and Voorhees , Peter and Blaiszik , Ben J and Foster , Ian and Emery , Jonathan D}
+} -->
+and by research teams at the University of Chicago, Argonne National Lab, the University of Wisconsin, MIT \autoref{fig 2}, and more. In \autoref{Figure 2}, we highlight a use case for the ML-guided design of organic structure–directing agents (OSDAs) to promote zeolite formation. With just a few lines of code and the dataset DOI \autoref{fig 2}a, a researcher can load descriptive metadata \autoref{fig 2}b to understand the dataset contents, and load the data \autoref{fig 2}c for analysis and exploration.     
+<!-- cite{DOI: 10.1126/science.abh3350} -->
+
+
+<!-- Screenshot showing one use case -->
+![A Foundry-ML use case for zeolite design. (a) A user instantiates the Python client and loads the descriptive metadata using the DOI. (b) Descriptive metadata includes information about the keys included in the datasets, associated units, and a short description. The metadata also include information about the dataset including the associated splits (e.g., train, test, validate), and the amount of data included. (c) A user can then load the data using the `load_data` function. This function returns a Pandas or Dask dataframe for tabular data.  The zeolite dataset show here, its metadata, and the data itself from researchers Daniel Schwalba-Koda and Rafael Gomez-Bombarelli.\label{fig 2}](JOSS-zeolite.png)
+
+
+# Future Directions
+ <!-- Mention models and Garden connections -->
+ In future work, we intend to add capabilities to Foundry-ML that enable publication and connection with machine learning models creating a combined ecosystem of datasets and models. This work will be completed in collaboration with the new NSF project (#2209892) Garden: A FAIR Framework for Publishing and Applying AI Models for Translational Research in Science, Engineering, Education, and Industry.
+
+# Documentation
+<!-- Link notebooks and docs -->
+To learn more, please read our [documentation](https://ai-materials-and-chemistry.gitbook.io/foundry/v/docs/) and look through our [example notebooks](https://github.com/MLMI2-CSSI/foundry/tree/main/examples). 
 
 # Citations
 
@@ -193,6 +232,6 @@ Figure sizes can be customized by adding an optional second parameter:
 
 # Acknowledgements
 
-We acknowledge contributions from 
+This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure". **MDF** This work was performed under the following financial assistance award 70NANB19H005 from U.S. Department of Commerce, National Institute of Standards and Technology as part of the Center for Hierarchical Materials Design (CHiMaD).
 
 # References
