@@ -116,6 +116,14 @@ portions of the requisite workflow, Foundry offers end-to-end coverage from data
 model publication and deployment for inference on distributed computing, and benchmark challenge
 creation.
 
+Foundry focuses on accessibility, reproducibility, and collaboration within research. Users can upload large datasets and models to Foundry, making them easy to share, use, and discover by the rest of the scientific community.
+
+For researchers looking to discover machine learning models and machine learning ready datasets, Foundry provides a curated collection of both. Users can access any Foundry dataset without barriers. All datasets are listed on the website with full instructions on how to use them. We believe in access to high quality data, so all of the datasets go through a curation process where an actual person assesses the data.
+
+With interpretability in mind, we created required metadata that is completed by the authors of each dataset. All metadata is formatted the same way, so it's easy to understand across all of our content. Reproducibility efforts on the data side become almost trivial.
+
+Foundry's infrastructure is designed for sharing large files, making collaboration easy.
+
 Foundry is designed to be domain agnostic,
 which allows our software to be a part of solving problems across scientific domains.
 It has been successfully used by graduate students and researchers at the University of Wisconsin[4], MIT[5], and
