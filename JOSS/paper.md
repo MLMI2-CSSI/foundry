@@ -11,15 +11,19 @@ tags:
 
 authors:
   - name: KJ Schmidt
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-9373-0058
     equal-contrib: true 
     affiliation: "1, 2"
   - name: Aristana Scourtas
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-3917-605X
     equal-contrib: true
     affiliation: "1, 2"
+  - name: Logan Ward
+    orcid: 0000-0002-1323-5939
+    equal-contrib: false
+    affiliation: 2
   - name: Marcus Schwarting
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0001-6817-7265
     equal-contrib: false
     affiliation: 3
   - name: Isaac Darling
@@ -55,23 +59,23 @@ authors:
     equal-contrib: false
     affiliation: 4 
   - name: Michael Ferris
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-7652-6776
     equal-contrib: false
     affiliation: 5  
   - name: Paul Voyles
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0001-9438-4284
     equal-contrib: false
     affiliation: 4
   - name: Dane Morgan
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-4911-0046
     equal-contrib: false
     affiliation: 4
   - name: Ian Foster
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0003-2129-5269
     equal-contrib: false
     affiliation: "1, 2, 3"
   - name: Ben Blaiszik
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0002-5326-4902
     equal-contrib: false
     affiliation: "1, 2"
 
@@ -100,8 +104,7 @@ bibliography: paper.bib
 
 # Summary
 
-The application of open science and machine learning to science, engineering, and industry-relevant problems is a critical, component of cross-department U.S. AI strategy highlighted e.g., by the AI Initiative, the Year of Open Data, and Materials Genome Initiative. As of 2023, ML and data science approaches are becoming central to scientific and technological
-advancement, with thousands of new scientific publications yearly[cite Blaiszik]. For this growth to translate more rapidly into applications and scientific impact, it's important for datasets to be easily accessible for training, retraining, reproducing, and verifying model usefulness on chosen tasks. However, the discovery of high-quality, curated datasets is a challenge.
+The application of open science and machine learning to science, engineering, and industry-relevant problems is a critical, component of cross-department U.S. AI strategy highlighted e.g., by the AI Initiative, the recent National AI Strategy report [@nairr], the Year of Open Data [@yearofopendata], and Materials Genome Initiative [@mgidepablo;@ward2015materials]. For this growth to translate more rapidly into applications and scientific impact, it's important for datasets to be easily accessible for training, retraining, reproducing, and verifying model usefulness on chosen tasks. However, the discovery of high-quality, curated datasets is a challenge.
 <!-- Add references to -->
 
 To overcome this dataset access challenge, we introduce Foundry-ML, a service to enable researchers a simple path to publish
@@ -120,19 +123,15 @@ The processes by which high-quality structured science datasets are published an
 
 * A prototype web interface has been developed (\autoref{fig2}), listing all datasets with instructions on how to access them. 
 
-* With interpretability in mind, we Foundry-ML datasets have required metadata (see \autoref{fig1}b) that are provided by the authors of each dataset. All metadata are stored in Globus Search [@globuspublish] to facilitate queries. Query helpers are provided through the Foundry-ML Python client.
+* With interpretability in mind, Foundry-ML datasets have required metadata (see \autoref{fig1}b) that are provided by the authors of each dataset. All metadata are stored in Globus Search [@globuspublish] to facilitate queries. Query helpers are provided through the Foundry-ML Python client.
 
 ![Foundry Website UI for browsing Datasets. This figure shows a web user interface for browsing available datasets with summary information about the datasets.\label{fig2}](foundry-datasets.png)
 
-While the example presented here come from the domains of materials science and chemistry, Foundry-ML is ultimately designed to be domain agnostic. This
-will allow the same software to be a part of solving similar problems across scientific domains.
+While the example presented here come from the domains of materials science and chemistry, Foundry-ML is  designed to be domain agnostic. This will allow the same software to be a part of solving similar problems across scientific domains.
 
 
-<!-- Fix these refs (e.g., Zeolite, Logan's work...)  -->
-
-to image sets 
-<!-- Fix these refs (Northwestern, Wisconsin, ARPA-E.. ) -->
-It has been successfully used in educational curricula [@foundrynanohub]
+# Usage
+Foundry has been successfully used in educational curricula [@foundrynanohub]
 and by research teams at the University of Chicago, Argonne National Lab, the University of Toronto [@dmc], 3M [@mmm], the University of Wisconsin [@wei2021benchmark; @li2021graph], MIT [@schwalbe2021priori] \autoref{fig 2}, and more. In \autoref{fig 2}, we highlight a use case for the ML-guided design of organic structure–directing agents (OSDAs) to promote zeolite formation. With just a few lines of code and the dataset DOI \autoref{fig1}a, a researcher can load descriptive metadata \autoref{fig1}b to understand the dataset contents, and load the data \autoref{fig1}c for analysis and exploration.     
 
 # Future Directions
