@@ -11,13 +11,8 @@ tags:
   - Materials Science
   - Data
 
-<!-- to do: 
-Update authors with ORCID ID's
-fill out the equal-contrib part. There are other selections to choose from
--->
-
 authors:
-   - name: KJ Schmidt
+  - name: KJ Schmidt
     orcid: 0000-0000-0000-0000
     equal-contrib: true 
     affiliation: "1, 2"
@@ -124,27 +119,23 @@ and chemistry datasets with just a few lines of code, 2) a prototype web based i
 
 
 
-* Foundry-ML focuses on accessibility and reproducibility. \autoref{fig2} shows an example of how, with just a few lines of code, researchers can access a curated collection of ML-ready datasets, the associated metadata describing the dataset contents, split details, and other information (). 
+* Foundry-ML focuses on accessibility and reproducibility. \autoref{fig2} shows an example of how, with just a few lines of code, researchers can access a curated collection of ML-ready datasets, the associated metadata describing the dataset contents, split details, and other information (). As of Q1 2023, we have collected and made available 30 datasets in the Foundry format with data represented in formats including tabular data (e.g., csv, Excel), key-value data (e.g, JSON), to image sets and hierarchical data (e.g., HDF5). 
 
 <!-- Screenshot showing one use case -->
 ![A Foundry-ML use case for zeolite design. (a) A user instantiates the Python client and loads the descriptive metadata using the DOI. (b) Descriptive metadata includes information about the keys included in the datasets, associated units, and a short description. The metadata also include information about the dataset including the associated splits (e.g., train, test, validate), and the amount of data included. (c) A user can then load the data using the `load_data` function. This function returns a Pandas or Dask dataframe for tabular data.  The zeolite dataset show here, its metadata, and the data itself from researchers Daniel Schwalba-Koda and Rafael Gomez-Bombarelli.\label{fig 1}](JOSS-zeolite.png)
 
 * Building on the Materials Data Facility, Foundry-ML users can upload large datasets, making them easy to share, use, and discover by the rest of the scientific community.
 
-* A prototype web interface has been developed (\autoref{fig2}), listing all datasets with instructions on how to access them. We believe in access to high-quality data, so all of the datasets go through a curation process where an actual person assesses the data. 
+* A prototype web interface has been developed (\autoref{fig2}), listing all datasets with instructions on how to access them. 
 
-* With interpretability in mind, we created required metadata that is completed by the authors of each dataset. All metadata is formatted the same way, so it's easy to understand across all of our content. Reproducibility efforts on the data side become almost trivial.
+* With interpretability in mind, we Foundry-ML datasets have required metadata (see \autoref{fig2}b) that are provided by the authors of each dataset. All metadata are stored in Globus Search to facilitate queries. Query helpers are provided through the Foundry-ML Python SDK.
 
-
-<!-- Add screenshot of web user interface -->
 ![Foundry Website UI for browsing Datasets. This figure shows a web user interface for browsing available datasets with summary information about the datasets.\label{fig 1}](foundry-datasets.png)
 
-Foundry-ML's infrastructure built with MDF and Globus is designed for sharing large files, making collaboration easy.
-
-While the example presented here come from the domains of materials science and chemistry, Foundry-ML is designed to be domain agnostic. This
+While the example presented here come from the domains of materials science and chemistry, Foundry-ML is ultimately designed to be domain agnostic. This
 will allow the same software to be a part of solving similar problems across scientific domains.
 
-As of Q1 2023, we have collected and made available 30 datasets in the Foundry format with examples ranging from tabular data 
+
 <!-- Fix these refs (e.g., Zeolite, Logan's work...)  -->
 to image sets 
 <!-- Fix these refs (Northwestern, Wisconsin, ARPA-E.. ) -->
