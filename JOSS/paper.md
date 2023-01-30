@@ -1,5 +1,3 @@
-# Foundry
-
 ---
 title: 'Foundry-ML - Software and Services to Simplify Access to Machine
 Learning Datasets and Models in Materials Science'
@@ -102,116 +100,46 @@ bibliography: paper.bib
 
 # Summary
 
-Machine learning (ML) and data science approaches are becoming central to scientific and technological
-advancement, with thousands of new scientific publications yearly[?] and countless private companies relying on ML as critical aspects of their business models[?]. For this growth to translate more rapidly into applications and scientific impact, it's important for datasets to be easily accessible for training, retraining, reproducing, and verifying usefulness on chosen tasks. However, the discovery of datasets is a challenge and often impossible task if they are not published openly[1] or easily accessible even when published.
+The application of open science and machine learning to science, engineering, and industry-relevant problems is a critical, component of cross-department U.S. AI strategy highlighted e.g., by the AI Initiative, the Year of Open Data, and Materials Genome Initiative. As of 2023, ML and data science approaches are becoming central to scientific and technological
+advancement, with thousands of new scientific publications yearly[cite Blaiszik]. For this growth to translate more rapidly into applications and scientific impact, it's important for datasets to be easily accessible for training, retraining, reproducing, and verifying model usefulness on chosen tasks. However, the discovery of high-quality, curated datasets is a challenge.
 <!-- Add references to -->
 
 To overcome this dataset access challenge, we introduce Foundry-ML, a service to enable researchers a simple path to publish
-and discover structured datasets for machine learning in science, specifically in materials science and chemistry. Foundry-ML is a built on top of services including 
-the Materials Data Facility[2], and Globus combined with Python software tooling, standardized metadata, and 
-a file structure specification to dramatically simplify data access patterns.
+and discover structured datasets for ML in science, specifically in materials science and chemistry. Foundry-ML consists of a Python client, a web app, and standardized metadata and file structure built on top of services including the Materials Data Facility[2], and Globus combined with Python software tooling, standardized metadata, to dramatically simplify data access patterns.
 
 # Statement of need
 
-The application of open science and machine learning to science, engineering, and industry-relevant problems is a critical, well-recognized component of cross-department U.S. AI strategy. In particular, these are proposed as a new engine to drive technological innovation and economic prosperity across diverse sectors. Yet, the processes by which high-quality datasets are published and accessed remains decentralized, without standards, and scattered with a few notable
-exceptions [cite MatBench, MOSES, etc.]. With Foundry-ML, we provide 1) a simple Python interface that allows users to access structured ML-ready materials science 
-and chemistry datasets with just a few lines of code, 2) a prototype web based interface for dataset search and discovery, and 3) a place where users can publish their own ML-ready datasets in a self-service manner.
+The processes by which high-quality structured science datasets are published and accessed remains decentralized, without standards, and scattered with some exceptions (e.g., [@matbench, @moses, @moleculenet; @wei2021benchmark]). With Foundry-ML, we provide 1) a simple Python interface that allows users to access structured ML-ready materials science and chemistry datasets with just a few lines of code, 2) a prototype web based interface for dataset search and discovery, and 3) a place where users can publish their own ML-ready datasets in a self-service manner.
 
-
-
-* Foundry-ML focuses on accessibility and reproducibility. \autoref{fig2} shows an example of how, with just a few lines of code, researchers can access a curated collection of ML-ready datasets, the associated metadata describing the dataset contents, split details, and other information (). As of Q1 2023, we have collected and made available 30 datasets in the Foundry format with data represented in formats including tabular data (e.g., csv, Excel), key-value data (e.g, JSON), to image sets and hierarchical data (e.g., HDF5). 
+* Foundry-ML focuses foremost on accessibility and reproducibility. \autoref{fig1} shows an example of how, with just a few lines of code, researchers can access a curated collection of ML-ready datasets, the associated metadata describing the dataset contents, split details, and other information (e.g., number of entries). As of Q1 2023, we have collected and made available 30 datasets in the Foundry format with data represented in formats including tabular data (e.g., csv, Excel), key-value data (e.g, JSON), to image sets and hierarchical data (e.g., HDF5). 
 
 <!-- Screenshot showing one use case -->
-![A Foundry-ML use case for zeolite design. (a) A user instantiates the Python client and loads the descriptive metadata using the DOI. (b) Descriptive metadata includes information about the keys included in the datasets, associated units, and a short description. The metadata also include information about the dataset including the associated splits (e.g., train, test, validate), and the amount of data included. (c) A user can then load the data using the `load_data` function. This function returns a Pandas or Dask dataframe for tabular data.  The zeolite dataset show here, its metadata, and the data itself from researchers Daniel Schwalba-Koda and Rafael Gomez-Bombarelli.\label{fig 1}](JOSS-zeolite.png)
+![A Foundry-ML use case for zeolite design. (a) A user instantiates the Foundry-ML Python client and loads the descriptive metadata using the DOI. (b) Descriptive metadata includes information about the keys included in the datasets, associated units, and a short description. The metadata also include information about the dataset including the associated splits (e.g., train, test, validate), and the amount of data included. (c) A user can then load the data using the `load_data` function. This function returns a Pandas or Dask dataframe for tabular data.  The zeolite dataset show here, its metadata, and the data itself from researchers Daniel Schwalba-Koda and Rafael Gomez-Bombarelli.\label{fig1}](JOSS-zeolite.png)
 
-* Building on the Materials Data Facility, Foundry-ML users can upload large datasets, making them easy to share, use, and discover by the rest of the scientific community.
+* Building on the Materials Data Facility [@mdf-2019; @mdf-2016], Foundry-ML users can upload large datasets (MDF supports multi-TB datases, with potentially millions of files), making them easy to share, use, and discover by the rest of the scientific community.
 
 * A prototype web interface has been developed (\autoref{fig2}), listing all datasets with instructions on how to access them. 
 
-* With interpretability in mind, we Foundry-ML datasets have required metadata (see \autoref{fig2}b) that are provided by the authors of each dataset. All metadata are stored in Globus Search to facilitate queries. Query helpers are provided through the Foundry-ML Python SDK.
+* With interpretability in mind, we Foundry-ML datasets have required metadata (see \autoref{fig1}b) that are provided by the authors of each dataset. All metadata are stored in Globus Search [@globuspublish] to facilitate queries. Query helpers are provided through the Foundry-ML Python client.
 
-![Foundry Website UI for browsing Datasets. This figure shows a web user interface for browsing available datasets with summary information about the datasets.\label{fig 1}](foundry-datasets.png)
+![Foundry Website UI for browsing Datasets. This figure shows a web user interface for browsing available datasets with summary information about the datasets.\label{fig2}](foundry-datasets.png)
 
 While the example presented here come from the domains of materials science and chemistry, Foundry-ML is ultimately designed to be domain agnostic. This
 will allow the same software to be a part of solving similar problems across scientific domains.
 
 
 <!-- Fix these refs (e.g., Zeolite, Logan's work...)  -->
+
 to image sets 
 <!-- Fix these refs (Northwestern, Wisconsin, ARPA-E.. ) -->
-
-It has been successfully used in educational curricula
-<!-- Cite Northwestern NanoHub -->
-<!-- @misc { 35361,
-	title = {Machine Learning in Materials Science: Image Analysis Using Convolutional Neural Networks in MatCNN},
-	month = {Nov},
-	url = {https://nanohub.org/resources/35361},
-	year = {2021},
-	author = {Stan , Tiberiu and James , Jim and Pruyne , Nathan and Schwarting , Marcus and Yeom , Jiwon and Voorhees , Peter and Blaiszik , Ben J and Foster , Ian and Emery , Jonathan D}
-} -->
-and by research teams at the University of Chicago, Argonne National Lab, the University of Wisconsin, MIT \autoref{fig 2}, and more. In \autoref{Figure 2}, we highlight a use case for the ML-guided design of organic structure–directing agents (OSDAs) to promote zeolite formation. With just a few lines of code and the dataset DOI \autoref{fig 2}a, a researcher can load descriptive metadata \autoref{fig 2}b to understand the dataset contents, and load the data \autoref{fig 2}c for analysis and exploration.     
-<!-- cite{DOI: 10.1126/science.abh3350} -->
-
-
-
+It has been successfully used in educational curricula [@foundrynanohub]
+and by research teams at the University of Chicago, Argonne National Lab, the University of Toronto [@dmc], 3M [@mmm], the University of Wisconsin [@wei2021benchmark; @li2021graph], MIT [@schwalbe2021priori] \autoref{fig 2}, and more. In \autoref{fig 2}, we highlight a use case for the ML-guided design of organic structure–directing agents (OSDAs) to promote zeolite formation. With just a few lines of code and the dataset DOI \autoref{fig1}a, a researcher can load descriptive metadata \autoref{fig1}b to understand the dataset contents, and load the data \autoref{fig1}c for analysis and exploration.     
 
 # Future Directions
- <!-- Mention models and Garden connections -->
  In future work, we intend to add capabilities to Foundry-ML that enable publication and connection of datasets with ML models creating a combined ecosystem of datasets and models. This work will be completed in collaboration with the new NSF project (#2209892) Garden: A FAIR Framework for Publishing and Applying AI Models for Translational Research in Science, Engineering, Education, and Industry.
 
 # Documentation
-<!-- Link notebooks and docs -->
-To learn more, please read our [documentation](https://ai-materials-and-chemistry.gitbook.io/foundry/v/docs/) and look through our [example notebooks](https://github.com/MLMI2-CSSI/foundry/tree/main/examples). 
-
-# Citations
-
-<!-- Notes to be organized before putting it all in the bib:
-
-1. Reproducibility standards for machine learning in the life sciences
-
-  Maybe also: 
-  D. Morgan and R. Jacobs, “Opportunities and challenges for machine learning in materials science,”
-  Annual Review of Materials Research, vol. 50, pp. 71–103, 2020
-
-2. MDF paper(s) - 
-  B. Blaiszik, L. Ward, M. Schwarting, J. Gaff, R. Chard, D. Pike, K. Chard, and I. Foster, “A data ecosys-
-  tem to support machine learning in materials science,” MRS Communications, vol. 9, no. 4, pp. 1125–
-  1133, 2019
-
-  B. Blaiszik, K. Chard, J. Pruyne, R. Ananthakrishnan, S. Tuecke, and I. Foster, “The Materials Data
-  Facility: Data services to advance materials science research,” Journal of Materials, 2016.
-
-3. DLHub paper - 
-  Z. Li, R. Chard, L. Ward, K. Chard, T. J. Skluzacek, Y. Babuji, A. Woodard, S. Tuecke, B. Blaiszik,
-  and M. J. Franklin, “DLHub: Simplifying publication, discovery, and use of machine learning models in
-  science,” Journal of Parallel and Distributed Computing, vol. 147, pp. 64–76, 2021.
-
-4. UW paper (bandgaps or atom position finding) - 
-  J. Wei, B. Blaiszik, D. Morgan, and P. Voyles, “Benchmark tests of atom-locating CNN models with a
-  consistent dataset,” Microscopy and Microanalysis, vol. 27, no. S1, pp. 2518–2520, 2021.
-
-  X.-G. Li, B. Blaiszik, M. E. Schwarting, R. Jacobs, A. Scourtas, K. Schmidt, P. M. Voyles, and D. Mor-
-  gan, “Graph network based deep learning of bandgaps,” The Journal of Chemical Physics, vol. 155,
-  no. 15, p. 154702, 2021
-
-5. Zeolite paper
-
-6. ?  
-
--->
-
-
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
-
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
-
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
+To learn more, we have documentation available via GitBook at the following location [GitBook documentation](https://ai-materials-and-chemistry.gitbook.io/foundry/v/docs/). We also have made available a number of [example notebooks](https://github.com/MLMI2-CSSI/foundry/tree/main/examples) that show how to publish and retrieve Foundry-ML datasets. 
 
 # Acknowledgements
 
