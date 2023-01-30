@@ -1,3 +1,4 @@
+name: Generate paper draft
 on: [push]
 
 jobs:
