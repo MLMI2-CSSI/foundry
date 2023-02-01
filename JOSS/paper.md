@@ -104,11 +104,11 @@ bibliography: paper.bib
 
 # Summary
 
-The application of open science and machine learning to science, engineering, and industry-relevant problems is a critical, component of cross-department U.S. AI strategy highlighted e.g., by the AI Initiative, the recent National AI Strategy report [@nairr], the Year of Open Data [@yearofopendata], and Materials Genome Initiative [@mgidepablo;@ward2015materials]. For this growth to translate more rapidly into applications and scientific impact, it's important for datasets to be easily accessible for training, retraining, reproducing, and verifying model usefulness on chosen tasks. However, the discovery of high-quality, curated datasets is a challenge.
+The application of open science and machine learning to scientific, engineering, and industry-relevant problems is a critical component of the cross-department U.S. AI strategy highlighted e.g., by the AI Initiative, the recent National AI Strategy report [@nairr], the Year of Open Data [@yearofopendata], and Materials Genome Initiative [@mgidepablo;@ward2015materials]. For this growth to translate more rapidly into applications and scientific impact, it's important for datasets to be easily accessible for training, retraining, reproducing, and verifying model usefulness on chosen tasks. However, the discovery of high-quality, curated datasets is a challenge.
 <!-- Add references to -->
 
 To overcome this dataset access challenge, we introduce Foundry-ML, a service to enable researchers a simple path to publish
-and discover structured datasets for ML in science, specifically in materials science and chemistry. Foundry-ML consists of a Python client, a web app, and standardized metadata and file structure built on top of services including the Materials Data Facility[2], and Globus combined with Python software tooling, standardized metadata, to dramatically simplify data access patterns.
+and discover structured datasets for ML in science, specifically in materials science and chemistry. Foundry-ML consists of a Python client, a web app, and standardized metadata and file structures built on top of services including the Materials Data Facility[2] and Globus; these services work in conjunction with Python software tooling to dramatically simplify data access patterns.
 
 # Statement of need
 
