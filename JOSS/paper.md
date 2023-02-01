@@ -57,6 +57,14 @@ authors:
   - name: Ryan Jacobs
     orcid: 0000-0000-0000-0000
     equal-contrib: false
+    affiliation: 4   
+  - name: Lane Schultz
+    orcid: 0000-0000-0000-0000
+    equal-contrib: false
+    affiliation: 4 
+  - name: Doyeon Kim
+    orcid: 0000-0000-0000-0000
+    equal-contrib: false
     affiliation: 4 
   - name: Michael Ferris
     orcid: 0000-0002-7652-6776
