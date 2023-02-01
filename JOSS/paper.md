@@ -1,6 +1,6 @@
 ---
 title: 'Foundry-ML - Software and Services to Simplify Access to Machine
-Learning Datasets and Models in Materials Science'
+Learning Datasets in Materials Science'
 
 tags:
   - Python
