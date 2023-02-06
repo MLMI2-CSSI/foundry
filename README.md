@@ -14,7 +14,7 @@ Foundry simplifies the discovery and usage of ML-ready datasets in materials sci
 * Load ML-ready data with just a few lines of code
 * Work with datasets in local or cloud environments. 
 * Publish your own datasets with Foundry to promote community usage
-* (in progress) Run published ML models without no hassle
+* (in progress) Run published ML models without hassle
 
 
 
