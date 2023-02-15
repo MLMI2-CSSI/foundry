@@ -1,7 +1,7 @@
 
 <picture>
-  <source srcset="https://raw.githubusercontent.com/MLMI2-CSSI/foundry/main/assets/foundry-light.png" height=175" media="(prefers-color-scheme: dark)">
-  <img src="https://raw.githubusercontent.com/MLMI2-CSSI/foundry/main/assets/foundry-dark.png" height="175">
+  <source srcset="https://raw.githubusercontent.com/MLMI2-CSSI/foundry/main/assets/foundry-white.png" height=175" media="(prefers-color-scheme: dark)">
+  <img src="https://raw.githubusercontent.com/MLMI2-CSSI/foundry/main/assets/foundry-black.png" height="175">
 </picture>
 
 [![PyPI](https://img.shields.io/pypi/v/foundry_ml.svg)](https://pypi.python.org/pypi/foundry_ml)
@@ -10,7 +10,7 @@
 [![NSF-1931306](https://img.shields.io/badge/NSF-1931306-blue)](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1931306&HistoricalAwards=false)
 
 
-Foundry simplifies the discovery and usage of ML-ready datasets in materials science and chemistry providing a simple API to access even complex datasets. 
+Foundry-ML simplifies the discovery and usage of ML-ready datasets in materials science and chemistry providing a simple API to access even complex datasets. 
 * Load ML-ready data with just a few lines of code
 * Work with datasets in local or cloud environments. 
 * Publish your own datasets with Foundry to promote community usage
@@ -19,15 +19,15 @@ Foundry simplifies the discovery and usage of ML-ready datasets in materials sci
 
 
 # Documentation
-Information on how to install and use foundry can be found in our documentation [here](https://ai-materials-and-chemistry.gitbook.io/foundry/v/docs/).
+Information on how to install and use Foundry is available in our documentation [here](https://ai-materials-and-chemistry.gitbook.io/foundry/v/docs/).
 
 DLHub documentation for model publication and running information can be found [here](https://dlhub-sdk.readthedocs.io/en/latest/servable-publication.html).
 
 # Quick Start
-Install Foundry via command line with:
+Install Foundry-ML via command line with:
 `pip install foundry_ml`
 
-You can use the following code to import and instantiate Foundry, then load a dataset.
+You can use the following code to import and instantiate Foundry-ML, then load a dataset.
 
 ```python
 from foundry import Foundry
@@ -66,7 +66,7 @@ for i in range(n_images):
 This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure".
 
 # Other Support
-Foundry brings together many components in the materials data ecosystem. Including [MAST-ML](https://mastmldocs.readthedocs.io/en/latest/), the [Data and Learning Hub for Science](https://www.dlhub.org) (DLHub), and the [Materials Data Facility](https://materialsdatafacility.org) (MDF).
+Foundry-ML brings together many components in the materials data ecosystem. Including [MAST-ML](https://mastmldocs.readthedocs.io/en/latest/), the [Data and Learning Hub for Science](https://www.dlhub.org) (DLHub), and the [Materials Data Facility](https://materialsdatafacility.org) (MDF).
 
 ## MAST-ML
 This work was supported by the National Science Foundation (NSF) SI2 award No. 1148011 and DMREF award number DMR-1332851
