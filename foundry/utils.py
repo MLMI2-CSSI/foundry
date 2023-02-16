@@ -24,7 +24,6 @@ def _read_json(path_to_file, lines=False):
     Returns: (dict) JSON file contents
     """
     df = pd.read_json(path_to_file, lines=lines)
-    print(df)
     return df
 
 
