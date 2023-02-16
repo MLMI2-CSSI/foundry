@@ -16,6 +16,8 @@ Foundry-ML simplifies the discovery and usage of ML-ready datasets in materials 
 * Publish your own datasets with Foundry to promote community usage
 * (in progress) Run published ML models without hassle
 
+Learn more and see our available datasets on [Foundry-ML.org](https://foundry-ml.org/)
+
 
 
 # Documentation
