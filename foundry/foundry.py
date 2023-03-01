@@ -23,6 +23,7 @@ from foundry.models import (
     FoundryDataset
 )
 from foundry.https_download import download_file, recursive_ls
+from foundry.https_upload import upload_to_endpoint
 
 
 logger = logging.getLogger(__name__)
@@ -395,7 +396,7 @@ class Foundry(FoundryMetadata):
         # upload via HTTPS if specified
         if https_data_path:
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
-            globus_data_source, rule_id = self._upload_to_endpoint(https_data_path, endpoint_id)
+            globus_data_source, rule_id = upload_to_endpoint(self.auths, https_data_path, endpoint_id)
 
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
