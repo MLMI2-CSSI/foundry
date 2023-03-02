@@ -411,8 +411,8 @@ class Foundry(FoundryMetadata):
             res = None
 
         # if uploaded by HTTPS, delete ACL rule after dataset submission is complete
-        # if https_data_path and rule_id:
-        #     self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
+        if https_data_path and rule_id:
+            self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
 
         return res
 

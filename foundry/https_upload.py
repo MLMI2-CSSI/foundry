@@ -43,7 +43,7 @@ def upload_to_endpoint(auths: dict, local_data_path: str, endpoint_id: str = "82
     # define upload destination
     dest_path = _create_dest_folder(auths, endpoint_id, parent_dir=dest_parent, child_dir=dest_child)
     # create new ACL rule (ie permission) for user to read/write to endpoint and path
-    rule_id = ""  # self._create_access_rule(endpoint_id, dest_path)
+    rule_id = _create_access_rule(auths, endpoint_id, dest_path)
     # upload data to endpoint
     globus_data_source = _https_upload(auths, local_data_path=local_data_path, dest_path=dest_path,
                                        endpoint_id=endpoint_id)
