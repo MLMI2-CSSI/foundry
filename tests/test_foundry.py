@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import pytest
+from collections import namedtuple
 from filecmp import cmp
 from datetime import datetime
 from math import floor
@@ -13,6 +14,7 @@ from mdf_forge import Forge
 from foundry import Foundry
 from foundry.https_upload import upload_to_endpoint
 from dlhub_sdk import DLHubClient
+from globus_sdk import AuthClient
 from mdf_connect_client import MDFConnectClient
 
 
@@ -286,8 +288,17 @@ def test_upload_to_endpoint():
     f = Foundry(index="mdf-test", authorizers=auths)
     # create test JSON to upload (if it doesn't already exist)
     _write_test_data(local_path, filename)
+
+    # gather auth'd clients necessary for publication to endpoint
+    PubAuths = namedtuple("Auths", ["transfer_client", "auth_client_openid", "auth_client_gcs"])
+    scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"  # lets you HTTPS to specific endpoint
+    pub_auths = PubAuths(
+        transfer_client=f.auths["transfer"],
+        auth_client_openid=AuthClient(authorizer=f.auths['openid']),
+        auth_client_gcs=AuthClient(authorizer=f.auths[scope])
+    )
     # upload via HTTPS to NCSA endpoint
-    globus_data_source, _ = upload_to_endpoint(f.auths, local_path, endpoint_id, dest_parent=dest_parent,
+    globus_data_source, _ = upload_to_endpoint(pub_auths, local_path, endpoint_id, dest_parent=dest_parent,
                                                dest_child=dest_child)
 
     expected_data_source = f"https://app.globus.org/file-manager?origin_id=" \

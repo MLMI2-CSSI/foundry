@@ -9,6 +9,7 @@ import logging
 import warnings
 import os
 from concurrent.futures import ThreadPoolExecutor
+from collections import namedtuple
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
@@ -395,9 +396,17 @@ class Foundry(FoundryMetadata):
 
         # upload via HTTPS if specified
         if https_data_path:
+            # gather auth'd clients necessary for publication to endpoint
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
-            globus_data_source, rule_id = upload_to_endpoint(self.auths, https_data_path, endpoint_id)
-
+            PubAuths = namedtuple("Auths", ["transfer_client", "auth_client_openid", "auth_client_gcs"])
+            scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"  # lets you HTTPS to specific endpoint
+            pub_auths = PubAuths(
+                transfer_client=self.auths["transfer"],
+                auth_client_openid=AuthClient(authorizer=self.auths['openid']),
+                auth_client_gcs=AuthClient(authorizer=self.auths[scope])
+            )
+            # upload (ie publish) data to endpoint
+            globus_data_source, rule_id = upload_to_endpoint(pub_auths, https_data_path, endpoint_id)
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
         # set dataset name using the title if an abbreviated short_name isn't specified

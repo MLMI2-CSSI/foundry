@@ -10,6 +10,7 @@ Authors:
 Last modified 12/21/22 by Isaac Darling
 """
 
+from collections import namedtuple
 import logging
 import os
 import urllib
@@ -17,22 +18,24 @@ from requests import put, Response
 from typing import Any, Tuple, Dict, List
 from uuid import uuid4
 
-from globus_sdk import AuthClient, TransferAPIError
+from globus_sdk import AuthClient, TransferClient, TransferAPIError
 
 
 logger = logging.getLogger(__name__)
 
 
-def upload_to_endpoint(auths: dict, local_data_path: str, endpoint_id: str = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
+def upload_to_endpoint(auths: namedtuple, local_data_path: str, endpoint_id: str = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
                        dest_parent: str = None, dest_child: str = None) -> Tuple[str, str]:
     """Upload local data to a Globus endpoint using HTTPS PUT requests. Data can be a folder or an individual file.
         Note that the ACL rule created in this method must later be deleted after the dataset is submitted to MDF.
     Args:
-        auths (dict): the required authorizers
+        auths (namedtuple): PubAuths tuple defined in foundry.py. Used for authorizing Globus functions. Contains
+            'transfer_client', 'auth_client_openid', and 'auth_client_gcs'
         local_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
             request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
             transferred to MDF.
-        endpoint_id (str): Globus endpoint ID to upload the data to. Default is NCSA endpoint.
+        endpoint_id (str): Globus endpoint ID to upload the data to. Default is NCSA endpoint. Must match the
+            `endpoint_id` auth'd in `auths.auth_client_gcs`.
 
     Returns
     -------
@@ -41,19 +44,21 @@ def upload_to_endpoint(auths: dict, local_data_path: str, endpoint_id: str = "82
         to MDF.
     """
     # define upload destination
-    dest_path = _create_dest_folder(auths, endpoint_id, parent_dir=dest_parent, child_dir=dest_child)
+    dest_path = _create_dest_folder(auths.transfer_client, endpoint_id, parent_dir=dest_parent, child_dir=dest_child)
     # create new ACL rule (ie permission) for user to read/write to endpoint and path
-    rule_id = _create_access_rule(auths, endpoint_id, dest_path)
+    rule_id = _create_access_rule(auths.transfer_client, auths.auth_client_openid, endpoint_id, dest_path)
     # upload data to endpoint
-    globus_data_source = _https_upload(auths, local_data_path=local_data_path, dest_path=dest_path,
-                                       endpoint_id=endpoint_id)
+    globus_data_source = _https_upload(auths.transfer_client, auths.auth_client_gcs, local_data_path=local_data_path,
+                                       dest_path=dest_path, endpoint_id=endpoint_id)
     return globus_data_source, rule_id
 
 
-def _create_dest_folder(auths: dict, endpoint_id: str, parent_dir: str = None, child_dir: str = None) -> str:
+def _create_dest_folder(transfer_client: TransferClient, endpoint_id: str, parent_dir: str = None,
+                        child_dir: str = None) -> str:
     """Create a destination folder for the data on a Globus endpoint
     Args:
-        auths (dict): the required authorizers
+        transfer_client (TransferClient): Globus client authorized for Globus Transfers (ie moving data on endpoint,
+            adding/removing folders, etc).
         endpoint_id (str): A UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
             the SDK.
         parent_dir (str): Set to "/tmp" when default is None. The parent directory that all publications via HTTPS
@@ -64,7 +69,6 @@ def _create_dest_folder(auths: dict, endpoint_id: str, parent_dir: str = None, c
     -------
         (str): Path on Globus endpoint to write to
     """
-    transfer_client = auths["transfer"]
     # use a random UUID for each dataset publication, unless specified otherwise
     if child_dir is None:
         child_dir = uuid4()  # the publication ID forms the name of the child directory
@@ -79,10 +83,14 @@ def _create_dest_folder(auths: dict, endpoint_id: str, parent_dir: str = None, c
     return dest_path
 
 
-def _create_access_rule(auths: dict, endpoint_id: str, dest_path: str) -> str:
+def _create_access_rule(transfer_client: TransferClient, auth_client_openid: AuthClient, endpoint_id: str,
+                        dest_path: str) -> str:
     """Create an ACL rule (ie permission) for the user to read/write to the given destination on a Globus endpoint
     Args:
-        auths (dict): the required authorizers
+        transfer_client (TransferClient): Globus client authorized for Globus Transfers (ie moving data on endpoint,
+            adding/removing folders, etc).
+        auth_client_openid (AuthClient): Globus client authorized for Globus Auth functionality within an "openid"
+            scope (ie viewing or updating user info).
         endpoint_id (str): A UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
             the SDK.
         dest_path (str): The path to the existing folder on the given Globus endpoint.
@@ -90,10 +98,8 @@ def _create_access_rule(auths: dict, endpoint_id: str, dest_path: str) -> str:
     -------
         (str): The ID for the ACL rule (necessary to delete it in the future)
     """
-    transfer_client = auths["transfer"]
-    auth_client = AuthClient(authorizer=auths['openid'])
     # get user info
-    res = auth_client.oauth2_userinfo()
+    res = auth_client_openid.oauth2_userinfo()
     user_id = res.data["sub"]  # get the user primary ID (based on primary email set in Globus)
     # create data blob needed to set new rule with Globus
     rule_data = {
@@ -113,29 +119,33 @@ def _create_access_rule(auths: dict, endpoint_id: str, dest_path: str) -> str:
     return rule_id
 
 
-def _https_upload(auths: dict, local_data_path: str, dest_path: str = "/tmp",
+def _https_upload(transfer_client: TransferClient, auth_client_gcs: AuthClient, local_data_path: str, dest_path: str = "/tmp",
                   endpoint_id: str = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec") -> str:
     """Upload a dataset via HTTPS to a Globus endpoint
     Args:
-        auths (dict): the required authorizers
+        transfer_client (TransferClient): Globus client authorized for Globus Transfers (ie moving data on endpoint,
+            adding/removing folders, etc).
+        auth_client_gcs (AuthClient): Globus client authorized for Globus Auth functionality within an endpoint-specific
+            scope using Globus Connect Server (ie accessing or altering data on a specific endpoint). Endpoint used
+            must correspond to `endpoint_id`.
         local_data_path (str): The path to the local data to upload. Can be relative or absolute.
         dest_path (str): The path to the destination folder on the Globus endpoint. Default is "/tmp".
-        endpoint_id (str): A UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
-            the SDK. Default is the NCSA UUID "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec".
+        endpoint_id (str): A UUID designating the exact Globus endpoint. Must match the endpoint ID used in
+            `auth_client_gcs`. Can be obtained via the Globus Web UI or the SDK. Default is the NCSA UUID
+            "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec".
     Returns
     -------
         (str): Globus data source URL (ie the URL that points to the data on a Globus endpoint)
     """
-    transfer_client = auths["transfer"]
     # get URL for Globus endpoint location
     endpoint = transfer_client.get_endpoint(endpoint_id)  # gets info for NCSA endpoint
     https_base_url = endpoint["https_server"]
 
     # Submit data (folders of files or an independent file) to be written to endpoint
     if os.path.isdir(local_data_path):
-        _upload_folder(auths, local_data_path, https_base_url, dest_path, endpoint_id)
+        _upload_folder(transfer_client, auth_client_gcs, local_data_path, https_base_url, dest_path, endpoint_id)
     elif os.path.isfile(local_data_path):
-        _upload_file(auths, local_data_path, https_base_url, dest_path, endpoint_id)
+        _upload_file(auth_client_gcs, local_data_path, https_base_url, dest_path)
     else:
         raise IOError(f"Data path '{local_data_path}' is of unknown type")
 
@@ -143,11 +153,14 @@ def _https_upload(auths: dict, local_data_path: str, dest_path: str = "/tmp",
     return _make_globus_link(endpoint_id, dest_path)
 
 
-def _upload_folder(auths: dict, local_data_path: str, https_base_url: str, parent_dest_path: str, endpoint_id: str) \
-        -> List[Dict[str, Any]]:
+def _upload_folder(transfer_client: TransferClient, auth_client_gcs: AuthClient, local_data_path: str,
+                   https_base_url: str, parent_dest_path: str, endpoint_id: str) -> List[Dict[str, Any]]:
     """Upload a folder to a Globus endpoint using HTTPS
     Args:
-        auths (dict): the required authorizers
+        transfer_client (TransferClient): Globus client authorized for Globus Transfers (ie moving data on endpoint,
+            adding/removing folders, etc).
+        auth_client_gcs (AuthClient): Globus client authorized for Globus Auth functionality within an endpoint-specific
+            scope using Globus Connect Server (ie accessing or altering data on a specific endpoint).
         local_data_path (str): The path to the local data to upload. Can be relative or absolute.
         https_base_url (str): The URL for a given Globus endpoint.
         parent_dest_path (str): The path to the parent folder to be written to on the given endpoint. The contents
@@ -158,7 +171,6 @@ def _upload_folder(auths: dict, local_data_path: str, https_base_url: str, paren
     -------
         (list): A list of all the HTTPS PUT request results (dicts) from the uploads
     """
-    transfer_client = auths["transfer"]
     results = []
     # initialize destination path as the parent destination path
     dest_path = parent_dest_path
@@ -180,29 +192,25 @@ def _upload_folder(auths: dict, local_data_path: str, https_base_url: str, paren
         for filename in files:
             filepath = os.path.join(root, filename)
             # upload file to destination path on endpoint
-            result = _upload_file(auths, filepath, https_base_url, dest_path, endpoint_id)
+            result = _upload_file(auth_client_gcs, filepath, https_base_url, dest_path)
             results.append(result)
     return results
 
 
-def _upload_file(auths: dict, filepath: str, https_base_url: str, dest_path: str, endpoint_id: str) -> Response:
-    """Upload an individual file to a Globus endpoint using HTTPS PUT
+def _upload_file(auth_client_gcs: AuthClient, filepath: str, https_base_url: str, dest_path: str) -> Response:
+    """Upload an individual file to a Globus endpoint specified in 'auth_client_gcs' using HTTPS PUT
     Args:
-        auths (dict): the required authorizers
+        auth_client_gcs (AuthClient): Globus client authorized for Globus Auth functionality within an endpoint-specific
+            scope using Globus Connect Server (ie accessing or altering data on a specific endpoint).
         filepath (str): The path to the local file to upload.
         https_base_url (str): The URL for a given Globus endpoint.
         dest_path (str): The path to the folder to be written to on the given endpoint.
-        endpoint_id (str): The UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
-            the SDK. This must be the same endpoint pointed to by the https_base_url.
     Returns
     -------
         (Response): The `requests` HTTPS response object from a PUT request
     """
-    # lets you HTTPS to specific endpoint (NCSA endpoint by default)
-    scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"
-    # Get the authorization header token (string for the headers dict) HTTPS upload
-    auth_gcs = AuthClient(authorizer=auths[scope])
-    header = auth_gcs.authorizer.get_authorization_header()
+    # Get the authorization header token (string for the headers dict) for HTTPS upload
+    header = auth_client_gcs.authorizer.get_authorization_header()
 
     # get Globus endpoint path to write to
     filename = os.path.split(filepath)[1]
