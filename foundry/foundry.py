@@ -15,6 +15,8 @@ from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 from dlhub_sdk import DLHubClient
 from globus_sdk import AuthClient
+
+from .auth import PubAuths
 from .utils import is_pandas_pytable, is_doi
 from .utils import _read_csv, _read_json, _read_excel
 
@@ -398,12 +400,11 @@ class Foundry(FoundryMetadata):
         if https_data_path:
             # gather auth'd clients necessary for publication to endpoint
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
-            PubAuths = namedtuple("Auths", ["transfer_client", "auth_client_openid", "auth_client_gcs"])
             scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"  # lets you HTTPS to specific endpoint
             pub_auths = PubAuths(
                 transfer_client=self.auths["transfer"],
                 auth_client_openid=AuthClient(authorizer=self.auths['openid']),
-                auth_client_gcs=AuthClient(authorizer=self.auths[scope])
+                gcs_auth_clients={endpoint_id: AuthClient(authorizer=self.auths[scope])}
             )
             # upload (ie publish) data to endpoint
             globus_data_source, rule_id = upload_to_endpoint(pub_auths, https_data_path, endpoint_id)

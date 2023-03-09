@@ -10,7 +10,6 @@ Authors:
 Last modified 12/21/22 by Isaac Darling
 """
 
-from collections import namedtuple
 import logging
 import os
 import urllib
@@ -20,17 +19,18 @@ from uuid import uuid4
 
 from globus_sdk import AuthClient, TransferClient, TransferAPIError
 
+from .auth import PubAuths
+
 
 logger = logging.getLogger(__name__)
 
 
-def upload_to_endpoint(auths: namedtuple, local_data_path: str, endpoint_id: str = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
+def upload_to_endpoint(auths: PubAuths, local_data_path: str, endpoint_id: str = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
                        dest_parent: str = None, dest_child: str = None) -> Tuple[str, str]:
     """Upload local data to a Globus endpoint using HTTPS PUT requests. Data can be a folder or an individual file.
         Note that the ACL rule created in this method must later be deleted after the dataset is submitted to MDF.
     Args:
-        auths (namedtuple): PubAuths tuple defined in foundry.py. Used for authorizing Globus functions. Contains
-            'transfer_client', 'auth_client_openid', and 'auth_client_gcs'
+        auths (PubAuths): Collection of authorizers needed for upload
         local_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
             request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
             transferred to MDF.
@@ -48,7 +48,7 @@ def upload_to_endpoint(auths: namedtuple, local_data_path: str, endpoint_id: str
     # create new ACL rule (ie permission) for user to read/write to endpoint and path
     rule_id = _create_access_rule(auths.transfer_client, auths.auth_client_openid, endpoint_id, dest_path)
     # upload data to endpoint
-    globus_data_source = _https_upload(auths.transfer_client, auths.auth_client_gcs, local_data_path=local_data_path,
+    globus_data_source = _https_upload(auths.transfer_client, auths.gcs_auth_clients[endpoint_id], local_data_path=local_data_path,
                                        dest_path=dest_path, endpoint_id=endpoint_id)
     return globus_data_source, rule_id
 
