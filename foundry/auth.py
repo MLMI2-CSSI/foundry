@@ -13,9 +13,9 @@ class PubAuths:
     Attributes:
         transfer_client: Client with credentials to perform transfers
         auth_client_openid: Client with permissions to get users IDs
-        gcs_auth_clients: Mapping between endpoint ID and client that can authorize access to it
+        endpoint_auth_clients: Mapping between endpoint ID and client that can authorize access to it
     """
 
     transfer_client: TransferClient
     auth_client_openid: AuthClient
-    gcs_auth_clients: Dict[str, AuthClient]
+    endpoint_auth_clients: Dict[str, AuthClient]

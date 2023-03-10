@@ -294,7 +294,7 @@ def test_upload_to_endpoint():
     pub_auths = PubAuths(
         transfer_client=f.auths["transfer"],
         auth_client_openid=AuthClient(authorizer=f.auths['openid']),
-        gcs_auth_clients={endpoint_id: AuthClient(authorizer=f.auths[scope])}
+        endpoint_auth_clients={endpoint_id: AuthClient(authorizer=f.auths[scope])}
     )
     # upload via HTTPS to NCSA endpoint
     globus_data_source, _ = upload_to_endpoint(pub_auths, local_path, endpoint_id, dest_parent=dest_parent,

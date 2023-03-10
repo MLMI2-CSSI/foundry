@@ -31,7 +31,7 @@ def upload_to_endpoint(auths: PubAuths, local_data_path: str, endpoint_id: str =
         Note that the ACL rule created in this method must later be deleted after the dataset is submitted to MDF.
     Args:
         auths (PubAuths): Dataclass of authorizers needed for upload. Includes `transfer_client`, `auth_client_openid`,
-            and `gcs_auth_clients`, which is a Dict of `endpoint_id`:AuthClient mappings.
+            and `endpoint_auth_clients`, which is a Dict of `endpoint_id`:AuthClient mappings.
         local_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
             request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
             transferred to MDF.
@@ -49,7 +49,7 @@ def upload_to_endpoint(auths: PubAuths, local_data_path: str, endpoint_id: str =
     # create new ACL rule (ie permission) for user to read/write to endpoint and path
     rule_id = _create_access_rule(auths.transfer_client, auths.auth_client_openid, endpoint_id, dest_path)
     # upload data to endpoint
-    globus_data_source = _https_upload(auths.transfer_client, auths.gcs_auth_clients, local_data_path=local_data_path,
+    globus_data_source = _https_upload(auths.transfer_client, auths.endpoint_auth_clients, local_data_path=local_data_path,
                                        dest_path=dest_path, endpoint_id=endpoint_id)
     return globus_data_source, rule_id
 
@@ -120,13 +120,13 @@ def _create_access_rule(transfer_client: TransferClient, auth_client_openid: Aut
     return rule_id
 
 
-def _https_upload(transfer_client: TransferClient, gcs_auth_clients: Dict[str, AuthClient], local_data_path: str,
+def _https_upload(transfer_client: TransferClient, endpoint_auth_clients: Dict[str, AuthClient], local_data_path: str,
                   dest_path: str = "/tmp", endpoint_id: str = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec") -> str:
     """Upload a dataset via HTTPS to a Globus endpoint
     Args:
         transfer_client (TransferClient): Globus client authorized for Globus Transfers (ie moving data on endpoint,
             adding/removing folders, etc).
-        gcs_auth_clients (Dict[str, AuthClient]): Dict of `endpoint_id` : `AuthClient` keypairs. AuthClients used
+        endpoint_auth_clients (Dict[str, AuthClient]): Dict of `endpoint_id` : `AuthClient` keypairs. AuthClients used
             for Globus Auth functionality within endpoint-specific scopes using Globus Connect Server (ie accessing
             or altering data on a specific endpoint).
         local_data_path (str): The path to the local data to upload. Can be relative or absolute.
@@ -144,9 +144,9 @@ def _https_upload(transfer_client: TransferClient, gcs_auth_clients: Dict[str, A
 
     # Submit data (folders of files or an independent file) to be written to endpoint
     if os.path.isdir(local_data_path):
-        _upload_folder(transfer_client, gcs_auth_clients, local_data_path, https_base_url, dest_path, endpoint_id)
+        _upload_folder(transfer_client, endpoint_auth_clients, local_data_path, https_base_url, dest_path, endpoint_id)
     elif os.path.isfile(local_data_path):
-        _upload_file(gcs_auth_clients[endpoint_id], local_data_path, https_base_url, dest_path)
+        _upload_file(endpoint_auth_clients[endpoint_id], local_data_path, https_base_url, dest_path)
     else:
         raise IOError(f"Data path '{local_data_path}' is of unknown type")
 
@@ -154,13 +154,13 @@ def _https_upload(transfer_client: TransferClient, gcs_auth_clients: Dict[str, A
     return _make_globus_link(endpoint_id, dest_path)
 
 
-def _upload_folder(transfer_client: TransferClient, gcs_auth_clients: Dict[str, AuthClient], local_data_path: str,
+def _upload_folder(transfer_client: TransferClient, endpoint_auth_clients: Dict[str, AuthClient], local_data_path: str,
                    https_base_url: str, parent_dest_path: str, endpoint_id: str) -> List[Dict[str, Any]]:
     """Upload a folder to a Globus endpoint using HTTPS
     Args:
         transfer_client (TransferClient): Globus client authorized for Globus Transfers (ie moving data on endpoint,
             adding/removing folders, etc).
-        gcs_auth_clients (Dict[str, AuthClient]): Dict of `endpoint_id` : `AuthClient` keypairs. AuthClients used
+        endpoint_auth_clients (Dict[str, AuthClient]): Dict of `endpoint_id` : `AuthClient` keypairs. AuthClients used
             for Globus Auth functionality within endpoint-specific scopes using Globus Connect Server (ie accessing
             or altering data on a specific endpoint).
         local_data_path (str): The path to the local data to upload. Can be relative or absolute.
@@ -194,7 +194,7 @@ def _upload_folder(transfer_client: TransferClient, gcs_auth_clients: Dict[str, 
         for filename in files:
             filepath = os.path.join(root, filename)
             # upload file to destination path on endpoint
-            result = _upload_file(gcs_auth_clients[endpoint_id], filepath, https_base_url, dest_path)
+            result = _upload_file(endpoint_auth_clients[endpoint_id], filepath, https_base_url, dest_path)
             results.append(result)
     return results
 

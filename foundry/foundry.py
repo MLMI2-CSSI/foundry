@@ -403,7 +403,7 @@ class Foundry(FoundryMetadata):
             pub_auths = PubAuths(
                 transfer_client=self.auths["transfer"],
                 auth_client_openid=AuthClient(authorizer=self.auths['openid']),
-                gcs_auth_clients={endpoint_id: AuthClient(authorizer=self.auths[scope])}
+                endpoint_auth_clients={endpoint_id: AuthClient(authorizer=self.auths[scope])}
             )
             # upload (ie publish) data to endpoint
             globus_data_source, rule_id = upload_to_endpoint(pub_auths, https_data_path, endpoint_id)
