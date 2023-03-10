@@ -9,7 +9,6 @@ import logging
 import warnings
 import os
 from concurrent.futures import ThreadPoolExecutor
-from collections import namedtuple
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge

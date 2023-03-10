@@ -2,7 +2,6 @@ import json
 import os
 import shutil
 import pytest
-from collections import namedtuple
 from filecmp import cmp
 from datetime import datetime
 from math import floor
@@ -12,6 +11,7 @@ import mdf_toolbox
 import pandas as pd
 from mdf_forge import Forge
 from foundry import Foundry
+from foundry.auth import PubAuths
 from foundry.https_upload import upload_to_endpoint
 from dlhub_sdk import DLHubClient
 from globus_sdk import AuthClient
@@ -269,8 +269,7 @@ def test_publish_with_https():
     # create test JSON to upload (if it doesn't already exist)
     _write_test_data(local_path)
 
-    res = f.publish_dataset(pub_test_metadata, title, authors, https_data_path=local_path,
-                      short_name=short_name)
+    res = f.publish_dataset(pub_test_metadata, title, authors, https_data_path=local_path, short_name=short_name)
 
     assert res['success']
     assert res['source_id'] == f"_test_{short_name}_v1.1"
@@ -290,19 +289,19 @@ def test_upload_to_endpoint():
     _write_test_data(local_path, filename)
 
     # gather auth'd clients necessary for publication to endpoint
-    PubAuths = namedtuple("Auths", ["transfer_client", "auth_client_openid", "auth_client_gcs"])
+    endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
     scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"  # lets you HTTPS to specific endpoint
     pub_auths = PubAuths(
         transfer_client=f.auths["transfer"],
         auth_client_openid=AuthClient(authorizer=f.auths['openid']),
-        auth_client_gcs=AuthClient(authorizer=f.auths[scope])
+        gcs_auth_clients={endpoint_id: AuthClient(authorizer=f.auths[scope])}
     )
     # upload via HTTPS to NCSA endpoint
     globus_data_source, _ = upload_to_endpoint(pub_auths, local_path, endpoint_id, dest_parent=dest_parent,
                                                dest_child=dest_child)
 
-    expected_data_source = f"https://app.globus.org/file-manager?origin_id=" \
-           f"82f1b5c6-6e9b-11e5-ba47-22000b92c6ec&origin_path=%2Ftmp%2F{dest_child}"
+    expected_data_source = f"https://app.globus.org/file-manager?origin_id=82f1b5c6-6e9b-11e5-ba47-22000b92c6ec&" \
+                           f"origin_path=%2Ftmp%2F{dest_child}"
     # confirm data source link was created properly, with correct folders
     assert globus_data_source == expected_data_source
 
