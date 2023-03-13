@@ -376,8 +376,8 @@ class Foundry(FoundryMetadata):
             of dataset. Contains `source_id`, which can be used to check the
             status of the submission
         """
-        if (https_data_path and globus_data_source) or \
-                (https_data_path is None and globus_data_source is None):
+        # ensure that one of `https_data_path` or `globus_data_source` have been assigned values
+        if https_data_path ^ globus_data_source:
             raise ValueError("Must assign either `https_data_path` or `globus_data_source`")
 
         self.connect_client.create_dc_block(

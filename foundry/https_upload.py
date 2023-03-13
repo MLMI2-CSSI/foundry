@@ -1,13 +1,4 @@
-"""
-https_upload.py
-
-Private utility methods to upload files and/or folders to Globus using HTTPS instead of Globus Transfer.
-
-Authors:
-    Aristana Scourtas
-    Isaac Darling
-
-Last modified 12/21/22 by Isaac Darling
+"""Private utility methods to upload files and/or folders to Globus using HTTPS instead of Globus Transfer.
 """
 
 import logging
@@ -171,7 +162,7 @@ def _upload_folder(transfer_client: TransferClient, endpoint_auth_clients: Dict[
             the SDK. This must be the same endpoint pointed to by the https_base_url.
     Returns
     -------
-        (list): A list of all the HTTPS PUT request results (dicts) from the uploads
+        (list): A list of Response objects (the `requests` HTTPS response object from a PUT request)
     """
     results = []
     # initialize destination path as the parent destination path
