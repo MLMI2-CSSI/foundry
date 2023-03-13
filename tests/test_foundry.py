@@ -1,13 +1,22 @@
+import json
 import os
 import shutil
 import pytest
+from filecmp import cmp
 from datetime import datetime
+from math import floor
+import numpy as np
+import requests
 import mdf_toolbox
 import pandas as pd
 from mdf_forge import Forge
 from foundry import Foundry
+from foundry.auth import PubAuths
+from foundry.https_upload import upload_to_endpoint
 from dlhub_sdk import DLHubClient
+from globus_sdk import AuthClient
 from mdf_connect_client import MDFConnectClient
+
 
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
@@ -21,7 +30,10 @@ services = [
             "petrel",
             "transfer",
             "openid",
-            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"]
+            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
+            "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
+            "https://auth.globus.org/scopes/82f1b5c6-6e9b-11e5-ba47-22000b92c6ec/https",  # NCSA HTTPS
+    ]
 
 if is_gha:
     auths = mdf_toolbox.confidential_login(client_id=client_id,
@@ -243,7 +255,91 @@ def test_globus_dataframe_load():
 
 
 @pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
-def test_publish():
+def test_publish_with_https():
+    """System test: Assess the end-to-end publication of a dataset via HTTPS
+    """
+
+    f = Foundry(index="mdf-test", authorizers=auths)
+    timestamp = datetime.now().timestamp()
+    title = "https_publish_test_{:.0f}".format(timestamp)
+    short_name = "https_pub_{:.0f}".format(timestamp)
+    authors = ["A Scourtas"]
+    local_path = "./data/https_test"
+
+    # create test JSON to upload (if it doesn't already exist)
+    _write_test_data(local_path)
+
+    res = f.publish_dataset(pub_test_metadata, title, authors, https_data_path=local_path, short_name=short_name)
+
+    assert res['success']
+    assert res['source_id'] == f"_test_{short_name}_v1.1"
+
+
+def test_upload_to_endpoint():
+    """Unit test: Test the _upload_to_endpoint() HTTPS functionality on its own, without publishing to MDF
+    """
+    endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
+    dest_parent = "/tmp"
+    dest_child = f"test_{floor(datetime.now().timestamp())}"
+    local_path = "./data/https_test"
+    filename = "test_data.json"
+
+    f = Foundry(index="mdf-test", authorizers=auths)
+    # create test JSON to upload (if it doesn't already exist)
+    _write_test_data(local_path, filename)
+
+    # gather auth'd clients necessary for publication to endpoint
+    endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
+    scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"  # lets you HTTPS to specific endpoint
+    pub_auths = PubAuths(
+        transfer_client=f.auths["transfer"],
+        auth_client_openid=AuthClient(authorizer=f.auths['openid']),
+        endpoint_auth_clients={endpoint_id: AuthClient(authorizer=f.auths[scope])}
+    )
+    # upload via HTTPS to NCSA endpoint
+    globus_data_source, _ = upload_to_endpoint(pub_auths, local_path, endpoint_id, dest_parent=dest_parent,
+                                               dest_child=dest_child)
+
+    expected_data_source = f"https://app.globus.org/file-manager?origin_id=82f1b5c6-6e9b-11e5-ba47-22000b92c6ec&" \
+                           f"origin_path=%2Ftmp%2F{dest_child}"
+    # confirm data source link was created properly, with correct folders
+    assert globus_data_source == expected_data_source
+
+    mdf_url = f"https://data.materialsdatafacility.org/tmp/{dest_child}/{filename}"
+    response = requests.get(mdf_url)
+    # check that we get a valid response back (note that a 200 could be a UI error, returned as HTML)
+    assert response.status_code == 200
+    # check that contents of response are as expected
+    tmp_file = "./data/tmp_data.json"
+    with open(tmp_file, "wb") as fl:
+        fl.write(response.content)
+    assert cmp(tmp_file, os.path.join(local_path, filename))
+
+    # delete ACL rule for user
+    # if rule_id is not None:
+    #     res = f.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
+
+
+def _write_test_data(dest_path="./data/https_test", filename="test_data.json"):
+    # Create random JSON data
+    data = pd.DataFrame(np.random.rand(100, 4), columns=list('ABCD'))
+    res = data.to_json(orient="records")
+
+    # Make data directory
+    os.makedirs(dest_path, exist_ok=True)
+    data_filepath = os.path.join(dest_path, filename)
+
+    # Write data to JSON file
+    with open(data_filepath, "w+") as f:
+        json.dump(res, f, indent=4)
+
+
+def test_ACL_creation_and_deletion():
+    pass
+
+
+@pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
+def test_publish_with_globus():
     # TODO: automate dealing with curation and cleaning after tests
 
     f = Foundry(authorizers=auths, index="mdf-test", no_browser=True, no_local_server=True)
@@ -253,7 +349,8 @@ def test_publish():
     short_name = "example_AS_iris_test_{:.0f}".format(timestamp)
     authors = ["A Scourtas"]
 
-    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name)
+    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source,
+                            short_name=short_name)
 
     # publish with short name
     assert res['success']
@@ -266,16 +363,16 @@ def test_publish():
     # assert res['source_id'] == "_test_scourtas_example_iris_publish_{:.0f}_v1.1".format(timestamp)
 
     # check that pushing same dataset without update flag fails
-    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name)
+    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=short_name)
     assert not res['success']
 
     # check that using update flag allows us to update dataset
-    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=short_name, update=True)
+    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=short_name, update=True)
     assert res['success']
 
     # check that using update flag for new dataset fails
     new_short_name = short_name + "_update"
-    res = f.publish(pub_test_metadata, pub_test_data_source, title, authors, short_name=new_short_name, update=True)
+    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=new_short_name,  update=True)
     assert not res['success']
 
 
