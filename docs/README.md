@@ -1,6 +1,6 @@
 # Introduction and Installation
 
-![](<../.gitbook/assets/foundry-purple (2).png>)
+<figure><img src=".gitbook/assets/foundry-logo-new.png" alt=""><figcaption></figcaption></figure>
 
 ## What is Foundry?
 
@@ -16,13 +16,11 @@ Foundry can be installed on any operating system with Python with pip
 pip install foundry-ml
 ```
 
+<table data-view="cards"><thead><tr><th></th><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th><th data-hidden data-card-cover data-type="files"></th></tr></thead><tbody><tr><td></td><td>Use Datasets</td><td></td><td><a href="loading-and-using/examples.md">examples.md</a></td><td><a href=".gitbook/assets/down-arrow.png">down-arrow.png</a></td></tr><tr><td></td><td>Publish Datasets</td><td></td><td><a href="publishing/publishing-datasets.md">publishing-datasets.md</a></td><td><a href=".gitbook/assets/arrows.png">arrows.png</a></td></tr></tbody></table>
+
 ### Globus
 
 We use the Globus platform for authentication and optimization of some data transfer operations. Follow the steps below to get set up.
 
 * [Create a free account.](https://app.globus.org) You can create a free account here with your institutional credentials or with free IDs (GlobusID, Google, ORCID, etc).
 * [Set up a Globus Connect Personal endpoint ](https://www.globus.org/globus-connect-personal)_**(optional)**_. While this step is optional, some Foundry capabilities will work more efficiently when using Globus Connect Personal (GCP).
-
-## Now you're ready to publish or access data&#x20;
-
-Keep the momentum going with our [loading data section](examples.md) or [publishing guide](publishing/publishing-datasets.md).

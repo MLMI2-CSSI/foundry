@@ -52,7 +52,7 @@ Load the metadata for a Foundry dataset into the client.
 
 `interval (int)`: How often to poll Globus to check if transfers are complete
 
-**Returns** the dataset's **** [metadata](foundry-datasets.md#descriptive-metadata).
+**Returns** the dataset's **** [metadata](../publishing/describing-datasets.md#descriptive-metadata).
 
 
 

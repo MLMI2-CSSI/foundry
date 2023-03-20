@@ -2,9 +2,9 @@
 description: An introduction to how Foundry datasets and their metadata are defined
 ---
 
-# Foundry Datasets
+# Describing Datasets
 
-Foundry Datasets are comprised of two key components, [_**data**_](foundry-datasets.md#data) and descriptive [_**metadata**_](foundry-datasets.md#descriptive-metadata). In order to make the data easily consumable, _**data**_ (consisting of files) should be assembled following the supported structures. The _**metadata**_ description allows tracking of high level information (e.g.,  authors, associated institutions, licenses, data location), and also information on how to operate on the datasets (e.g., how to load the data, training/test splits).
+Foundry Datasets are comprised of two key components, [_**data**_](describing-datasets.md#data) and descriptive [_**metadata**_](describing-datasets.md#descriptive-metadata). In order to make the data easily consumable, _**data**_ (consisting of files) should be assembled following the supported structures. The _**metadata**_ description allows tracking of high level information (e.g.,  authors, associated institutions, licenses, data location), and also information on how to operate on the datasets (e.g., how to load the data, training/test splits).
 
 ## **Data**
 
@@ -176,6 +176,6 @@ The number of items within the dataset.
 
 ## Example usage
 
-For loading datasets, see [Getting Started - Loading Data](../examples.md).
+For loading datasets, see [Getting Started - Loading Data](../loading-and-using/examples.md).
 
 For a full example of exploring data using Foundry, see our [Jupyter notebook examples](https://github.com/MLMI2-CSSI/foundry/tree/main/examples).&#x20;

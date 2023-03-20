@@ -2,7 +2,7 @@
 description: We'll take you from importing Foundry all the way to seeing your data.
 ---
 
-# Getting Started - Loading Data
+# Using Datasets
 
 ## Scientific Examples
 
@@ -25,13 +25,13 @@ If you are running your script on cloud resources (e.g. Google Colab, Binder), s
 
 ### Listing Datasets
 
-To show all available Foundry datasets, you can use the Foundry [`list()` method](concepts/methods.md#.list) as follows. The method returns a pandas DataFrame with details on the available datasets.
+To show all available Foundry datasets, you can use the Foundry [`list()` method](../advanced-usage/methods.md#.list) as follows. The method returns a pandas DataFrame with details on the available datasets.
 
 ```python
 f.list()
 ```
 
-![The returned Dataframe from f.list()](<.gitbook/assets/Screen Shot 2022-01-27 at 1.29.23 PM (1).png>)
+![The returned Dataframe from f.list()](<../.gitbook/assets/Screen Shot 2022-01-27 at 1.29.23 PM (1).png>)
 
 ### Loading Datasets
 
@@ -44,7 +44,7 @@ f = Foundry(index="mdf")
 f.load("10.18126/e73h-3w6n", globus=True)
 ```
 
-The [`load()` method](concepts/methods.md#.load) will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup (set `download` to `True` and `globus` to `False`) or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine (set `download` to `False` and `globus` to `True`).&#x20;
+The [`load()` method](../advanced-usage/methods.md#.load) will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup (set `download` to `True` and `globus` to `False`) or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine (set `download` to `False` and `globus` to `True`).&#x20;
 
 {% hint style="success" %}
 All datasets are accessible via HTTPS and Globus by authenticated or anonymous download. Using the load function, simply set `globus=True` to use Globus and `globus=False` to use HTTPS
@@ -52,11 +52,11 @@ All datasets are accessible via HTTPS and Globus by authenticated or anonymous d
 
 
 
-The image below is what `f` looks like when printed in a notebook. This table contains the dataset's [metadata](concepts/foundry-datasets.md#descriptive-metadata).
+The image below is what `f` looks like when printed in a notebook. This table contains the dataset's [metadata](../publishing/describing-datasets.md#descriptive-metadata).
 
-![](../.gitbook/assets/image.png)
+![](../../.gitbook/assets/image.png)
 
-Once the data are accessible locally, access the data with the [`load_data()` method](concepts/methods.md#.load\_data). Load data allows you to load data from a specific [split](concepts/foundry-datasets.md#splits) that is defined for the dataset, here we use `train`.&#x20;
+Once the data are accessible locally, access the data with the [`load_data()` method](../advanced-usage/methods.md#.load\_data). Load data allows you to load data from a specific [split](../publishing/describing-datasets.md#splits) that is defined for the dataset, here we use `train`.&#x20;
 
 ```python
 res = f.load_data()
@@ -78,7 +78,7 @@ for i in range(n_images):
                    coords[key_list[i]][:,1], s = 20, c = 'r', alpha=0.5)
 ```
 
-![Overlay of a STEM image with atomic coordinate labels (red dots)](<../.gitbook/assets/image (1).png>)
+![Overlay of a STEM image with atomic coordinate labels (red dots)](<../../.gitbook/assets/image (1).png>)
 
 ## Using Foundry on Cloud Computing Resources
 

@@ -1,22 +1,20 @@
 # Table of contents
 
 * [Introduction and Installation](README.md)
-* [Getting Started - Loading Data](examples.md)
+* [About Foundry-ML](overview.md)
 
-## Key Concepts <a href="#concepts" id="concepts"></a>
+## Loading and Using
 
-* [Overview](concepts/overview.md)
-* [Foundry Datasets](concepts/foundry-datasets.md)
-* [Methods](concepts/methods.md)
+* [Using Datasets](loading-and-using/examples.md)
 
 ## Publishing
 
+* [Describing Datasets](publishing/describing-datasets.md)
 * [Publishing Datasets](publishing/publishing-datasets.md)
 
 ## Advanced Usage
 
-* [PyTorch Datasets](advanced-usage/pytorch-datasets.md)
-* [TensorFlow Datasets](advanced-usage/tensorflow-datasets.md)
+* [Methods](advanced-usage/methods.md)
 
 ## How to contribute
 
