@@ -70,7 +70,7 @@ authors:
     orcid: 0000-0002-7652-6776
     equal-contrib: false
     affiliation: 5  
-  - name: Paul Voyles
+  - name: Paul M. Voyles
     orcid: 0000-0001-9438-4284
     equal-contrib: false
     affiliation: 4
