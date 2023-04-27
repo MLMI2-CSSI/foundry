@@ -297,7 +297,7 @@ def test_upload_to_endpoint():
         endpoint_auth_clients={endpoint_id: AuthClient(authorizer=f.auths[scope])}
     )
     # upload via HTTPS to NCSA endpoint
-    globus_data_source, _ = upload_to_endpoint(pub_auths, local_path, endpoint_id, dest_parent=dest_parent,
+    globus_data_source = upload_to_endpoint(pub_auths, local_path, endpoint_id, dest_parent=dest_parent,
                                                dest_child=dest_child)
 
     expected_data_source = f"https://app.globus.org/file-manager?origin_id=82f1b5c6-6e9b-11e5-ba47-22000b92c6ec&" \
@@ -314,10 +314,6 @@ def test_upload_to_endpoint():
     with open(tmp_file, "wb") as fl:
         fl.write(response.content)
     assert cmp(tmp_file, os.path.join(local_path, filename))
-
-    # delete ACL rule for user
-    # if rule_id is not None:
-    #     res = f.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
 
 
 def _write_test_data(dest_path="./data/https_test", filename="test_data.json"):
