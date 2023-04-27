@@ -407,7 +407,6 @@ class Foundry(FoundryMetadata):
                 endpoint_auth_clients={endpoint_id: AuthClient(authorizer=self.auths[scope])}
             )
             # upload (ie publish) data to endpoint
-            # globus_data_source, rule_id = upload_to_endpoint(pub_auths, https_data_path, endpoint_id)
             globus_data_source = upload_to_endpoint(pub_auths, https_data_path, endpoint_id)
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
@@ -420,11 +419,6 @@ class Foundry(FoundryMetadata):
             res = self.connect_client.submit_dataset(update=update)
         else:
             res = None
-
-        # # if uploaded by HTTPS, delete ACL rule after dataset submission is complete
-        # if https_data_path and rule_id:
-        #     self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
-
         return res
 
     def publish_model(self, title, creators, short_name, servable_type, serv_options, affiliations=None, paper_doi=None):
