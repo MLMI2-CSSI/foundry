@@ -136,6 +136,9 @@ class Foundry(FoundryMetadata):
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
             ],
             openid_authorizer=self.auths['openid'],
+            sl_authorizer=self.auths[
+                "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all"
+            ],
             force_login=False,
         )
 
