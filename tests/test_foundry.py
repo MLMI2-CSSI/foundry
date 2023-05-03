@@ -301,7 +301,7 @@ def test_upload_to_endpoint():
     )
     # upload via HTTPS to NCSA endpoint
     globus_data_source = upload_to_endpoint(pub_auths, local_path, endpoint_id, dest_parent=dest_parent,
-                                               dest_child=dest_child)
+                                            dest_child=dest_child)
 
     expected_data_source = f"https://app.globus.org/file-manager?origin_id=82f1b5c6-6e9b-11e5-ba47-22000b92c6ec&" \
                            f"origin_path=%2Ftmp%2F{dest_child}"
