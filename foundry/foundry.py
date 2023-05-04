@@ -4,17 +4,19 @@ import mdf_toolbox
 from json2table import convert
 import numpy as np
 import pandas as pd
-from typing import Any
+from typing import Any, Dict, List
 import logging
 import warnings
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm.auto import tqdm
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 from dlhub_sdk import DLHubClient
-from tqdm.auto import tqdm
+from globus_sdk import AuthClient
 
+from .auth import PubAuths
 from .utils import is_pandas_pytable, is_doi
 from .utils import _read_csv, _read_json, _read_excel
 
@@ -24,6 +26,7 @@ from foundry.models import (
     FoundryDataset
 )
 from foundry.https_download import download_file, recursive_ls
+from foundry.https_upload import upload_to_endpoint
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +43,9 @@ class Foundry(FoundryMetadata):
     forge_client: Any
     connect_client: Any
     transfer_client: Any
+    auth_client: Any
     index = ""
+    auths: Any
 
     xtract_tokens: Any
 
@@ -63,22 +68,25 @@ class Foundry(FoundryMetadata):
         """
         super().__init__(**data)
         self.index = index
+        self.auths = None
 
         if authorizers:
-            auths = authorizers
+            self.auths = authorizers
         else:
             services = [
-                "data_mdf",
-                "mdf_connect",
-                "search",
-                "petrel",
-                "transfer",
-                "dlhub",
-                "funcx",
-                "openid",
-                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",
-            ]
-            auths = mdf_toolbox.login(
+                    "data_mdf",
+                    "mdf_connect",
+                    "search",
+                    "petrel",
+                    "transfer",
+                    "dlhub",
+                    "openid",
+                    "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
+                    "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
+                    "https://auth.globus.org/scopes/82f1b5c6-6e9b-11e5-ba47-22000b92c6ec/https",  # NCSA HTTPS
+                    "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all",  # Globus Search Lambda
+                ]
+            self.auths = mdf_toolbox.login(
                 services=services,
                 app_name="Foundry",
                 make_clients=True,
@@ -94,18 +102,20 @@ class Foundry(FoundryMetadata):
                 no_local_server=no_local_server,
             )
             # add special SearchAuthorizer object
-            auths['search_authorizer'] = search_auth['search']
+            self.auths['search_authorizer'] = search_auth['search']
 
         self.forge_client = Forge(
             index=index,
             services=None,
-            search_client=auths["search"],
-            transfer_client=auths["transfer"],
-            data_mdf_authorizer=auths["data_mdf"],
-            petrel_authorizer=auths["petrel"],
+            search_client=self.auths["search"],
+            transfer_client=self.auths["transfer"],
+            data_mdf_authorizer=self.auths["data_mdf"],
+            petrel_authorizer=self.auths["petrel"],
         )
 
-        self.transfer_client = auths['transfer']
+        self.transfer_client = self.auths['transfer']
+
+        self.auth_client = AuthClient(authorizer=self.auths['openid'])
 
         if index == "mdf":
             test = False
@@ -114,23 +124,26 @@ class Foundry(FoundryMetadata):
         # TODO: when release-ready, remove test=True
 
         self.connect_client = MDFConnectClient(
-            authorizer=auths["mdf_connect"], test=test
+            authorizer=self.auths["mdf_connect"], test=test
         )
 
         self.dlhub_client = DLHubClient(
-            dlh_authorizer=auths["dlhub"],
-            search_authorizer=auths["search_authorizer"],
-            fx_authorizer=auths[
+            dlh_authorizer=self.auths["dlhub"],
+            search_authorizer=self.auths["search_authorizer"],
+            fx_authorizer=self.auths[
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
             ],
-            openid_authorizer=auths['openid'],
+            openid_authorizer=self.auths['openid'],
+            sl_authorizer=self.auths[
+                "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all"
+            ],
             force_login=False,
         )
 
         self.xtract_tokens = {
-            "auth_token": auths["petrel"].access_token,
-            "transfer_token": auths["transfer"].authorizer.access_token,
-            "funcx_token": auths[
+            "auth_token": self.auths["petrel"].access_token,
+            "transfer_token": self.auths["transfer"].authorizer.access_token,
+            "funcx_token": self.auths[
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
             ].access_token,
         }
@@ -272,7 +285,7 @@ class Foundry(FoundryMetadata):
            as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
 
         Returns
-        -------s
+        -------
              (tuple): Tuple of X, y values
         """
         data = {}
@@ -281,8 +294,8 @@ class Foundry(FoundryMetadata):
         try:
             if self.dataset.splits:
                 for split in self.dataset.splits:
-                    data[split.label] = self._load_data(file=split.path,
-                                                        source_id=source_id, globus=globus, as_hdf5=as_hdf5)
+                    data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
+                                                        as_hdf5=as_hdf5)
                 return data
             else:
                 return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
@@ -321,20 +334,33 @@ class Foundry(FoundryMetadata):
         bibtex = f"@misc{{https://doi.org/{self.dc['identifier']['identifier']}{os.linesep}{bibtex}}}"
         return bibtex
 
-    def publish(self, foundry_metadata, data_source, title, authors, update=False,
-                publication_year=None, **kwargs, ):
-        """Submit a dataset for publication
+    def publish_dataset(
+            self, foundry_metadata: Dict[str, Any], title: str, authors: List[str], https_data_path: str = None,
+            globus_data_source: str = None, update: bool = False, publication_year: int = None, test: bool = False,
+            **kwargs: Dict[str, Any],) -> Dict[str, Any]:
+        """Submit a dataset for publication; can choose to submit via HTTPS using `https_data_path` or via Globus
+            Transfer using the `globus_data_source` argument. Only one upload method may be specified.
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
-            data_source (string): Url for Globus endpoint
             title (string): Title of data package
             authors (list): List of data package author names e.g., Jack Black
                 or Nunez, Victoria
+            https_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
+                request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
+                transferred to MDF. If None, the user must specify a 'globus_data_source' URL to the location of the
+                data on their own Globus endpoint. User must choose either `globus_data_source` or `https_data_path` to
+                publish their data.
+            globus_data_source (str): Url path for a data folder on a Globus endpoint; url can be obtained through
+                the Globus Web UI or SDK. If None, the user must specify an 'https_data_path' pointing to the location
+                of the data on their local machine. User must choose either `globus_data_source` or `https_data_path` to
+                publish their data.
             update (bool): True if this is an update to a prior data package
                 (default: self.config.metadata_file)
             publication_year (int): Year of dataset publication. If None, will
                 be set to the current calendar year by MDF Connect Client.
                 (default: $current_year)
+            test (bool): If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).
+                Default is False.
 
         Keyword Args:
             affiliations (list): List of author affiliations
@@ -352,6 +378,11 @@ class Foundry(FoundryMetadata):
             of dataset. Contains `source_id`, which can be used to check the
             status of the submission
         """
+        # ensure that one of `https_data_path` or `globus_data_source` have been assigned values
+        if (https_data_path and globus_data_source) or \
+                (https_data_path is None and globus_data_source is None):
+            raise ValueError("Must assign either `https_data_path` or `globus_data_source`")
+
         self.connect_client.create_dc_block(
             title=title,
             authors=authors,
@@ -366,10 +397,30 @@ class Foundry(FoundryMetadata):
         self.connect_client.add_organization(self.config.organization)
         self.connect_client.set_project_block(
             self.config.metadata_key, foundry_metadata)
-        self.connect_client.add_data_source(data_source)
+
+        # upload via HTTPS if specified
+        if https_data_path:
+            # gather auth'd clients necessary for publication to endpoint
+            endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
+            scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"  # lets you HTTPS to specific endpoint
+            pub_auths = PubAuths(
+                transfer_client=self.auths["transfer"],
+                auth_client_openid=AuthClient(authorizer=self.auths['openid']),
+                endpoint_auth_clients={endpoint_id: AuthClient(authorizer=self.auths[scope])}
+            )
+            # upload (ie publish) data to endpoint
+            globus_data_source = upload_to_endpoint(pub_auths, https_data_path, endpoint_id)
+        # set Globus data source URL with MDF
+        self.connect_client.add_data_source(globus_data_source)
+        # set dataset name using the title if an abbreviated short_name isn't specified
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
-        res = self.connect_client.submit_dataset(update=update)
+        # do not submit to MDF if this is just a test
+        if not test:
+            # Globus Transfer the data from the data source to the MDF endpoint
+            res = self.connect_client.submit_dataset(update=update)
+        else:
+            res = None
         return res
 
     def publish_model(self, title, creators, short_name, servable_type, serv_options, affiliations=None, paper_doi=None):
