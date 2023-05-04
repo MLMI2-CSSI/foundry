@@ -23,17 +23,18 @@ client_secret = os.getenv("CLIENT_SECRET")
 is_gha = os.getenv("GITHUB_ACTIONS")
 
 services = [
-            "data_mdf",
-            "mdf_connect",
-            "search",
-            "dlhub",
-            "petrel",
-            "transfer",
-            "openid",
-            "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
-            "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
-            "https://auth.globus.org/scopes/82f1b5c6-6e9b-11e5-ba47-22000b92c6ec/https",  # NCSA HTTPS
-    ]
+    "data_mdf",
+    "mdf_connect",
+    "search",
+    "petrel",
+    "transfer",
+    "dlhub",
+    "openid",
+    "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
+    "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
+    "https://auth.globus.org/scopes/82f1b5c6-6e9b-11e5-ba47-22000b92c6ec/https",  # NCSA HTTPS
+    "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all",  # Globus Search Lambda
+]
 
 if is_gha:
     auths = mdf_toolbox.confidential_login(client_id=client_id,
@@ -297,8 +298,8 @@ def test_upload_to_endpoint():
         endpoint_auth_clients={endpoint_id: AuthClient(authorizer=f.auths[scope])}
     )
     # upload via HTTPS to NCSA endpoint
-    globus_data_source, _ = upload_to_endpoint(pub_auths, local_path, endpoint_id, dest_parent=dest_parent,
-                                               dest_child=dest_child)
+    globus_data_source = upload_to_endpoint(pub_auths, local_path, endpoint_id, dest_parent=dest_parent,
+                                            dest_child=dest_child)
 
     expected_data_source = f"https://app.globus.org/file-manager?origin_id=82f1b5c6-6e9b-11e5-ba47-22000b92c6ec&" \
                            f"origin_path=%2Ftmp%2F{dest_child}"
@@ -314,10 +315,6 @@ def test_upload_to_endpoint():
     with open(tmp_file, "wb") as fl:
         fl.write(response.content)
     assert cmp(tmp_file, os.path.join(local_path, filename))
-
-    # delete ACL rule for user
-    # if rule_id is not None:
-    #     res = f.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
 
 
 def _write_test_data(dest_path="./data/https_test", filename="test_data.json"):

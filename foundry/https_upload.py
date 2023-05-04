@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 def upload_to_endpoint(auths: PubAuths, local_data_path: str, endpoint_id: str = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
                        dest_parent: str = None, dest_child: str = None) -> Tuple[str, str]:
     """Upload local data to a Globus endpoint using HTTPS PUT requests. Data can be a folder or an individual file.
-        Note that the ACL rule created in this method must later be deleted after the dataset is submitted to MDF.
     Args:
         auths (PubAuths): Dataclass of authorizers needed for upload. Includes `transfer_client`, `auth_client_openid`,
             and `endpoint_auth_clients`, which is a Dict of `endpoint_id`:AuthClient mappings.
@@ -32,17 +31,13 @@ def upload_to_endpoint(auths: PubAuths, local_data_path: str, endpoint_id: str =
     Returns
     -------
     (str) Globus data source URL: URL pointing to the data on the Globus endpoint
-    (str) rule_id: Globus ACL rule ID for the uploaded data. Used to delete the rule after the dataset is submitted
-        to MDF.
     """
     # define upload destination
     dest_path = _create_dest_folder(auths.transfer_client, endpoint_id, parent_dir=dest_parent, child_dir=dest_child)
-    # create new ACL rule (ie permission) for user to read/write to endpoint and path
-    rule_id = _create_access_rule(auths.transfer_client, auths.auth_client_openid, endpoint_id, dest_path)
     # upload data to endpoint
     globus_data_source = _https_upload(auths.transfer_client, auths.endpoint_auth_clients, local_data_path=local_data_path,
                                        dest_path=dest_path, endpoint_id=endpoint_id)
-    return globus_data_source, rule_id
+    return globus_data_source
 
 
 def _create_dest_folder(transfer_client: TransferClient, endpoint_id: str, parent_dir: str = None,
@@ -73,42 +68,6 @@ def _create_dest_folder(transfer_client: TransferClient, endpoint_id: str, paren
     except TransferAPIError as e:
         raise IOError(f"Error from Globus API while creating destination folder: {e.message}") from e
     return dest_path
-
-
-def _create_access_rule(transfer_client: TransferClient, auth_client_openid: AuthClient, endpoint_id: str,
-                        dest_path: str) -> str:
-    """Create an ACL rule (ie permission) for the user to read/write to the given destination on a Globus endpoint
-    Args:
-        transfer_client (TransferClient): Globus client authorized for Globus Transfers (ie moving data on endpoint,
-            adding/removing folders, etc).
-        auth_client_openid (AuthClient): Globus client authorized for Globus Auth functionality within an "openid"
-            scope (ie viewing or updating user info).
-        endpoint_id (str): A UUID designating the exact Globus endpoint. Can be obtained via the Globus Web UI or
-            the SDK.
-        dest_path (str): The path to the existing folder on the given Globus endpoint.
-    Returns
-    -------
-        (str): The ID for the ACL rule (necessary to delete it in the future)
-    """
-    # get user info
-    res = auth_client_openid.oauth2_userinfo()
-    user_id = res.data["sub"]  # get the user primary ID (based on primary email set in Globus)
-    # create data blob needed to set new rule with Globus
-    rule_data = {
-        "DATA_TYPE": "access",
-        "principal_type": "identity",
-        "principal": user_id,
-        "path": dest_path,
-        "permissions": "rw",
-    }
-    # create new ACL rule (eg permission) for user to read/write to endpoint and path
-    rule_id = None
-    try:
-        ret = transfer_client.add_endpoint_acl_rule(endpoint_id, rule_data)
-        rule_id = ret["access_id"]  # rule_id is needed to delete the rule later
-    except TransferAPIError as e:
-        logger.error(e.message)  # NOTE: known issue where user can still write to endpoint if this fails
-    return rule_id
 
 
 def _https_upload(transfer_client: TransferClient, endpoint_auth_clients: Dict[str, AuthClient], local_data_path: str,
