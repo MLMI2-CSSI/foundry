@@ -80,11 +80,11 @@ class Foundry(FoundryMetadata):
                     "petrel",
                     "transfer",
                     "dlhub",
-                    "funcx",
                     "openid",
                     "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
                     "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
                     "https://auth.globus.org/scopes/82f1b5c6-6e9b-11e5-ba47-22000b92c6ec/https",  # NCSA HTTPS
+                    "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all",  # Globus Search Lambda
                 ]
             self.auths = mdf_toolbox.login(
                 services=services,
@@ -134,6 +134,9 @@ class Foundry(FoundryMetadata):
                 "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
             ],
             openid_authorizer=self.auths['openid'],
+            sl_authorizer=self.auths[
+                "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all"
+            ],
             force_login=False,
         )
 
@@ -407,7 +410,7 @@ class Foundry(FoundryMetadata):
                 endpoint_auth_clients={endpoint_id: AuthClient(authorizer=self.auths[scope])}
             )
             # upload (ie publish) data to endpoint
-            globus_data_source, rule_id = upload_to_endpoint(pub_auths, https_data_path, endpoint_id)
+            globus_data_source = upload_to_endpoint(pub_auths, https_data_path, endpoint_id)
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
         # set dataset name using the title if an abbreviated short_name isn't specified
@@ -419,11 +422,6 @@ class Foundry(FoundryMetadata):
             res = self.connect_client.submit_dataset(update=update)
         else:
             res = None
-
-        # if uploaded by HTTPS, delete ACL rule after dataset submission is complete
-        if https_data_path and rule_id:
-            self.transfer_client.delete_endpoint_acl_rule(endpoint_id, rule_id)
-
         return res
 
     def publish_model(self, title, creators, short_name, servable_type, serv_options, affiliations=None, paper_doi=None):
