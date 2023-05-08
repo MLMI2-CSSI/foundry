@@ -57,7 +57,7 @@ For this example dataset, the `keys` list could be: &#x20;
 ```
 
 {% hint style="info" %}
-`Don't forget to specify the tabular data filename and path in the submitted metadata. This can be done in a split - see the section on` [`Describing Datasets`](publishing-datasets.md#describing-datasets)``
+`Don't forget to specify the tabular data filename and path in the submitted metadata. This can be done in a split - see the section on` [`Describing Datasets`](publishing-datasets.md#describing-datasets)
 {% endhint %}
 
 ### Hierarchical Data
@@ -91,8 +91,8 @@ Foundry also supports data from hierarchical data formats (e.g., [HDF5](https://
 
 * **`key (str) [required]`**A name mapping to a column name (e.g., for csv files) or key within a data structure (e.g., for HDF5 files)
 * **`type (str) [required]`** The type of key this entry represents. Currently suported types are _**\["input", "target" ]**_
-* **`units (str)[optional]` **_****_ The scientific units associated with a key. _Default: None_
-* **`description (str)[optional]` **_****_ A free text description of the key. _Default: None_
+* **`units (str)[optional]`** The scientific units associated with a key. _Default: None_
+* **`description (str)[optional]`** A free text description of the key. _Default: None_
 * **`labels (list) (str) [optional]`:** A list of strings mapped to integers in a key column
 
 ```python
@@ -165,17 +165,18 @@ Currently, you can publish any dataset you have stored on a Globus endpoint or G
 ```python
 from foundry import Foundry
 
-# Globus endpoint URL where your dataset is located
-data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry%2F_test_blaiszik_foundry_iris_v1.2%2F"
+# path to the data for HTTPS upload
+# NOTE: if uploading via Globus Connect Client, you'll want to specify `globus_data_source` instead 
+https_data_path = "~/Documents/data/g4mp2_data.json"
 
 # full title of dataset
-title = "Scourtas example iris dataset"
+title = "Scourtas example bandgap dataset"
 
 # authors to list 
 authors = ["A. Scourtas", "B. Blaiszik"]
 
 # shorthand title (optional)
-short_name = "example_AS_iris"
+short_name = "example_AS_bandgap"
 
 # affiliations of authors (optional)
 affiliations = ["Globus Labs, UChicago"]
@@ -184,23 +185,31 @@ affiliations = ["Globus Labs, UChicago"]
 publisher = "Materials Data Facility"
 
 # publication year (optional)
-publication_year = 2021
+publication_year = 2023
 
 
 f = Foundry()
-res = f.publish(metadata, data_source, title, authors, short_name=short_name))
+res = f.publish_dataset(metadata, data_source, title, authors, short_name=short_name))
 ```
 
-The `publish()` method returns a result object that you can inspect for information about the state of the publication. For the above publication, `res` would have the format:
+The `publish_dataset()` method returns a result object that you can inspect for information about the state of the publication. For the above publication, `res` would have the format:
 
 ```python
 {
  'error': None,
- 'source_id': '_test_example_iris_v1.1',
+ 'source_id': '_test_example_bandgap_v1.1',
  'status_code': 202,
  'success': True
 }
 ```
+
+Note that for large datasets, or for datasets that you would like to upload faster than HTTPS allows, you can create a Globus Transfer. Instead of specifying `https_data_path`, use `globus_data_source`:
+
+<pre><code># Globus endpoint URL where your dataset is located
+<strong>globus_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&#x26;origin_path=%2Ffoundry%2F_test_blaiszik_foundry_bandgap_v1.2%2F"
+</strong></code></pre>
+
+More information about how to get the Globus source URL to the dataset you would like to publish can be found in our [Publishing Guide](https://github.com/MLMI2-CSSI/foundry/blob/main/examples/publishing-guides/dataset\_publishing.ipynb).
 
 {% hint style="success" %}
 Once the dataset is submitted, there is a manual curation step required to maintain dataset standards. This will take additional time.

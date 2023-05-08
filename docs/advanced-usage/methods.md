@@ -52,7 +52,7 @@ Load the metadata for a Foundry dataset into the client.
 
 `interval (int)`: How often to poll Globus to check if transfers are complete
 
-**Returns** the dataset's **** [metadata](../publishing/describing-datasets.md#descriptive-metadata).
+**Returns** the dataset's [metadata](../publishing/describing-datasets.md#descriptive-metadata).
 
 
 
@@ -112,25 +112,29 @@ Collect dataframes of local data packages
 
 
 
-#### publish()
+#### publish\_dataset()
 
-`publish()`:
+`publish_dataset()`:
 
-Submit a dataset for publication
+Submit a dataset for publication; can choose to submit via HTTPS using `https_data_path` or via Globus Transfer using the `globus_data_source` argument. Only one upload method may be specified.
 
 **Args:**
 
 `foundry_metadata (dict)`: Dict of metadata describing data package
 
-`data_source (string)`: Url for Globus endpoint
-
 `title (string):` Title of data package
 
 `authors (list)`: List of data package author names e.g., Jack Black or Nunez, Victoria
 
+`https_data_path (string)`: Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is transferred to MDF. If None, the user must specify a `globus_data_source` URL to the location of the data on their own Globus endpoint. User must choose either `globus_data_source` or `https_data_path` to publish their data.
+
+`globus_data_source (string)` : Url path for a data folder on a Globus endpoint; url can be obtained through the Globus Web UI or SDK. If None, the user must specify an `https_data_path` pointing to the location of the data on their local machine. User must choose either `globus_data_source` or `https_data_path` to publish their data.
+
 `update (bool)`: True if this is an update to a prior data package (default: self.config.metadata\_file)
 
 `publication_year (int)`: Year of dataset publication. If None, will be set to the current calendar year by MDF Connect Client. (default: $current\_year)
+
+`test (bool)` : If True, do not submit the dataset for publication (ie transfer to the MDF endpoint). Default is False.
 
 **Keyword Args:**
 
@@ -168,7 +172,7 @@ Check the status of your submission.
 
 **Returns** _dict_: The full status result if `raw` is `True`
 
-****
+
 
 #### **configure()**
 
