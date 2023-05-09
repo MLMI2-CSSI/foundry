@@ -167,7 +167,7 @@ from foundry import Foundry
 
 # path to the data for HTTPS upload
 # NOTE: if uploading via Globus Connect Client, you'll want to specify `globus_data_source` instead 
-https_data_path = "~/Documents/data/g4mp2_data.json"
+https_data_path = "~/Documents/data/g4mp2_data"
 
 # full title of dataset
 title = "Scourtas example bandgap dataset"
