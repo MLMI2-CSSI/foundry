@@ -27,31 +27,24 @@ authors:
     equal-contrib: false
     affiliation: 3
   - name: Isaac Darling
-    orcid: 0000-0000-0000-0000
     equal-contrib: false
     affiliation: 3
   - name: Ethan Truelove
-    orcid: 0000-0000-0000-0000
     equal-contrib: false
     affiliation: 3
   - name: Aadit Ambadkar
-    orcid: 0000-0000-0000-0000
     equal-contrib: false
     affiliation: 1
   - name: Ribhav Bose
-    orcid: 0000-0000-0000-0000
     equal-contrib: false
     affiliation: 1
   - name: Zoa Katok
-    orcid: 0000-0000-0000-0000
     equal-contrib: false
     affiliation: 1
   - name: Jingrui Wei
-    orcid: 0000-0000-0000-0000
     equal-contrib: false
     affiliation: 4  
   - name: Xiangguo Li
-    orcid: 0000-0-0000-0000
     equal-contrib: false
     affiliation: 4  
   - name: Ryan Jacobs
@@ -59,11 +52,9 @@ authors:
     equal-contrib: false
     affiliation: 4   
   - name: Lane Schultz
-    orcid: 0000-0000-0000-0000
     equal-contrib: false
     affiliation: 4 
   - name: Doyeon Kim
-    orcid: 0000-0000-0000-0000
     equal-contrib: false
     affiliation: 4 
   - name: Michael Ferris
