@@ -234,8 +234,12 @@ def test_dataframe_load_split_wrong_split_name():
     _delete_test_data(f)
 
     f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
-    with pytest.raises(Exception):
+    with pytest.raises(Exception) as exc_info:
         f.load_data(splits_to_load=['chewbacca'])
+
+    err = exc_info.value
+    assert hasattr(err, '__cause__')
+    assert isinstance(err.__cause__, ValueError)
 
 
 @pytest.mark.skip(reason='No clear examples of datasets without splits - likely to be protected against soon.')
