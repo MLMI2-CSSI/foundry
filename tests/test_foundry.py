@@ -214,6 +214,40 @@ def test_dataframe_load():
     _delete_test_data(f)
 
 
+def test_dataframe_load_split():
+    f = Foundry(authorizers=auths)
+    _delete_test_data(f)
+
+    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
+    res = f.load_data(splits_to_load=['train'])
+    X, y = res['train']
+
+    assert len(X) > 1
+    assert isinstance(X, pd.DataFrame)
+    assert len(y) > 1
+    assert isinstance(y, pd.DataFrame)
+    _delete_test_data(f)
+
+
+def test_dataframe_load_split_wrong_split_name():
+    f = Foundry(authorizers=auths)
+    _delete_test_data(f)
+
+    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
+    with pytest.raises(Exception):
+        f.load_data(splits_to_load=['chewbacca'])
+
+
+@pytest.mark.skip(reason='No clear examples of datasets without splits - likely to be protected against soon.')
+def test_dataframe_load_split_but_no_splits():
+    f = Foundry(authorizers=auths)
+    _delete_test_data(f)
+
+    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
+    with pytest.raises(ValueError):
+        f.load_data(splits_to_load=['train'])
+
+
 def test_dataframe_load_doi():
     f = Foundry(authorizers=auths)
     _delete_test_data(f)
