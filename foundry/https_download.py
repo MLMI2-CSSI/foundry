@@ -1,3 +1,7 @@
+"""Methods to download files from a Globus endpoint using Xtract (HTTPS). Now deprecated as of Aug 2022
+"""
+
+
 import os
 from collections import deque
 
