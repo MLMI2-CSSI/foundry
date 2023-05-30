@@ -266,7 +266,7 @@ class Foundry(FoundryMetadata):
             self.dlhub_client.fx_endpoint = funcx_endpoint
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
-    def load_data(self, source_id=None, globus=True, as_hdf5=False, splits_to_load=[]):
+    def load_data(self, source_id=None, globus=True, as_hdf5=False, splits=[]):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
@@ -292,23 +292,23 @@ class Foundry(FoundryMetadata):
         # Handle splits if they exist. Return as a labeled dictionary of tuples
         try:
             if self.dataset.splits:
-                if not splits_to_load:
+                if not splits:
                     for split in self.dataset.splits:
                         data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
                                                             as_hdf5=as_hdf5)
                 else:
                     for split in self.dataset.splits:
-                        if split.label in splits_to_load:
-                            splits_to_load.remove(split.label)
+                        if split.label in splits:
+                            splits.remove(split.label)
                             data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
                                                                 as_hdf5=as_hdf5)
-                    if len(splits_to_load) > 0:
-                        raise ValueError(f'The split(s) {splits_to_load} were not found in the dataset!')
+                    if len(splits) > 0:
+                        raise ValueError(f'The split(s) {splits} were not found in the dataset!')
                 return data
             else:
                 # raise an error if splits are specified but not present in the dataset
-                if len(splits_to_load) > 0:
-                    raise ValueError(f"Splits to load were specified as {splits_to_load}, but no splits are present in dataset")
+                if len(splits) > 0:
+                    raise ValueError(f"Splits to load were specified as {splits}, but no splits are present in dataset")
                 return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
         except Exception as e:
             raise Exception(

@@ -219,7 +219,7 @@ def test_dataframe_load_split():
     _delete_test_data(f)
 
     f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
-    res = f.load_data(splits_to_load=['train'])
+    res = f.load_data(splits=['train'])
     X, y = res['train']
 
     assert len(X) > 1
@@ -235,7 +235,7 @@ def test_dataframe_load_split_wrong_split_name():
 
     f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     with pytest.raises(Exception) as exc_info:
-        f.load_data(splits_to_load=['chewbacca'])
+        f.load_data(splits=['chewbacca'])
 
     err = exc_info.value
     assert hasattr(err, '__cause__')
@@ -249,7 +249,7 @@ def test_dataframe_load_split_but_no_splits():
 
     f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     with pytest.raises(ValueError):
-        f.load_data(splits_to_load=['train'])
+        f.load_data(splits=['train'])
 
 
 def test_dataframe_load_doi():
