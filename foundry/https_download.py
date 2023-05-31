@@ -1,4 +1,4 @@
-"""Methods to download files from a Globus endpoint using Xtract (HTTPS). Now deprecated as of Aug 2022
+"""Methods to download files from a Globus endpoint
 """
 
 
