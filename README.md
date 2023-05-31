@@ -66,7 +66,7 @@ for i in range(n_images):
 [See full examples](./examples)
 
 # Contributing
-Foundry is an Open Source project and we encourage contributions from the community. To contribute, please fork from the `main` branch and open a Pull Request. A member of our team will review your PR shortly.
+Foundry is an Open Source project and we encourage contributions from the community. To contribute, please fork from the `main` branch and open a Pull Request on the `main` branch. A member of our team will review your PR shortly.
 
 # Primary Support
 This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure".
