@@ -52,7 +52,7 @@ Returns
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L442"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L453"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_status`
 
@@ -80,7 +80,7 @@ Check the status of your submission.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L471"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L482"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `configure`
 
@@ -97,7 +97,7 @@ Returns
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L489"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L500"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `download`
 
@@ -128,7 +128,7 @@ Download a Foundry dataset
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L311"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L322"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_citation`
 
@@ -142,7 +142,7 @@ get_citation() → str
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L585"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L596"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_keys`
 
@@ -209,12 +209,12 @@ Returns
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L260"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L259"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `load_data`
 
 ```python
-load_data(source_id=None, globus=True, as_hdf5=False)
+load_data(source_id=None, globus=True, as_hdf5=False, splits=[])
 ```
 
 Load in the data associated with the prescribed dataset 
@@ -233,14 +233,17 @@ For more complicated data structures, users should subclass Foundry and override
  - <b>`targets`</b> (list):  List of strings for output columns 
  - <b>`source_id`</b> (string):  Relative path to the source file 
  - <b>`as_hdf5`</b> (bool):  If True and dataset is in hdf5 format, keep data in hdf5 format 
+ - <b>`splits`</b> (list):  Labels of splits to be loaded 
 
-Returns 
-------- 
- - <b>`(tuple)`</b>:  Tuple of X, y values 
+
+
+**Returns:**
+ 
+ - <b>`(dict)`</b>:  a labeled dictionary of tuples 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L327"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L338"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `publish_dataset`
 
@@ -287,7 +290,7 @@ Returns
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L416"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L427"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `publish_model`
 
@@ -347,8 +350,10 @@ Run a model on data
  - <b>`inputs`</b>:  Data to send to DLHub as inputs (should be JSON serializable) 
  - <b>`funcx_endpoint`</b> (optional):  UUID for the funcx endpoint to run the model on, if not the default (eg River) 
 
-Returns 
--------  Returns results after invocation via the DLHub service 
+
+
+**Returns:**
+  Returns results after invocation via the DLHub service 
 
 ---
 
@@ -367,7 +372,7 @@ Returns
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L739"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L750"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `to_tensorflow`
 
@@ -388,7 +393,7 @@ Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the speci
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L724"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L735"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `to_torch`
 
