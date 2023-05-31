@@ -3,7 +3,7 @@
 <a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/https_download.py#L0"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 # <kbd>module</kbd> `foundry.https_download`
-Methods to download files from a Globus endpoint using Xtract (HTTPS). Now deprecated as of Aug 2022 
+Methods to download files from a Globus endpoint 
 
 
 ---
