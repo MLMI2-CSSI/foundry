@@ -249,15 +249,14 @@ class Foundry(FoundryMetadata):
            inputs: Data to send to DLHub as inputs (should be JSON serializable)
            funcx_endpoint (optional): UUID for the funcx endpoint to run the model on, if not the default (eg River)
 
-        Returns
-        -------
+        Returns:
              Returns results after invocation via the DLHub service
         """
         if funcx_endpoint is not None:
             self.dlhub_client.fx_endpoint = funcx_endpoint
         return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
-    def load_data(self, source_id=None, globus=True, as_hdf5=False):
+    def load_data(self, source_id=None, globus=True, as_hdf5=False, splits=[]):
         """Load in the data associated with the prescribed dataset
 
         Tabular Data Type: Data are arranged in a standard data frame
@@ -273,21 +272,33 @@ class Foundry(FoundryMetadata):
            targets (list): List of strings for output columns
            source_id (string): Relative path to the source file
            as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
+           splits (list): Labels of splits to be loaded
 
-        Returns
-        -------
-             (tuple): Tuple of X, y values
+        Returns:
+             (dict): a labeled dictionary of tuples
         """
         data = {}
 
         # Handle splits if they exist. Return as a labeled dictionary of tuples
         try:
             if self.dataset.splits:
-                for split in self.dataset.splits:
-                    data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
-                                                        as_hdf5=as_hdf5)
+                if not splits:
+                    for split in self.dataset.splits:
+                        data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
+                                                            as_hdf5=as_hdf5)
+                else:
+                    for split in self.dataset.splits:
+                        if split.label in splits:
+                            splits.remove(split.label)
+                            data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
+                                                                as_hdf5=as_hdf5)
+                    if len(splits) > 0:
+                        raise ValueError(f'The split(s) {splits} were not found in the dataset!')
                 return data
             else:
+                # raise an error if splits are specified but not present in the dataset
+                if len(splits) > 0:
+                    raise ValueError(f"Splits to load were specified as {splits}, but no splits are present in dataset")
                 return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
         except Exception as e:
             raise Exception(
