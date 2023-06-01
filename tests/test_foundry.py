@@ -210,10 +210,8 @@ def test_dataframe_load():
 
 
 def test_dataframe_load_split():
-    f = Foundry(authorizers=auths)
-    _delete_test_data(f)
+    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths)
 
-    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     res = f.load_data(splits=['train'])
     X, y = res['train']
 
@@ -225,26 +223,24 @@ def test_dataframe_load_split():
 
 
 def test_dataframe_load_split_wrong_split_name():
-    f = Foundry(authorizers=auths)
-    _delete_test_data(f)
+    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths)
 
-    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
     with pytest.raises(Exception) as exc_info:
         f.load_data(splits=['chewbacca'])
 
     err = exc_info.value
     assert hasattr(err, '__cause__')
     assert isinstance(err.__cause__, ValueError)
+    _delete_test_data(f)
 
 
 @pytest.mark.skip(reason='No clear examples of datasets without splits - likely to be protected against soon.')
 def test_dataframe_load_split_but_no_splits():
-    f = Foundry(authorizers=auths)
-    _delete_test_data(f)
-
-    f = f.load(test_dataset, download=True, globus=False, authorizers=auths)
+    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths)
+    
     with pytest.raises(ValueError):
         f.load_data(splits=['train'])
+    _delete_test_data(f)
 
 
 def test_dataframe_load_doi():
