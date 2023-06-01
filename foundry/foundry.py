@@ -50,7 +50,7 @@ class Foundry(FoundryMetadata):
     xtract_tokens: Any
 
     def __init__(
-            self, name=None, no_browser=False, no_local_server=False, index="mdf", authorizers=None, 
+            self, name=None, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
             download=True, globus=True, verbose=False, metadata=None, interval=10, **data
     ):
         """Initialize a Foundry client
@@ -69,7 +69,7 @@ class Foundry(FoundryMetadata):
             interval (int): How often to poll Globus to check if transfers are complete
             data (dict): Other arguments, e.g., results from an MDF search result that are used
                     to populate Foundry metadata fields
-            
+
         Returns:
             an initialized and authenticated Foundry client
         """
@@ -156,12 +156,12 @@ class Foundry(FoundryMetadata):
         }
 
         if name is not None:
-            self._load(name=name, 
-                       download=download, 
-                       globus=globus, 
-                       verbose=verbose, 
-                       metadata=metadata, 
-                       authorizers=authorizers, 
+            self._load(name=name,
+                       download=download,
+                       globus=globus,
+                       verbose=verbose,
+                       metadata=metadata,
+                       authorizers=authorizers,
                        interval=interval)
 
     def _load(self, name, download=True, globus=True, verbose=False, metadata=None, authorizers=None, interval=None):

@@ -237,7 +237,7 @@ def test_dataframe_load_split_wrong_split_name():
 @pytest.mark.skip(reason='No clear examples of datasets without splits - likely to be protected against soon.')
 def test_dataframe_load_split_but_no_splits():
     f = Foundry(test_dataset, download=True, globus=False, authorizers=auths)
-    
+
     with pytest.raises(ValueError):
         f.load_data(splits=['train'])
     _delete_test_data(f)
