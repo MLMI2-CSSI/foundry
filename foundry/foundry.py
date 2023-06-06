@@ -163,8 +163,8 @@ class Foundry(FoundryMetadata):
                        metadata=metadata,
                        authorizers=authorizers,
                        interval=interval)
-    def _load(self, name, download=True, globus=True, verbose=False, metadata=None, authorizers=None, interval=None):
 
+    def _load(self, name, download=True, globus=True, verbose=False, metadata=None, authorizers=None, interval=None):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
