@@ -47,8 +47,6 @@ class Foundry(FoundryMetadata):
     index = ""
     auths: Any
 
-    xtract_tokens: Any
-
     def __init__(
             self, name=None, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
             download=True, globus=True, verbose=False, metadata=None, interval=10, **data
@@ -146,14 +144,6 @@ class Foundry(FoundryMetadata):
             ],
             force_login=False,
         )
-
-        self.xtract_tokens = {
-            "auth_token": self.auths["petrel"].access_token,
-            "transfer_token": self.auths["transfer"].authorizer.access_token,
-            "funcx_token": self.auths[
-                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
-            ].access_token,
-        }
 
         if name is not None:
             self._load(name=name,
