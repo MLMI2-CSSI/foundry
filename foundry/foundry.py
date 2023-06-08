@@ -48,20 +48,27 @@ class Foundry(FoundryMetadata):
     auths: Any
 
     def __init__(
-            self, no_browser=False, no_local_server=False, index="mdf", authorizers=None, **data
+            self, name=None, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
+            download=True, globus=True, verbose=False, metadata=None, interval=10, **data
     ):
         """Initialize a Foundry client
         Args:
+            name (str): Name of the foundry dataset. If not supplied, metadata will not be loaded into
+                    the Foundry object
             no_browser (bool):  Whether to open the browser for the Globus Auth URL.
             no_local_server (bool): Whether a local server is available.
                     This should be `False` when on remote server (e.g., Google Colab ).
             index (str): Index to use for search and data publication. Choices `mdf` or `mdf-test`
             authorizers (dict): A dictionary of authorizers to use, following the `mdf_toolbox` format
+            download (bool): If True, download the data associated with the package (default is True)
+            globus (bool): If True, download using Globus, otherwise https
+            verbose (bool): If True print additional debug information
+            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
+            interval (int): How often to poll Globus to check if transfers are complete
             data (dict): Other arguments, e.g., results from an MDF search result that are used
                     to populate Foundry metadata fields
 
-        Returns
-        -------
+        Returns:
             an initialized and authenticated Foundry client
         """
         super().__init__(**data)
@@ -138,7 +145,16 @@ class Foundry(FoundryMetadata):
             force_login=False,
         )
 
-    def load(self, name, download=True, globus=False, verbose=False, metadata=None, authorizers=None, **kwargs):
+        if name is not None:
+            self._load(name=name,
+                       download=download,
+                       globus=globus,
+                       verbose=verbose,
+                       metadata=metadata,
+                       authorizers=authorizers,
+                       interval=interval)
+
+    def _load(self, name, download=True, globus=True, verbose=False, metadata=None, authorizers=None, interval=None):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
@@ -146,12 +162,9 @@ class Foundry(FoundryMetadata):
             globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
             metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
-
-        Keyword Args:
             interval (int): How often to poll Globus to check if transfers are complete
 
-        Returns
-        -------
+        Returns:
             self
         """
 
@@ -198,7 +211,7 @@ class Foundry(FoundryMetadata):
 
         if download:  # Add check for package existence
             self.download(
-                interval=kwargs.get("interval", 10), globus=globus, verbose=verbose
+                interval=interval, globus=globus, verbose=verbose
             )
 
         return self
