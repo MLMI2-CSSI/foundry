@@ -39,6 +39,8 @@ f = Foundry(index="mdf")
 
 f = f.load("10.18126/e73h-3w6n", globus=True)
 ```
+*NOTE*: If you run locally and don't want to install the [Globus Connect Personal endpoint](https://www.globus.org/globus-connect-personal), just set the `globus=False`.
+
 If running this code in a notebook, a table of metadata for the dataset will appear:
 
 <img width="903" alt="metadata" src="https://user-images.githubusercontent.com/16869564/197038472-0b6ae559-4a6b-4b20-88e5-679bb6eb4f5c.png">
