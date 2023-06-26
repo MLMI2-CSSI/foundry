@@ -5,7 +5,7 @@ from json2table import convert
 import numpy as np
 import pandas as pd
 from pydantic import ValidationError
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 import logging
 import warnings
 import os
@@ -52,7 +52,7 @@ class Foundry(FoundryBase):
     def __init__(
             self, name=None, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
             download=True, globus=True, verbose=False, metadata=None, interval=10,
-            dc: Optional[Dict] = {}, mdf: Optional[Dict] = {}, dataset: FoundryDataset = {}, **data
+            **data
     ):
         """Initialize a Foundry client
         Args:
