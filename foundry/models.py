@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, StrictInt, StrictStr
 from enum import Enum
 import pandas as pd
 from json2table import convert
@@ -58,6 +58,7 @@ class FoundrySpecification(BaseModel):
 
 # END Classes for Foundry Data Package Specification
 
+
 class FoundryDatasetType(Enum):
     """Foundry Dataset Types
     Enumeration of the possible Foundry dataset types
@@ -70,23 +71,40 @@ class FoundryDatasetType(Enum):
 
 
 class FoundryKeyClass(BaseModel):
-    label: str = ""
-    name: str = ""
+    label: StrictStr = Field(..., description="The label that exists in the data")
+    name: StrictStr = Field(..., description="The name the label maps onto.")
 
 
 class FoundryKey(BaseModel):
-    key: List[str] = []
-    type: str = ""
-    filter: Optional[str] = ""
-    units: Optional[str] = ""
-    description: Optional[str] = ""
+    key: List[StrictStr] = Field(..., description="Column or header name for tabular data, key/path for HDF5 data")
+    type: StrictStr = Field(..., description="Whether input or target")
     classes: Optional[List[FoundryKeyClass]]
+    description: Optional[StrictStr]
+    filter: Optional[StrictStr]
+    units: Optional[StrictStr]
 
 
 class FoundrySplit(BaseModel):
-    type: str = ""
-    path: Optional[str] = ""
-    label: Optional[str] = ""
+    type: StrictStr = Field(..., description="The kind of partition of the dataset (train, test, validation, etc)")
+    path: Optional[StrictStr]
+    label: Optional[StrictStr]
+
+
+class FoundryMetadata(BaseModel):
+    """Foundry Dataset
+    Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
+    """
+    data_type: FoundryDatasetType = Field(..., description="The kind of data in the dataset, e.g. tabular, json, hdf5")
+    domain: List[StrictStr] = Field(..., description="The domain of applicability. e.g., materials science, chemistry, machine vision")
+    keys: List[FoundryKey] = Field(..., description="Keys describing how to load the data")
+    dataframe: Optional[Any]
+    n_items: Optional[StrictInt]
+    short_name: Optional[StrictStr]
+    splits: Optional[List[FoundrySplit]]
+    task_type: Optional[List[StrictStr]]
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class FoundryDataset(BaseModel):
@@ -134,7 +152,7 @@ class FoundryConfig(BaseModel):
         return convert(json.loads(self.json()))
 
 
-class FoundryMetadata(BaseModel):
+class FoundryBase(BaseModel):
     dc: Optional[Dict] = {}  # pydantic Datacite?
     mdf: Optional[Dict] = {}
     dataset: FoundryDataset = {}

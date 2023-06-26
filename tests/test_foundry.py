@@ -6,6 +6,7 @@ from filecmp import cmp
 from datetime import datetime
 from math import floor
 import numpy as np
+from pydantic import ValidationError
 import requests
 import mdf_toolbox
 import pandas as pd
@@ -133,6 +134,66 @@ pub_test_metadata = {
     'domain': ['materials science', 'chemistry'],
     'n_items': 1000
 }
+
+
+pub_test_invalid_metadata = {
+    "keys": [
+        {
+            "key": ["sepal length (cm)"],
+            "type": "input",
+            "units": "cm",
+            "description": 10
+        },
+        {
+            "key": ["sepal width (cm)"],
+            "type": "input",
+            "units": "cm",
+            "description": "sepal width in unit(cm)"
+        },
+        {
+            "key": ["petal length (cm)"],
+            "type": "input",
+            "units": "cm",
+            "description": "petal length in unit(cm)"
+        },
+        {
+            "key": ["petal width (cm)"],
+            "type": "input",
+            "units": "cm",
+            "description": "petal width in unit(cm)"
+        },
+        {
+            "key": ["y"],
+            "type": "output",
+            "units": "",
+            "description": "flower type",
+            "classes": [
+                {
+                    "label": "0",
+                    "name": "setosa"
+                },
+                {
+                    "label": "1",
+                    "name": "versicolor"
+                },
+                {
+                    "label": "2",
+                    "name": "virginica"
+                }
+            ]
+        }
+    ],
+    'splits': [
+        {'label': 'train', 'path': 'train.json', 'type': 'train'},
+        {'label': 'test', 'path': 'test.json', 'type': 'test'}
+    ],
+    "short_name": "example_AS_iris_test_{:.0f}".format(datetime.now().timestamp()),
+    "data_type": "tabular",
+    'task_type': ['unsupervised', 'generative'],
+    'domain': ['materials science', 'chemistry'],
+    'n_items': 1000
+}
+
 
 # Globus endpoint for '_iris_dev' for test publication
 pub_test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2Firis-dev%2F"
@@ -298,6 +359,24 @@ def test_publish_with_https():
 
     assert res['success']
     assert res['source_id'] == f"_test_{short_name}_v1.1"
+
+
+def test_publish_invalid_metadata():
+    """Testing the validation of the metadata when publishing data
+    """
+    with pytest.raises(ValidationError) as exc_info:
+        f = Foundry(index="mdf-test", authorizers=auths)
+        timestamp = datetime.now().timestamp()
+        title = "https_publish_test_{:.0f}".format(timestamp)
+        short_name = "https_pub_{:.0f}".format(timestamp)
+        authors = ["A Scourtas"]
+        local_path = "./data/https_test"
+
+        # create test JSON to upload (if it doesn't already exist)
+        _write_test_data(local_path)
+        f.publish_dataset(pub_test_invalid_metadata, title, authors, https_data_path=local_path, short_name=short_name)
+
+    assert exc_info.value.errors()[0]['msg'] == 'str type expected'
 
 
 def test_upload_to_endpoint():
