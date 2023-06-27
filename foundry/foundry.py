@@ -4,6 +4,7 @@ import mdf_toolbox
 from json2table import convert
 import numpy as np
 import pandas as pd
+from pydantic import ValidationError
 from typing import Any, Dict, List
 import logging
 import warnings
@@ -23,7 +24,8 @@ from .utils import _read_csv, _read_json, _read_excel
 from foundry.models import (
     FoundryMetadata,
     FoundryConfig,
-    FoundryDataset
+    FoundryDataset,
+    FoundryBase
 )
 from foundry.https_download import download_file, recursive_ls
 from foundry.https_upload import upload_to_endpoint
@@ -31,7 +33,7 @@ from foundry.https_upload import upload_to_endpoint
 logger = logging.getLogger(__name__)
 
 
-class Foundry(FoundryMetadata):
+class Foundry(FoundryBase):
     """Foundry Client Base Class
     TODO:
     -------
@@ -49,7 +51,8 @@ class Foundry(FoundryMetadata):
 
     def __init__(
             self, name=None, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
-            download=True, globus=True, verbose=False, metadata=None, interval=10, **data
+            download=True, globus=True, verbose=False, metadata=None, interval=10,
+            **data
     ):
         """Initialize a Foundry client
         Args:
@@ -74,6 +77,13 @@ class Foundry(FoundryMetadata):
         super().__init__(**data)
         self.index = index
         self.auths = None
+
+        self.config = FoundryConfig(
+            dataframe_file="foundry_dataframe.json",
+            metadata_file="foundry_metadata.json",
+            local=False,
+            local_cache_dir="./data",
+        )
 
         if authorizers:
             self.auths = authorizers
@@ -392,6 +402,9 @@ class Foundry(FoundryMetadata):
             of dataset. Contains `source_id`, which can be used to check the
             status of the submission
         """
+        # ensure metadata is properly formatted
+        self.validate_metadata(foundry_metadata)
+
         # ensure that one of `https_data_path` or `globus_data_source` have been assigned values
         if (https_data_path and globus_data_source) or \
                 (https_data_path is None and globus_data_source is None):
@@ -774,3 +787,27 @@ class Foundry(FoundryMetadata):
 
         inputs, targets = self._get_inputs_targets(split)
         return TensorflowSequence(inputs, targets)
+
+    def validate_metadata(self, metadata):
+        """Validate the JSON message against the FoundryMetadata model
+
+        Arguments:
+            metadata (dict): Metadata information provided by the user.
+
+        Raises:
+            ValidationError: if metadata supplied by user does not meet the specificiation of a
+            FoundryMetadata object.
+
+        """
+        try:
+            FoundryMetadata(**metadata)
+            logger.debug("Metadata validation successful!")
+        except ValidationError as e:
+            logger.error("Metadata validation failed!")
+            for error in e.errors():
+                field_name = ".".join([item for item in error['loc'] if isinstance(item, str)])
+                error_description = error['msg']
+                error_message = f"""There is an issue validating the metadata for the field '{field_name}':
+                The error message returned is: '{error_description}'."""
+                logger.error(error_message)
+            raise e
