@@ -51,7 +51,7 @@ class Foundry(FoundryBase):
 
     def __init__(
             self, name=None, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
-            download=True, globus=True, verbose=False, metadata=None, interval=10,
+            globus=True, verbose=False, metadata=None, interval=10,
             **data
     ):
         """Initialize a Foundry client
@@ -63,7 +63,6 @@ class Foundry(FoundryBase):
                     This should be `False` when on remote server (e.g., Google Colab ).
             index (str): Index to use for search and data publication. Choices `mdf` or `mdf-test`
             authorizers (dict): A dictionary of authorizers to use, following the `mdf_toolbox` format
-            download (bool): If True, download the data associated with the package (default is True)
             globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
             metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
@@ -155,23 +154,13 @@ class Foundry(FoundryBase):
             force_login=False,
         )
 
-        if name is not None:
-            self._load(name=name,
-                       download=download,
-                       globus=globus,
-                       verbose=verbose,
-                       metadata=metadata,
-                       authorizers=authorizers,
-                       interval=interval)
-
-    def _load(self, name, download=True, globus=True, verbose=False, metadata=None, authorizers=None, interval=None):
+    def fetch_data(self, name, download=True, globus=True, verbose=False, authorizers=None, interval=10):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
             download (bool): If True, download the data associated with the package (default is True)
             globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
-            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
             interval (int): How often to poll Globus to check if transfers are complete
 
         Returns:
@@ -182,11 +171,8 @@ class Foundry(FoundryBase):
         if not name:
             raise ValueError("load: No dataset name is given")
 
-        if metadata:
-            res = metadata
-
         # MDF specific logic
-        if is_doi(name) and not metadata:
+        if is_doi(name):
             res = self.forge_client.match_resource_types("dataset")
             res = res.match_dois(name).search()
 
@@ -325,7 +311,7 @@ class Foundry(FoundryBase):
                 return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
         except Exception as e:
             raise Exception(
-                "Metadata not loaded into Foundry object, make sure to call load()") from e
+                "Metadata not loaded into Foundry object, make sure to call fetch_data()") from e
 
     def _repr_html_(self) -> str:
         if not self.dc:

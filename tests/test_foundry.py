@@ -245,21 +245,23 @@ def test_search():
 
 
 def test_metadata_pull():
-    f = Foundry(test_dataset, download=False, authorizers=auths)
+    f = Foundry(no_browser=True, no_local_server=True)
+    f.fetch_data(test_dataset, download=False)
     assert f.dc["titles"][0]["title"] == expected_title
 
 
 def test_download_https():
-    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths)
+    f = Foundry(no_browser=True, no_local_server=True)
     _delete_test_data(f)
 
+    f.fetch_data(test_dataset, download=True, globus=False)
     assert f.dc["titles"][0]["title"] == expected_title
     _delete_test_data(f)
 
 
 def test_dataframe_load():
-    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths)
-
+    f = Foundry()
+    f = f.fetch_data(test_dataset, download=True, globus=False)
     res = f.load_data()
     X, y = res['train']
 
@@ -271,7 +273,8 @@ def test_dataframe_load():
 
 
 def test_dataframe_load_split():
-    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths)
+    f = Foundry()
+    f = f.fetch_data(test_dataset, download=True, globus=False)
 
     res = f.load_data(splits=['train'])
     X, y = res['train']
@@ -284,7 +287,8 @@ def test_dataframe_load_split():
 
 
 def test_dataframe_load_split_wrong_split_name():
-    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths)
+    f = Foundry()
+    f = f.fetch_data(test_dataset, download=True, globus=False)
 
     with pytest.raises(Exception) as exc_info:
         f.load_data(splits=['chewbacca'])
@@ -297,7 +301,8 @@ def test_dataframe_load_split_wrong_split_name():
 
 @pytest.mark.skip(reason='No clear examples of datasets without splits - likely to be protected against soon.')
 def test_dataframe_load_split_but_no_splits():
-    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths)
+    f = Foundry()
+    f = f.fetch_data(test_dataset, download=True, globus=False)
 
     with pytest.raises(ValueError):
         f.load_data(splits=['train'])
@@ -305,7 +310,8 @@ def test_dataframe_load_split_but_no_splits():
 
 
 def test_dataframe_load_doi():
-    f = Foundry(test_doi, download=True, globus=False, authorizers=auths)
+    f = Foundry()
+    f = f.fetch_data(test_dataset, download=True, globus=False)
 
     res = f.load_data()
     X, y = res['train']
@@ -319,17 +325,18 @@ def test_dataframe_load_doi():
 
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_download_globus():
-    f = Foundry(test_dataset, download=True, authorizers=auths, no_browser=True, no_local_server=True)
+    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
     _delete_test_data(f)
 
+    f = f.fetch_data(test_dataset)
     assert f.dc["titles"][0]["title"] == expected_title
     _delete_test_data(f)
 
 
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_globus_dataframe_load():
-    f = Foundry(test_dataset, download=True, authorizers=auths, no_browser=True, no_local_server=True)
-
+    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
+    f = f.fetch_data(test_dataset)
     res = f.load_data()
     X, y = res['train']
 
@@ -482,8 +489,8 @@ def test_check_status():
 
 
 def test_to_pytorch():
-    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths, no_browser=True, no_local_server=True)
-
+    f = Foundry(globus=False, authorizers=auths, no_browser=True, no_local_server=True)
+    f = f.fetch_data(test_dataset)
     raw = f.load_data()
 
     ds = f.to_torch(split='train')
@@ -495,7 +502,8 @@ def test_to_pytorch():
 
 
 def test_to_tensorflow():
-    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths, no_browser=True, no_local_server=True)
+    f = Foundry(globus=False, authorizers=auths, no_browser=True, no_local_server=True)
+    f = f.fetch_data(test_dataset)
 
     raw = f.load_data()
 
