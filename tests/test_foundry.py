@@ -207,33 +207,33 @@ def _delete_test_data(foundry_obj):
 
 
 def test_foundry_init():
-    f = Foundry(test_dataset, download=False, authorizers=auths)
+    f = Foundry(test_dataset, metadata_only=True, authorizers=auths)
     assert isinstance(f.forge_client, Forge)
     assert isinstance(f.connect_client, MDFConnectClient)
 
     if not is_gha:
         assert isinstance(f.dlhub_client, DLHubClient)
 
-        f2 = Foundry(test_dataset, download=False, authorizers=auths, no_browser=False, no_local_server=True)
+        f2 = Foundry(test_dataset, metadata_only=True, authorizers=auths, no_browser=False, no_local_server=True)
         assert isinstance(f2.dlhub_client, DLHubClient)
         assert isinstance(f2.forge_client, Forge)
         assert isinstance(f2.connect_client, MDFConnectClient)
 
-        f3 = Foundry(test_dataset, download=False, authorizers=auths, no_browser=True, no_local_server=False)
+        f3 = Foundry(test_dataset, metadata_only=True, authorizers=auths, no_browser=True, no_local_server=False)
         assert isinstance(f3.dlhub_client, DLHubClient)
         assert isinstance(f3.forge_client, Forge)
         assert isinstance(f3.connect_client, MDFConnectClient)
 
 
 def test_list():
-    f = Foundry(test_dataset, download=False, authorizers=auths)
+    f = Foundry(test_dataset, metadata_only=True, authorizers=auths)
     ds = f.list()
     assert isinstance(ds, pd.DataFrame)
     assert len(ds) > 0
 
 
 def test_search():
-    f = Foundry(test_dataset, download=False, authorizers=auths)
+    f = Foundry(test_dataset, metadata_only=True, authorizers=auths)
     q = "Elwood"
     ds = f.search(q)
 
@@ -246,7 +246,7 @@ def test_search():
 
 def test_metadata_pull():
     f = Foundry(no_browser=True, no_local_server=True)
-    f.fetch_data(test_dataset, download=False)
+    f.fetch_data(test_dataset, metadata_only=True)
     assert f.dc["titles"][0]["title"] == expected_title
 
 
@@ -254,14 +254,29 @@ def test_download_https():
     f = Foundry(no_browser=True, no_local_server=True)
     _delete_test_data(f)
 
-    f.fetch_data(test_dataset, download=True, globus=False)
+    f.fetch_data(test_dataset, metadata_only=False, globus=False)
     assert f.dc["titles"][0]["title"] == expected_title
     _delete_test_data(f)
 
 
 def test_dataframe_load():
     f = Foundry()
-    f = f.fetch_data(test_dataset, download=True, globus=False)
+    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
+    res = f.load_data()
+    X, y = res['train']
+
+    assert len(X) > 1
+    assert isinstance(X, pd.DataFrame)
+    assert len(y) > 1
+    assert isinstance(y, pd.DataFrame)
+    _delete_test_data(f)
+
+
+def test_metadata_then_data_download():
+    f = Foundry()
+    f = f.fetch_data(test_dataset, metadata_only=True, globus=False)
+    _delete_test_data(f)
+    f.download_dataset()
     res = f.load_data()
     X, y = res['train']
 
@@ -274,7 +289,7 @@ def test_dataframe_load():
 
 def test_dataframe_load_split():
     f = Foundry()
-    f = f.fetch_data(test_dataset, download=True, globus=False)
+    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
 
     res = f.load_data(splits=['train'])
     X, y = res['train']
@@ -288,7 +303,7 @@ def test_dataframe_load_split():
 
 def test_dataframe_load_split_wrong_split_name():
     f = Foundry()
-    f = f.fetch_data(test_dataset, download=True, globus=False)
+    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
 
     with pytest.raises(Exception) as exc_info:
         f.load_data(splits=['chewbacca'])
@@ -302,7 +317,7 @@ def test_dataframe_load_split_wrong_split_name():
 @pytest.mark.skip(reason='No clear examples of datasets without splits - likely to be protected against soon.')
 def test_dataframe_load_split_but_no_splits():
     f = Foundry()
-    f = f.fetch_data(test_dataset, download=True, globus=False)
+    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
 
     with pytest.raises(ValueError):
         f.load_data(splits=['train'])
@@ -311,7 +326,7 @@ def test_dataframe_load_split_but_no_splits():
 
 def test_dataframe_load_doi():
     f = Foundry()
-    f = f.fetch_data(test_dataset, download=True, globus=False)
+    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
 
     res = f.load_data()
     X, y = res['train']

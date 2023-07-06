@@ -24,7 +24,6 @@ from .utils import _read_csv, _read_json, _read_excel
 from foundry.models import (
     FoundryMetadata,
     FoundryConfig,
-    FoundryDataset,
     FoundryBase
 )
 from foundry.https_download import download_file, recursive_ls
@@ -154,17 +153,23 @@ class Foundry(FoundryBase):
             force_login=False,
         )
 
-    def fetch_data(self, name, download=True, globus=True, verbose=False, authorizers=None, interval=10):
-        """Load the metadata for a Foundry dataset into the client
+    def fetch_data(self, name, metadata_only=False, globus=True, verbose=False, authorizers=None, interval=10):
+        """Load the data for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
-            download (bool): If True, download the data associated with the package (default is True)
+            metadata_only (bool): If True, download only the metadata (not the full dataset)
+                associated with the package (default is False)
             globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
             interval (int): How often to poll Globus to check if transfers are complete
 
         Returns:
             self
+
+        Todo:
+            * Add check for package existence during download of dataset
+            * Creating a new Foundry instance is a problematic way to update the metadata,
+                we should find a way to abstract this.
         """
 
         # handle empty dataset name (was returning all the datasets)
@@ -198,15 +203,12 @@ class Foundry(FoundryBase):
 
         del res["projects"][self.config.metadata_key]
 
-        # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
-        # we should find a way to abstract this.
-
         self.dc = res['dc']
         self.mdf = res['mdf']
-        self.dataset = FoundryDataset(**res['dataset'])
+        self.metadata = FoundryMetadata(**res['dataset'])
 
-        if download:  # Add check for package existence
-            self.download(
+        if not metadata_only:
+            self.download_dataset(
                 interval=interval, globus=globus, verbose=verbose
             )
 
@@ -290,13 +292,13 @@ class Foundry(FoundryBase):
 
         # Handle splits if they exist. Return as a labeled dictionary of tuples
         try:
-            if self.dataset.splits:
+            if self.metadata.splits:
                 if not splits:
-                    for split in self.dataset.splits:
+                    for split in self.metadata.splits:
                         data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
                                                             as_hdf5=as_hdf5)
                 else:
-                    for split in self.dataset.splits:
+                    for split in self.metadata.splits:
                         if split.label in splits:
                             splits.remove(split.label)
                             data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
@@ -325,7 +327,7 @@ class Foundry(FoundryBase):
 
             buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
 
-            buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
+            buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.metadata.json(exclude={"dataframe"})))}'
         return buf
 
     def get_citation(self) -> str:
@@ -509,7 +511,7 @@ class Foundry(FoundryBase):
         self.config = FoundryConfig(**kwargs)
         return self
 
-    def download(self, globus: bool = True, interval: int = 20, parallel_https: int = 4, verbose: bool = False) -> 'Foundry':
+    def download_dataset(self, globus: bool = True, interval: int = 20, parallel_https: int = 4, verbose: bool = False) -> 'Foundry':
         """Download a Foundry dataset
 
         Args:
@@ -526,10 +528,10 @@ class Foundry(FoundryBase):
         if os.path.isdir(path):
             # if directory is present, but doesn't have the correct number of files inside,
             # dataset will attempt to redownload
-            if self.dataset.splits:
+            if self.metadata.splits:
                 # array to keep track of missing files
                 missing_files = []
-                for split in self.dataset.splits:
+                for split in self.metadata.splits:
                     if split.path[0] == '/':
                         split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
@@ -586,9 +588,9 @@ class Foundry(FoundryBase):
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
             # checking all necessary files are present
-            if self.dataset.splits:
+            if self.metadata.splits:
                 missing_files = []
-                for split in self.dataset.splits:
+                for split in self.metadata.splits:
                     if split.path[0] == '/':  # if absolute path, make it a relative path
                         split.path = split.path[1:]
                     if not os.path.isfile(os.path.join(path, split.path)):
@@ -620,15 +622,15 @@ class Foundry(FoundryBase):
 
         if as_object:
             if type:
-                return [key for key in self.dataset.keys if key.type == type]
+                return [key for key in self.metadata.keys if key.type == type]
             else:
-                return [key for key in self.dataset.keys]
+                return [key for key in self.metadata.keys]
 
         else:
             if type:
-                keys = [key.key for key in self.dataset.keys if key.type == type]
+                keys = [key.key for key in self.metadata.keys if key.type == type]
             else:
-                keys = [key.key for key in self.dataset.keys]
+                keys = [key.key for key in self.metadata.keys]
 
             key_list = []
             for k in keys:
@@ -656,7 +658,7 @@ class Foundry(FoundryBase):
             raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
 
         # Handle Foundry-defined types.
-        if self.dataset.data_type.value == "tabular":
+        if self.metadata.data_type.value == "tabular":
             # TODO: Add hashes and versioning to metadata and checking to the file
             read_fns = [(_read_json, {"lines": False, "path_to_file": path_to_file}),
                         (_read_json, {"lines": True, "path_to_file": path_to_file}),
@@ -665,22 +667,22 @@ class Foundry(FoundryBase):
 
             for fn, params in read_fns:
                 try:
-                    self.dataset.dataframe = fn(**params)
+                    self.metadata.dataframe = fn(**params)
                 except Exception as e:
                     logger.info(f"Unable to read file with {fn.__name__} with params {params}: {e}")
-                if self.dataset.dataframe is not None:
+                if self.metadata.dataframe is not None:
                     logger.info(f"Succeeded with {fn.__name__} with params {params}")
                     break
-            if self.dataset.dataframe is None:
+            if self.metadata.dataframe is None:
                 logger.fatal(f"Cannot read {path_to_file} as tabular data, failed to load")
                 raise ValueError(f"Cannot read tabular data from {path_to_file}")
 
             return (
-                self.dataset.dataframe[self.get_keys("input")],
-                self.dataset.dataframe[self.get_keys("target")],
+                self.metadata.dataframe[self.get_keys("input")],
+                self.metadata.dataframe[self.get_keys("target")],
             )
 
-        elif self.dataset.data_type.value == "hdf5":
+        elif self.metadata.data_type.value == "hdf5":
             f = h5py.File(path_to_file, "r")
             special_types = ["input", "target"]
             tmp_data = {s: {} for s in special_types}
@@ -712,13 +714,13 @@ class Foundry(FoundryBase):
         raw = self.load_data(as_hdf5=False)
 
         if not split:
-            split = self.dataset.splits[0].type
+            split = self.metadata.splits[0].type
 
-        if self.dataset.data_type.value == "hdf5":
+        if self.metadata.data_type.value == "hdf5":
             inputs = []
             targets = []
-            for key in self.dataset.keys:
-                if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
+            for key in self.metadata.keys:
+                if len(raw[split][key.type][key.key[0]].keys()) != self.metadata.n_items:
                     continue
 
                 # Get a numpy array of all the values for each item for that key
@@ -730,7 +732,7 @@ class Foundry(FoundryBase):
 
             return (inputs, targets)
 
-        elif self.dataset.data_type.value == "tabular":
+        elif self.metadata.data_type.value == "tabular":
             inputs = []
             targets = []
 

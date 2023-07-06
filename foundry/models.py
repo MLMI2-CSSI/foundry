@@ -155,7 +155,7 @@ class FoundryConfig(BaseModel):
 class FoundryBase(BaseModel):
     dc: Optional[Dict] = {}  # pydantic Datacite?
     mdf: Optional[Dict] = {}
-    dataset: FoundryDataset = {}
+    metadata: FoundryMetadata = {}
     config: FoundryConfig = FoundryConfig(
         dataframe_file="foundry_dataframe.json",
         metadata_file="foundry_metadata.json",
