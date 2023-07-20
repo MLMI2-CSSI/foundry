@@ -4,6 +4,7 @@ import mdf_toolbox
 from json2table import convert
 import numpy as np
 import pandas as pd
+import pprint
 from pydantic import ValidationError
 from typing import Any, Dict, List
 import logging
@@ -99,6 +100,7 @@ class Foundry(FoundryBase):
                     "https://auth.globus.org/scopes/82f1b5c6-6e9b-11e5-ba47-22000b92c6ec/https",  # NCSA HTTPS
                     "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all",  # Globus Search Lambda
                 ]
+
             self.auths = mdf_toolbox.login(
                 services=services,
                 app_name="Foundry",
@@ -116,6 +118,8 @@ class Foundry(FoundryBase):
             )
             # add special SearchAuthorizer object
             self.auths['search_authorizer'] = search_auth['search']
+
+        logger.info(f'authorizers: {pprint.pformat(authorizers)}')
 
         self.forge_client = Forge(
             index=index,
