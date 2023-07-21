@@ -260,7 +260,7 @@ def test_download_https():
 
 
 def test_dataframe_load():
-    f = Foundry()
+    f = Foundry(authorizers=auths)
     f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
     res = f.load_data()
     X, y = res['train']
@@ -273,7 +273,7 @@ def test_dataframe_load():
 
 
 def test_metadata_then_data_download():
-    f = Foundry()
+    f = Foundry(authorizers=auths)
     f = f.fetch_data(test_dataset, metadata_only=True, globus=False)
     _delete_test_data(f)
     f.download_dataset()
@@ -288,7 +288,7 @@ def test_metadata_then_data_download():
 
 
 def test_dataframe_load_split():
-    f = Foundry()
+    f = Foundry(authorizers=auths)
     f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
 
     res = f.load_data(splits=['train'])
@@ -302,7 +302,7 @@ def test_dataframe_load_split():
 
 
 def test_dataframe_load_split_wrong_split_name():
-    f = Foundry()
+    f = Foundry(authorizers=auths)
     f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
 
     with pytest.raises(Exception) as exc_info:
@@ -316,7 +316,7 @@ def test_dataframe_load_split_wrong_split_name():
 
 @pytest.mark.skip(reason='No clear examples of datasets without splits - likely to be protected against soon.')
 def test_dataframe_load_split_but_no_splits():
-    f = Foundry()
+    f = Foundry(authorizers=auths)
     f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
 
     with pytest.raises(ValueError):
@@ -325,7 +325,7 @@ def test_dataframe_load_split_but_no_splits():
 
 
 def test_dataframe_load_doi():
-    f = Foundry()
+    f = Foundry(authorizers=auths)
     f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
 
     res = f.load_data()

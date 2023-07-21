@@ -119,8 +119,6 @@ class Foundry(FoundryBase):
             # add special SearchAuthorizer object
             self.auths['search_authorizer'] = search_auth['search']
 
-        logger.info(f'authorizers: {pprint.pformat(authorizers)}')
-
         self.forge_client = Forge(
             index=index,
             services=None,
