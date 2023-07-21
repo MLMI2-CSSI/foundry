@@ -276,7 +276,7 @@ def test_metadata_then_data_download():
     f = Foundry(authorizers=auths)
     f = f.fetch_data(test_dataset, metadata_only=True, globus=False)
     _delete_test_data(f)
-    f.download_dataset()
+    f.download_dataset(globus=False)
     res = f.load_data()
     X, y = res['train']
 
@@ -505,7 +505,7 @@ def test_check_status():
 
 def test_to_pytorch():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    f = f.fetch_data(test_dataset)
+    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
     raw = f.load_data()
 
     ds = f.to_torch(split='train')
@@ -518,7 +518,7 @@ def test_to_pytorch():
 
 def test_to_tensorflow():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    f = f.fetch_data(test_dataset)
+    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
 
     raw = f.load_data()
 
