@@ -245,13 +245,13 @@ def test_search():
 
 
 def test_metadata_pull():
-    f = Foundry(no_browser=True, no_local_server=True)
+    f = Foundry(no_browser=True, no_local_server=True, authorizers=auths)
     f.fetch_data(test_dataset, metadata_only=True)
     assert f.dc["titles"][0]["title"] == expected_title
 
 
 def test_download_https():
-    f = Foundry(no_browser=True, no_local_server=True)
+    f = Foundry(no_browser=True, no_local_server=True, authorizers=auths)
     _delete_test_data(f)
 
     f.fetch_data(test_dataset, metadata_only=False, globus=False)
@@ -504,7 +504,7 @@ def test_check_status():
 
 
 def test_to_pytorch():
-    f = Foundry(globus=False, authorizers=auths, no_browser=True, no_local_server=True)
+    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
     f = f.fetch_data(test_dataset)
     raw = f.load_data()
 
@@ -517,7 +517,7 @@ def test_to_pytorch():
 
 
 def test_to_tensorflow():
-    f = Foundry(globus=False, authorizers=auths, no_browser=True, no_local_server=True)
+    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
     f = f.fetch_data(test_dataset)
 
     raw = f.load_data()

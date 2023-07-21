@@ -50,7 +50,7 @@ class Foundry(FoundryBase):
 
     def __init__(
             self, name=None, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
-            globus=True, verbose=False, metadata=None, interval=10,
+            verbose=False, metadata=None, interval=10,
             **data
     ):
         """Initialize a Foundry client
@@ -62,7 +62,6 @@ class Foundry(FoundryBase):
                     This should be `False` when on remote server (e.g., Google Colab ).
             index (str): Index to use for search and data publication. Choices `mdf` or `mdf-test`
             authorizers (dict): A dictionary of authorizers to use, following the `mdf_toolbox` format
-            globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
             metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
             interval (int): How often to poll Globus to check if transfers are complete
