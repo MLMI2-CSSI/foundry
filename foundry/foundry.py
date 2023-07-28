@@ -72,7 +72,6 @@ class Foundry(FoundryBase):
             an initialized and authenticated Foundry client
         """
 
-
         super().__init__(**data)
         self.index = index
         self.auths = None
