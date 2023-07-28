@@ -50,7 +50,7 @@ class Foundry(FoundryBase):
 
     def __init__(
             self, name=None, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
-            verbose=False, metadata=None, interval=10,
+            verbose=False, metadata=None, interval=10, metadata_only=False, globus=True,
             **data
     ):
         """Initialize a Foundry client
@@ -71,6 +71,8 @@ class Foundry(FoundryBase):
         Returns:
             an initialized and authenticated Foundry client
         """
+
+
         super().__init__(**data)
         self.index = index
         self.auths = None
@@ -153,28 +155,21 @@ class Foundry(FoundryBase):
             force_login=False,
         )
 
-    def fetch_data(self, name, metadata_only=False, globus=True, verbose=False, authorizers=None, interval=10):
-        """Load the data for a Foundry dataset into the client
+        # handle empty dataset name (was returning all the datasets)
+        if name:
+            self.download_metadata(name)
+
+        if name and not metadata_only:
+            self.download_dataset(
+                interval=interval, globus=globus, verbose=verbose
+            )
+
+    def download_metadata(self, name):
+        """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
-            metadata_only (bool): If True, download only the metadata (not the full dataset)
-                associated with the package (default is False)
-            globus (bool): If True, download using Globus, otherwise https
-            verbose (bool): If True print additional debug information
-            interval (int): How often to poll Globus to check if transfers are complete
 
-        Returns:
-            self
-
-        Todo:
-            * Add check for package existence during download of dataset
-            * Creating a new Foundry instance is a problematic way to update the metadata,
-                we should find a way to abstract this.
         """
-
-        # handle empty dataset name (was returning all the datasets)
-        if not name:
-            raise ValueError("load: No dataset name is given")
 
         # MDF specific logic
         if is_doi(name):
@@ -206,13 +201,6 @@ class Foundry(FoundryBase):
         self.dc = res['dc']
         self.mdf = res['mdf']
         self.metadata = FoundryMetadata(**res['dataset'])
-
-        if not metadata_only:
-            self.download_dataset(
-                interval=interval, globus=globus, verbose=verbose
-            )
-
-        return self
 
     def search(self, q=None, limit=None):
         """Search available Foundry datasets

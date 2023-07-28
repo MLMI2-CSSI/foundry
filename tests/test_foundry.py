@@ -245,23 +245,18 @@ def test_search():
 
 
 def test_metadata_pull():
-    f = Foundry(no_browser=True, no_local_server=True, authorizers=auths)
-    f.fetch_data(test_dataset, metadata_only=True)
+    f = Foundry(test_dataset, metadata_only=True, no_browser=True, no_local_server=True, authorizers=auths)
     assert f.dc["titles"][0]["title"] == expected_title
 
 
 def test_download_https():
-    f = Foundry(no_browser=True, no_local_server=True, authorizers=auths)
-    _delete_test_data(f)
-
-    f.fetch_data(test_dataset, metadata_only=False, globus=False)
+    f = Foundry(test_dataset, metadata_only=True, no_browser=True, no_local_server=True, authorizers=auths)
     assert f.dc["titles"][0]["title"] == expected_title
     _delete_test_data(f)
 
 
 def test_dataframe_load():
-    f = Foundry(authorizers=auths)
-    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
+    f = Foundry(test_dataset, metadata_only=False, globus=False, authorizers=auths)
     res = f.load_data()
     X, y = res['train']
 
@@ -273,8 +268,7 @@ def test_dataframe_load():
 
 
 def test_metadata_then_data_download():
-    f = Foundry(authorizers=auths)
-    f = f.fetch_data(test_dataset, metadata_only=True, globus=False)
+    f = Foundry(test_dataset, metadata_only=True, globus=False, authorizers=auths)
     _delete_test_data(f)
     f.download_dataset(globus=False)
     res = f.load_data()
@@ -288,8 +282,7 @@ def test_metadata_then_data_download():
 
 
 def test_dataframe_load_split():
-    f = Foundry(authorizers=auths)
-    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
+    f = Foundry(test_dataset, metadata_only=False, globus=False, authorizers=auths)
 
     res = f.load_data(splits=['train'])
     X, y = res['train']
@@ -302,8 +295,7 @@ def test_dataframe_load_split():
 
 
 def test_dataframe_load_split_wrong_split_name():
-    f = Foundry(authorizers=auths)
-    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
+    f = Foundry(test_dataset, metadata_only=False, globus=False, authorizers=auths)
 
     with pytest.raises(Exception) as exc_info:
         f.load_data(splits=['chewbacca'])
@@ -316,8 +308,7 @@ def test_dataframe_load_split_wrong_split_name():
 
 @pytest.mark.skip(reason='No clear examples of datasets without splits - likely to be protected against soon.')
 def test_dataframe_load_split_but_no_splits():
-    f = Foundry(authorizers=auths)
-    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
+    f = Foundry(test_dataset, metadata_only=False, globus=False, authorizers=auths)
 
     with pytest.raises(ValueError):
         f.load_data(splits=['train'])
@@ -325,8 +316,7 @@ def test_dataframe_load_split_but_no_splits():
 
 
 def test_dataframe_load_doi():
-    f = Foundry(authorizers=auths)
-    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
+    f = Foundry(test_dataset, metadata_only=False, globus=False, authorizers=auths)
 
     res = f.load_data()
     X, y = res['train']
@@ -340,18 +330,16 @@ def test_dataframe_load_doi():
 
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_download_globus():
-    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    _delete_test_data(f)
+    f = Foundry(test_dataset, authorizers=auths, no_browser=True, no_local_server=True)
 
-    f = f.fetch_data(test_dataset)
     assert f.dc["titles"][0]["title"] == expected_title
     _delete_test_data(f)
 
 
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_globus_dataframe_load():
-    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    f = f.fetch_data(test_dataset)
+    f = Foundry(test_dataset, authorizers=auths, no_browser=True, no_local_server=True)
+
     res = f.load_data()
     X, y = res['train']
 
@@ -504,8 +492,7 @@ def test_check_status():
 
 
 def test_to_pytorch():
-    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
+    f = Foundry(test_dataset, metadata_only=False, globus=False, authorizers=auths, no_browser=True, no_local_server=True)
     raw = f.load_data()
 
     ds = f.to_torch(split='train')
@@ -517,8 +504,7 @@ def test_to_pytorch():
 
 
 def test_to_tensorflow():
-    f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
-    f = f.fetch_data(test_dataset, metadata_only=False, globus=False)
+    f = Foundry(test_dataset, metadata_only=False, globus=False, authorizers=auths, no_browser=True, no_local_server=True)
 
     raw = f.load_data()
 
