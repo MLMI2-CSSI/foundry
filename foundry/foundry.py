@@ -65,6 +65,7 @@ class Foundry(FoundryBase):
             verbose (bool): If True print additional debug information
             metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
             interval (int): How often to poll Globus to check if transfers are complete
+            metadata_only (bool): Whether to download the dataset or just it's metadata (default=False)
             data (dict): Other arguments, e.g., results from an MDF search result that are used
                     to populate Foundry metadata fields
 
@@ -154,10 +155,10 @@ class Foundry(FoundryBase):
             force_login=False,
         )
 
-        # handle empty dataset name (was returning all the datasets)
         if name:
             self.download_metadata(name)
 
+        # download the dataset
         if name and not metadata_only:
             self.download_dataset(
                 interval=interval, globus=globus, verbose=verbose
@@ -169,6 +170,9 @@ class Foundry(FoundryBase):
             name (str): Name of the foundry dataset
 
         """
+        # handle empty dataset name (was returning all the datasets)
+        if not name:
+            raise ValueError("load: No dataset name is given")
 
         # MDF specific logic
         if is_doi(name):
