@@ -107,27 +107,6 @@ class FoundryMetadata(BaseModel):
         arbitrary_types_allowed = True
 
 
-class FoundryDataset(BaseModel):
-    """Foundry Dataset
-    Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
-    """
-
-    keys: List[FoundryKey] = None
-    splits: Optional[List[FoundrySplit]] = None
-    data_type: FoundryDatasetType = None
-    # version: Optional[str] = ""
-    short_name: Optional[str] = ""
-    dataframe: Optional[Any] = None
-    # links: Optional[FoundryLinks]
-    # citations: Optional[List[str]] = []
-    task_type: Optional[List[str]] = []
-    domain: Optional[List[str]] = []
-    n_items: Optional[int] = 0
-
-    class Config:
-        arbitrary_types_allowed = True
-
-
 class FoundryConfig(BaseModel):
     """Foundry Configuration
     Configuration information for Foundry Dataset
