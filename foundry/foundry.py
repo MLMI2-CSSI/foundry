@@ -434,9 +434,9 @@ class Foundry(FoundryBase):
             links = links if isinstance(links, list) else [links]
             for link in links:
                 # validate links
-                if self.validate_link(link):
-                    # add valid links
-                    self.connect_client.add_links(link)
+                self.validate_link(link)
+            # add valid links - need to add all at once
+            self.connect_client.add_links(links)
 
         # upload via HTTPS if specified
         if https_data_path:
