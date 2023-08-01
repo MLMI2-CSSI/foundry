@@ -356,6 +356,62 @@ def test_publish_with_https():
     _write_test_data(local_path)
 
     res = f.publish_dataset(pub_test_metadata, title, authors, https_data_path=local_path, short_name=short_name)
+    assert res['success']
+    assert res['source_id'] == f"_test_{short_name}_v1.1"
+
+
+@pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
+def test_publish_bad_links_with_https():
+    """System test: Assess the end-to-end publication of a dataset via HTTPS
+    """
+
+    f = Foundry(index="mdf-test", authorizers=auths)
+    timestamp = datetime.now().timestamp()
+    title = "https_publish_test_{:.0f}".format(timestamp)
+    short_name = "https_pub_{:.0f}".format(timestamp)
+    authors = ["A Scourtas"]
+    local_path = "./data/https_test"
+    links = {"horse": "link", "doi": "3", "url": "www.test.com", "description": "string", "bibtex": "bib"}
+
+    # create test JSON to upload (if it doesn't already exist)
+    _write_test_data(local_path)
+
+    with pytest.raises(Exception) as exc_info:
+        f.publish_dataset(pub_test_metadata,
+                          title,
+                          authors,
+                          https_data_path=local_path,
+                          short_name=short_name,
+                          links=links)
+    # err = exc_info.value
+    # assert hasattr(err, '__cause__')
+    # assert isinstance(err.__cause__, ValueError)
+    assert isinstance(exc_info.type(), ValueError)
+    _delete_test_data(f)
+
+
+@pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
+def test_publish_links_with_https():
+    """System test: Assess the end-to-end publication of a dataset via HTTPS
+    """
+
+    f = Foundry(index="mdf-test", authorizers=auths)
+    timestamp = datetime.now().timestamp()
+    title = "https_publish_test_{:.0f}".format(timestamp)
+    short_name = "https_pub_{:.0f}".format(timestamp)
+    authors = ["A Scourtas"]
+    local_path = "./data/https_test"
+    links = {"type": "link", "doi": "3", "url": "www.test.com", "description": "string", "bibtex": "bib"}
+
+    # create test JSON to upload (if it doesn't already exist)
+    _write_test_data(local_path)
+
+    res = f.publish_dataset(pub_test_metadata,
+                            title,
+                            authors,
+                            https_data_path=local_path,
+                            short_name=short_name,
+                            links=links)
 
     assert res['success']
     assert res['source_id'] == f"_test_{short_name}_v1.1"
