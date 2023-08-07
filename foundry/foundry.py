@@ -395,6 +395,8 @@ class Foundry(FoundryBase):
             dataset_doi (str): The DOI for this dataset (not an associated paper).
             related_dois (list): DOIs related to this dataset,
                     not including the dataset's own DOI (for example, an associated paper's DOI).
+            links (list[dict]): List of dicts describing links associated with the dataset; in the format:
+                {"type":str, "doi":str, "url":str, "description":str, "bibtex":str}
 
         Returns
         -------
@@ -424,6 +426,17 @@ class Foundry(FoundryBase):
         self.connect_client.add_organization(self.config.organization)
         self.connect_client.set_project_block(
             self.config.metadata_key, foundry_metadata)
+
+        # add links
+        links = kwargs.get("links")
+        if links is not None:
+            # make sure it's a list
+            links = links if isinstance(links, list) else [links]
+            for link in links:
+                # validate links
+                self.validate_link(link)
+            # add valid links - need to add all at once
+            self.connect_client.add_links(links)
 
         # upload via HTTPS if specified
         if https_data_path:
@@ -808,6 +821,15 @@ class Foundry(FoundryBase):
                 field_name = ".".join([item for item in error['loc'] if isinstance(item, str)])
                 error_description = error['msg']
                 error_message = f"""There is an issue validating the metadata for the field '{field_name}':
-                The error message returned is: '{error_description}'."""
+                                The error message returned is: '{error_description}'."""
                 logger.error(error_message)
             raise e
+
+    def validate_link(self, link):
+        valid_keys = ["type", "doi", "url", "description", "bibtex"]
+        link_keys = [*link]
+        if not all(key in valid_keys for key in link_keys):
+            raise ValueError(f"A key in one of the submitted link ({link_keys}) is not of the valid options: "
+                             f"{valid_keys}")
+        else:
+            return True
