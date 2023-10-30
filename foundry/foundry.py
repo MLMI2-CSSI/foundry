@@ -50,27 +50,17 @@ class Foundry(FoundryBase):
     auths: Any
 
     def __init__(
-            self, name=None, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
-            download=True, globus=True, verbose=False, metadata=None, interval=10,
-            **data
+            self, no_browser=False, no_local_server=False, index="mdf", authorizers=None, **data
     ):
         """Initialize a Foundry client
         Args:
-            name (str): Name of the foundry dataset. If not supplied, metadata will not be loaded into
-                    the Foundry object
             no_browser (bool):  Whether to open the browser for the Globus Auth URL.
             no_local_server (bool): Whether a local server is available.
                     This should be `False` when on remote server (e.g., Google Colab ).
             index (str): Index to use for search and data publication. Choices `mdf` or `mdf-test`
             authorizers (dict): A dictionary of authorizers to use, following the `mdf_toolbox` format
-            download (bool): If True, download the data associated with the package (default is True)
-            globus (bool): If True, download using Globus, otherwise https
-            verbose (bool): If True print additional debug information
-            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
-            interval (int): How often to poll Globus to check if transfers are complete
             data (dict): Other arguments, e.g., results from an MDF search result that are used
                     to populate Foundry metadata fields
-
         Returns:
             an initialized and authenticated Foundry client
         """
@@ -155,16 +145,7 @@ class Foundry(FoundryBase):
             force_login=False,
         )
 
-        if name is not None:
-            self._load(name=name,
-                       download=download,
-                       globus=globus,
-                       verbose=verbose,
-                       metadata=metadata,
-                       authorizers=authorizers,
-                       interval=interval)
-
-    def _load(self, name, download=True, globus=True, verbose=False, metadata=None, authorizers=None, interval=None):
+    def load(self, name, download=True, globus=False, verbose=False, metadata=None, authorizers=None, **kwargs):
         """Load the metadata for a Foundry dataset into the client
         Args:
             name (str): Name of the foundry dataset
@@ -172,12 +153,12 @@ class Foundry(FoundryBase):
             globus (bool): If True, download using Globus, otherwise https
             verbose (bool): If True print additional debug information
             metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
+        Keyword Args: (TODO: make this a regular arg instead?)
             interval (int): How often to poll Globus to check if transfers are complete
 
         Returns:
             self
         """
-
         # handle empty dataset name (was returning all the datasets)
         if not name:
             raise ValueError("load: No dataset name is given")
@@ -220,8 +201,9 @@ class Foundry(FoundryBase):
         self.dataset = FoundryDataset(**res['dataset'])
 
         if download:  # Add check for package existence
+            # TODO: perhaps change interval here
             self.download(
-                interval=interval, globus=globus, verbose=verbose
+                interval=kwargs.get("interval", 10), globus=globus, verbose=verbose
             )
 
         return self
@@ -425,6 +407,8 @@ class Foundry(FoundryBase):
         self.connect_client.set_project_block(
             self.config.metadata_key, foundry_metadata)
 
+        # NOTE: need to add data_source and set_block before submit_dataset() is called -- so might want to upload
+        #   from here and not from within submit_dataset()?
         # upload via HTTPS if specified
         if https_data_path:
             # gather auth'd clients necessary for publication to endpoint
@@ -437,6 +421,20 @@ class Foundry(FoundryBase):
             )
             # upload (ie publish) data to endpoint
             globus_data_source = upload_to_endpoint(pub_auths, https_data_path, endpoint_id)
+
+        """
+        # proposed solution
+        .
+        .
+        self.connect_client.set_project_block()
+        # auths handled within MDF? attempt this
+        # consider renaming to "https_upload" or similar
+        if https_data_path:
+            globus_data_source = self.connect_client.upload_to_endpoint(https_data_path) #leave endpoint_id as an option
+        self.connect_client.add_data_source(globus_data_source)
+        .
+        .
+        """
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
         # set dataset name using the title if an abbreviated short_name isn't specified
