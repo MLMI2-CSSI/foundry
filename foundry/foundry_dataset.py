@@ -6,7 +6,7 @@ from json2table import convert
 import pandas as pd
 import numpy as np
 
-from foundry.models import FoundrySchema, FoundryDataset
+from foundry.models import FoundrySchema
 from pydantic import ValidationError
 
 
