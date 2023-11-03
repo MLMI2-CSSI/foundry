@@ -1,13 +1,13 @@
 import json
 import logging
 import os
-import ValidationError
 
 from json2table import convert
 import pandas as pd
 import numpy as np
 
-from foundry.models import FoundrySchema, FoundryMetadata
+from foundry.models import FoundrySchema, FoundryDataset
+from pydantic import ValidationError
 
 
 logger = logging.getLogger(__name__)
@@ -161,18 +161,18 @@ class FoundryDataset(FoundrySchema):
         return bibtex
 
     def validate_metadata(self, metadata):
-        """Validate the JSON message against the FoundryMetadata model
+        """Validate the JSON message against the FoundryDataset model
 
         Arguments:
             metadata (dict): Metadata information provided by the user.
 
         Raises:
             ValidationError: if metadata supplied by user does not meet the specificiation of a
-            FoundryMetadata object.
+            FoundryDataset object.
 
         """
         try:
-            FoundryMetadata(**metadata)
+            FoundryDataset(**metadata)
             logger.debug("Metadata validation successful!")
         except ValidationError as e:
             logger.error("Metadata validation failed!")

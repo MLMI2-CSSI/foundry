@@ -1,5 +1,5 @@
 from typing import List, Dict, Optional, Any
-from pydantic import BaseModel, Field, StrictInt, StrictStr
+from pydantic import BaseModel, Extra, Field, StrictInt, StrictStr
 from enum import Enum
 import pandas as pd
 from json2table import convert
@@ -90,7 +90,7 @@ class FoundrySplit(BaseModel):
     label: Optional[StrictStr]
 
 
-class FoundryMetadata(BaseModel):
+class FoundrySchema(BaseModel):
     """Foundry Dataset
     Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
     """
@@ -128,9 +128,8 @@ class FoundryDataset(BaseModel):
         arbitrary_types_allowed = True
 
 
-class FoundryConfig(BaseModel):
-    """Foundry Configuration
-    Configuration information for Foundry Dataset
+class FoundryBase(BaseModel, extra=Extra.allow):
+    """Configuration information for Foundry instance
 
     Args:
         dataframe_file (str): Filename to read dataframe contents from
@@ -152,16 +151,23 @@ class FoundryConfig(BaseModel):
         return convert(json.loads(self.json()))
 
 
-class FoundryBase(BaseModel):
-    dc: Optional[Dict] = {}  # pydantic Datacite?
-    mdf: Optional[Dict] = {}
+class FoundryDataset(BaseModel, extra=Extra.allow):
+    dc: Dict = {}  # pydantic Datacite?
+    mdf: Dict = {}
     dataset: FoundryDataset = {}
-    config: FoundryConfig = FoundryConfig(
-        dataframe_file="foundry_dataframe.json",
-        metadata_file="foundry_metadata.json",
-        local=False,
-        local_cache_dir="./data",
-    )
 
-    class Config:
-        arbitrary_types_allowed = True
+
+# class FoundryBase(BaseModel, extra=Extra.allow):
+#     dc: Optional[Dict] = {}  # pydantic Datacite?
+#     mdf: Optional[Dict] = {}
+#     dataset: FoundryDataset = {}
+    # cache: FoundryCache
+    # config: FoundryConfig = FoundryConfig(
+    #     dataframe_file="foundry_dataframe.json",
+    #     metadata_file="foundry_metadata.json",
+    #     local=False,
+    #     local_cache_dir="./data",
+    # )
+
+    # class Config:
+    #     arbitrary_types_allowed = True
