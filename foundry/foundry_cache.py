@@ -18,10 +18,10 @@ class FoundryCache():
         self.local_cache_dir = os.environ.get("FOUNDRY_LOCAL_CACHE_DIR", "./data")
 
     def download_to_cache(self, dataset: FoundryDataset, globus: bool = True, interval: int = 20, parallel_https: int = 4, verbose: bool = False):
-        # TODO: Adapt to living in the FoundryCache (originated from Foundry object)
         """Downloads the data from source to local storage
 
         Args:
+            dataset: a FoundryDataset object created from the metadata
             globus: if True, use Globus to download the data else try HTTPS
             interval: How often to wait before checking Globus transfer status
             parallel_https: Number of files to download in parallel if using HTTPS
@@ -42,7 +42,6 @@ class FoundryCache():
                 self.forge_client.globus_download(
                     res,
                     dest=self.local_cache_dir,
-                    # dest_ep=self.destination_endpoint, # never actually used anywhere I can find? -SW
                     interval=interval,
                     download_datasets=True,
                 )

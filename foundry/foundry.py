@@ -24,7 +24,7 @@ from foundry.foundry_cache import FoundryCache
 
 from foundry.https_upload import upload_to_endpoint
 
-logging.basicConfig(format='%(levelname)s: %(message)s')
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
@@ -152,20 +152,20 @@ class Foundry(FoundryBase):
         """
 
         if (query is not None) and (is_doi(query)):
-            metadatas = [self.get_metadata_by_doi(query)]
+            metadata_list = [self.get_metadata_by_doi(query)]
         else:
-            metadatas = self.get_metadata_by_query(query, limit)
+            metadata_list = self.get_metadata_by_query(query, limit)
 
-        if len(metadatas) == 0:
+        if len(metadata_list) == 0:
             raise Exception(f"load: No results found for the query '{query}'")
 
         foundry_datasets = []
-        for metadata in metadatas:
+        for metadata in metadata_list:
             ds = self.dataset_from_metadata(metadata)
             if ds:
                 foundry_datasets.append(ds)
 
-        print(f"Search for '{query}' returned {len(foundry_datasets)} foundry datasets out of {len(metadatas)} matches")
+        logger.info(f"Search for '{query}' returned {len(foundry_datasets)} foundry datasets out of {len(metadata_list)} matches")
         return foundry_datasets
 
     def list(self, limit: int = None):
@@ -175,7 +175,7 @@ class Foundry(FoundryBase):
             limit (int): maximum number of results to return
 
         Returns
-            (pandas.DataFrame): DataFrame with summary list of Foundry datasets including name, title, publication year, and DOI
+            List[FoundryDataset]: List of FoundryDatset objects
         """
         return self.search(limit=limit)
 
@@ -186,24 +186,19 @@ class Foundry(FoundryBase):
             metadata (dict): result from a forge query
 
         Returns:
-            FoundryDataset: a FoundryDatset object created from the metadata
+            FoundryDataset: a FoundryDataset object created from the metadata
         """
         try:
-            if 'project' in metadata.keys():
-                schema = FoundrySchema(**metadata['projects']['foundry'])
-            else:
-                schema = None
-            if 'dc' in metadata.keys():
-                dc = metadata['dc']
-            else:
-                dc = None
+            schema = FoundrySchema(**metadata['projects']['foundry'])
+            dc = metadata['dc']
             name = metadata['mdf']['source_id']
 
             ds = FoundryDataset(**{'name': name, 'schema': schema, 'dc': dc})
+
             return ds
 
         except Exception as e:
-            logger.error(f"     The mdf entry {metadata['mdf']['source_id']} is missing the key {e} - cannot generate a foundry dataset object")
+            logger.error(f"The mdf entry {metadata['mdf']['source_id']} is missing a {e} section - cannot generate a foundry dataset object")
 
     def get_dataset_by_name(self, name: str) -> FoundryDataset:
         """Query foundry datasets by name
@@ -244,10 +239,11 @@ class Foundry(FoundryBase):
             return results[0]
 
     def get_metadata_by_query(self, q: str, limit: int) -> dict:
-        """Query foundry datasets returned by a search query
+        """Submit query to forge client and return results
 
         Args:
             q (str): query string
+            limit (int): maximum number of results to return
 
         Returns:
             metadata (dict): result from a forge query

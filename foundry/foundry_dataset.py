@@ -34,17 +34,6 @@ class FoundryDataset(FoundrySchema):
         self.dc = datacite_entry
         self.foundry_schema = foundry_schema
 
-        return pd.DataFrame(
-            [
-                {
-                    "source_id": source_id,
-                    "name": self.dc["titles"][0]["title"],
-                    "year": self.dc.get("publicationYear", None),
-                    "DOI": self.dc.get("identifier", {}).get("identifier", None),
-                }
-            ]
-        )
-
     def to_torch(self, split: str = None):
         """Convert Foundry Dataset to a PyTorch Dataset
 
@@ -77,21 +66,6 @@ class FoundryDataset(FoundrySchema):
 
         inputs, targets = self._get_inputs_targets(split)
         return TensorflowSequence(inputs, targets)
-
-    def run(self, name, inputs, funcx_endpoint=None, **kwargs):
-        """Run a model on data
-
-        Args:
-           name (str): DLHub model name
-           inputs: Data to send to DLHub as inputs (should be JSON serializable)
-           funcx_endpoint (optional): UUID for the funcx endpoint to run the model on, if not the default (eg River)
-
-        Returns:
-             Returns results after invocation via the DLHub service
-        """
-        if funcx_endpoint is not None:
-            self.dlhub_client.fx_endpoint = funcx_endpoint
-        return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
     def download_if_not_downloaded(self):
         ...

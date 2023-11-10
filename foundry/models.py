@@ -155,19 +155,3 @@ class FoundryDataset(BaseModel, extra=Extra.allow):
     dc: Dict = {}  # pydantic Datacite?
     mdf: Dict = {}
     dataset: FoundryDataset = {}
-
-
-# class FoundryBase(BaseModel, extra=Extra.allow):
-#     dc: Optional[Dict] = {}  # pydantic Datacite?
-#     mdf: Optional[Dict] = {}
-#     dataset: FoundryDataset = {}
-    # cache: FoundryCache
-    # config: FoundryConfig = FoundryConfig(
-    #     dataframe_file="foundry_dataframe.json",
-    #     metadata_file="foundry_metadata.json",
-    #     local=False,
-    #     local_cache_dir="./data",
-    # )
-
-    # class Config:
-    #     arbitrary_types_allowed = True
