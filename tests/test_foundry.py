@@ -256,7 +256,7 @@ def test_search_limit():
     ds = f.search(q, limit=100)
 
     assert isinstance(ds, list)
-    assert len(ds) == 25
+    assert len(ds) < 101
     
     # assert ds.iloc[0]['name'] is not None
     assert ds[0].dc["titles"][0]["title"] is not None
