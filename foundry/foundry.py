@@ -1,15 +1,9 @@
 import h5py
-import json
 import mdf_toolbox
-from json2table import convert
-import numpy as np
 import pandas as pd
 from typing import Any, Dict, List
 import logging
-import warnings
 import os
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from tqdm.auto import tqdm
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
@@ -21,17 +15,20 @@ from .utils import is_pandas_pytable, is_doi
 from .utils import _read_csv, _read_json, _read_excel
 
 from foundry.models import (
-    FoundryMetadata,
-    FoundryConfig,
-    FoundryDataset
+    FoundrySchema,
+    FoundryDataset,
+    FoundryBase
 )
-from foundry.https_download import download_file, recursive_ls
+
+from foundry.foundry_cache import FoundryCache
+
 from foundry.https_upload import upload_to_endpoint
 
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-class Foundry(FoundryMetadata):
+class Foundry(FoundryBase):
     """Foundry Client Base Class
     TODO:
     -------
@@ -47,10 +44,10 @@ class Foundry(FoundryMetadata):
     index = ""
     auths: Any
 
-    xtract_tokens: Any
-
     def __init__(
-            self, no_browser=False, no_local_server=False, index="mdf", authorizers=None, **data
+            self, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
+            globus=True, verbose=False, interval=10,
+            **data
     ):
         """Initialize a Foundry client
         Args:
@@ -59,16 +56,19 @@ class Foundry(FoundryMetadata):
                     This should be `False` when on remote server (e.g., Google Colab ).
             index (str): Index to use for search and data publication. Choices `mdf` or `mdf-test`
             authorizers (dict): A dictionary of authorizers to use, following the `mdf_toolbox` format
+            globus (bool): If True, download using Globus, otherwise https
+            verbose (bool): If True print additional debug information
+            interval (int): How often to poll Globus to check if transfers are complete
             data (dict): Other arguments, e.g., results from an MDF search result that are used
                     to populate Foundry metadata fields
 
-        Returns
-        -------
+        Returns:
             an initialized and authenticated Foundry client
         """
         super().__init__(**data)
         self.index = index
         self.auths = None
+        self.cache = FoundryCache()
 
         if authorizers:
             self.auths = authorizers
@@ -140,210 +140,122 @@ class Foundry(FoundryMetadata):
             force_login=False,
         )
 
-        self.xtract_tokens = {
-            "auth_token": self.auths["petrel"].access_token,
-            "transfer_token": self.auths["transfer"].authorizer.access_token,
-            "funcx_token": self.auths[
-                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
-            ].access_token,
-        }
-
-    def load(self, name, download=True, globus=True, verbose=False, metadata=None, authorizers=None, **kwargs):
-        """Load the metadata for a Foundry dataset into the client
-        Args:
-            name (str): Name of the foundry dataset
-            download (bool): If True, download the data associated with the package (default is True)
-            globus (bool): If True, download using Globus, otherwise https
-            verbose (bool): If True print additional debug information
-            metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
-
-        Keyword Args:
-            interval (int): How often to poll Globus to check if transfers are complete
-
-        Returns
-        -------
-            self
-        """
-
-        # handle empty dataset name (was returning all the datasets)
-        if not name:
-            raise ValueError("load: No dataset name is given")
-
-        if metadata:
-            res = metadata
-
-        # MDF specific logic
-        if is_doi(name) and not metadata:
-            res = self.forge_client.match_resource_types("dataset")
-            res = res.match_dois(name).search()
-
-        else:
-            res = self.forge_client.match_field(
-                "mdf.organizations", self.config.organization
-            ).match_resource_types("dataset")
-            res = res.match_field("mdf.source_id", name).search()
-
-        # unpack res, handle if empty
-        if len(res) == 0:
-            raise Exception(f"load: No metadata found for given dataset {name}")
-
-        # if search returns multiple results, this automatically uses first result, while warning the user
-        if len(res) > 1:
-            warnings.warn("Multiple datasets found for the given search query. Using first dataset")
-        res = res[0]
-
-        try:
-            res["dataset"] = res["projects"][self.config.metadata_key]
-        except KeyError as e:
-            raise Exception(f"load: not able to index with metadata key {self.config.metadata_key}") from e
-
-        del res["projects"][self.config.metadata_key]
-
-        # TODO: Creating a new Foundry instance is a problematic way to update the metadata,
-        # we should find a way to abstract this.
-
-        self.dc = res['dc']
-        self.mdf = res['mdf']
-        self.dataset = FoundryDataset(**res['dataset'])
-
-        if download:  # Add check for package existence
-            self.download(
-                interval=kwargs.get("interval", 10), globus=globus, verbose=verbose
-            )
-
-        return self
-
-    def search(self, q=None, limit=None):
+    def search(self, query: str = None, limit: int = None) -> [FoundryDataset]:
         """Search available Foundry datasets
-        q (str): query string to match
-        limit (int): maximum number of results to return
-
-        Returns
-        -------
-            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication year, and DOI
-        """
-        if not q:
-            q = None
-        res = (
-            self.forge_client.match_field(
-                "mdf.organizations", self.config.organization)
-            .match_resource_types("dataset")
-            .search(q, limit=limit)
-        )
-
-        return pd.DataFrame(
-            [
-                {
-                    "source_id": r["mdf"]["source_id"],
-                    "name": r["dc"]["titles"][0]["title"],
-                    "year": r["dc"].get("publicationYear", None),
-                    "DOI": r["dc"].get("identifier", {}).get("identifier", None),
-                }
-                for r in res
-            ]
-        )
-
-    def list(self):
-        """List available Foundry datasets
-        Returns
-        -------
-            (pandas.DataFrame): DataFrame with summary list of Foundry datasets including name, title, publication year, and DOI
-        """
-        return self.search()
-
-    def run(self, name, inputs, funcx_endpoint=None, **kwargs):
-        """Run a model on data
 
         Args:
-           name (str): DLHub model name
-           inputs: Data to send to DLHub as inputs (should be JSON serializable)
-           funcx_endpoint (optional): UUID for the funcx endpoint to run the model on, if not the default (eg River)
+            query (str): query string to match
+            limit (int): maximum number of results to return
 
         Returns:
-             Returns results after invocation via the DLHub service
+            List[FoundryDataset]: List of search results as FoundryDatset objects
         """
-        if funcx_endpoint is not None:
-            self.dlhub_client.fx_endpoint = funcx_endpoint
-        return self.dlhub_client.run(name, inputs=inputs, **kwargs)
 
-    def load_data(self, source_id=None, globus=True, as_hdf5=False, splits=[]):
-        """Load in the data associated with the prescribed dataset
-
-        Tabular Data Type: Data are arranged in a standard data frame
-        stored in self.dataframe_file. The contents are read, and
-
-        File Data Type: <<Add desc>>
-
-        For more complicated data structures, users should
-        subclass Foundry and override the load_data function
-
-        Args:
-           inputs (list): List of strings for input columns
-           targets (list): List of strings for output columns
-           source_id (string): Relative path to the source file
-           as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
-           splits (list): Labels of splits to be loaded
-
-        Returns:
-             (dict): a labeled dictionary of tuples
-        """
-        data = {}
-
-        # Handle splits if they exist. Return as a labeled dictionary of tuples
-        try:
-            if self.dataset.splits:
-                if not splits:
-                    for split in self.dataset.splits:
-                        data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
-                                                            as_hdf5=as_hdf5)
-                else:
-                    for split in self.dataset.splits:
-                        if split.label in splits:
-                            splits.remove(split.label)
-                            data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
-                                                                as_hdf5=as_hdf5)
-                    if len(splits) > 0:
-                        raise ValueError(f'The split(s) {splits} were not found in the dataset!')
-                return data
-            else:
-                # raise an error if splits are specified but not present in the dataset
-                if len(splits) > 0:
-                    raise ValueError(f"Splits to load were specified as {splits}, but no splits are present in dataset")
-                return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
-        except Exception as e:
-            raise Exception(
-                "Metadata not loaded into Foundry object, make sure to call load()") from e
-
-    def _repr_html_(self) -> str:
-        if not self.dc:
-            buf = str(self)
+        if (query is not None) and (is_doi(query)):
+            metadata_list = [self.get_metadata_by_doi(query)]
         else:
-            title = self.dc['titles'][0]['title']
-            authors = [creator['creatorName']
-                       for creator in self.dc['creators']]
-            authors = '; '.join(authors)
-            DOI = "DOI: " + self.dc['identifier']['identifier']
+            metadata_list = self.get_metadata_by_query(query, limit)
 
-            buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
+        if len(metadata_list) == 0:
+            raise Exception(f"load: No results found for the query '{query}'")
 
-            buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
-        return buf
+        foundry_datasets = []
+        for metadata in metadata_list:
+            ds = self.dataset_from_metadata(metadata)
+            if ds:
+                foundry_datasets.append(ds)
 
-    def get_citation(self) -> str:
-        subjects = [subject['subject'] for subject in self.dc['subjects']]
-        doi_str = f"doi = {{{self.dc['identifier']['identifier']}}}"
-        url_str = f"url = {{https://doi.org/{self.dc['identifier']['identifier']}}}"
-        author_str = f"author = {{{' and '.join([creator['creatorName'] for creator in self.dc['creators']])}}}"
-        title_str = f"title = {{{self.dc['titles'][0]['title']}}}"
-        keywords_str = f"keywords = {{{', '.join(subjects)}}}"
-        publisher_str = f"publisher = {{{self.dc['publisher']}}}"
-        year_str = f"year = {{{self.dc['publicationYear']}}}"
-        bibtex = os.linesep.join([doi_str, url_str,
-                                  author_str, title_str,
-                                  keywords_str, publisher_str,
-                                  year_str])
-        bibtex = f"@misc{{https://doi.org/{self.dc['identifier']['identifier']}{os.linesep}{bibtex}}}"
-        return bibtex
+        logger.info(f"Search for '{query}' returned {len(foundry_datasets)} foundry datasets out of {len(metadata_list)} matches")
+        return foundry_datasets
+
+    def list(self, limit: int = None):
+        """List available Foundry datasets
+
+        Args:
+            limit (int): maximum number of results to return
+
+        Returns
+            List[FoundryDataset]: List of FoundryDatset objects
+        """
+        return self.search(limit=limit)
+
+    def dataset_from_metadata(self, metadata: dict) -> FoundryDataset:
+        """ Converts the result of a forge query to a FoundryDatset object
+
+        Args:
+            metadata (dict): result from a forge query
+
+        Returns:
+            FoundryDataset: a FoundryDataset object created from the metadata
+        """
+        try:
+            schema = FoundrySchema(**metadata['projects']['foundry'])
+            dc = metadata['dc']
+            name = metadata['mdf']['source_id']
+
+            ds = FoundryDataset(**{'name': name, 'schema': schema, 'dc': dc})
+
+            return ds
+
+        except Exception as e:
+            logger.error(f"The mdf entry {metadata['mdf']['source_id']} is missing a {e} section - cannot generate a foundry dataset object")
+
+    def get_dataset_by_name(self, name: str) -> FoundryDataset:
+        """Query foundry datasets by name
+
+        Name is equivalent of 'source_id' in MDF. Should only return a single result.
+
+        Args:
+            doi (str): doi of desired datset
+
+        Returns:
+            FoundryDataset: a FoundryDatset object for the result of the query
+        """
+
+        forge = self.forge_client.match_field(
+                    "mdf.organizations", self.organization
+                    ).match_resource_types("dataset")
+        metadata = forge.match_field("mdf.source_id", name).search()[0]
+        ds = self.dataset_from_metadata(metadata)
+        return ds
+
+    def get_metadata_by_doi(self, doi: str) -> dict:
+        """Query foundry datasets by DOI
+
+        Should only return a single result.
+
+        Args:
+            doi (str): doi of desired datset
+
+        Returns:
+            metadata (dict): result from a forge query
+        """
+        logger.info('using DOI to retrieve metadata')
+        forge = self.forge_client.match_resource_types("dataset")
+        results = forge.match_dois(doi).search()
+        if len(results) < 1:
+            return None
+        else:
+            return results[0]
+
+    def get_metadata_by_query(self, q: str, limit: int) -> dict:
+        """Submit query to forge client and return results
+
+        Args:
+            q (str): query string
+            limit (int): maximum number of results to return
+
+        Returns:
+            metadata (dict): result from a forge query
+        """
+
+        # forge = self.forge_client.match_field(
+        #             "mdf.organizations", self.organization
+        #             ).match_resource_types("dataset")
+
+        forge = self.forge_client.match_resource_types("dataset").match_organizations('foundry')
+        metadata = forge.search(q, advanced=True, limit=limit)
+        return metadata
 
     def publish_dataset(
             self, foundry_metadata: Dict[str, Any], title: str, authors: List[str], https_data_path: str = None,
@@ -389,6 +301,9 @@ class Foundry(FoundryMetadata):
             of dataset. Contains `source_id`, which can be used to check the
             status of the submission
         """
+        # ensure metadata is properly formatted
+        self.validate_metadata(foundry_metadata)
+
         # ensure that one of `https_data_path` or `globus_data_source` have been assigned values
         if (https_data_path and globus_data_source) or \
                 (https_data_path is None and globus_data_source is None):
@@ -405,7 +320,7 @@ class Foundry(FoundryMetadata):
             dataset_doi=kwargs.get("dataset_doi", ""),
             related_dois=kwargs.get("related_dois", [])
         )
-        self.connect_client.add_organization(self.config.organization)
+        self.connect_client.add_organization(self.organization)
         self.connect_client.set_project_block(
             self.config.metadata_key, foundry_metadata)
 
@@ -488,120 +403,6 @@ class Foundry(FoundryMetadata):
     #     """
     #     # return self.dlhub_client.get_task_status(res)
     #     pass
-
-    def configure(self, **kwargs):
-        """Set Foundry config
-        Keyword Args:
-            file (str): Path to the file containing
-            (default: self.config.metadata_file)
-
-        dataframe_file (str): filename for the dataframe file default:"foundry_dataframe.json"
-        data_file (str): : filename for the data file default:"foundry.hdf5"
-        destination_endpoint (str): Globus endpoint UUID where Foundry data should move
-        local_cache_dir (str): Where to place collected data default:"./data"
-
-        Returns
-        -------
-        (Foundry): self: for chaining
-        """
-        self.config = FoundryConfig(**kwargs)
-        return self
-
-    def download(self, globus: bool = True, interval: int = 20, parallel_https: int = 4, verbose: bool = False) -> 'Foundry':
-        """Download a Foundry dataset
-
-        Args:
-            globus: if True, use Globus to download the data else try HTTPS
-            interval: How often to wait before checking Globus transfer status
-            parallel_https: Number of files to download in parallel if using HTTPS
-            verbose: Produce more debug messages to screen
-
-        Returns:
-            self, for chaining
-        """
-        # Check if the dir already exists
-        path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
-        if os.path.isdir(path):
-            # if directory is present, but doesn't have the correct number of files inside,
-            # dataset will attempt to redownload
-            if self.dataset.splits:
-                # array to keep track of missing files
-                missing_files = []
-                for split in self.dataset.splits:
-                    if split.path[0] == '/':
-                        split.path = split.path[1:]
-                    if not os.path.isfile(os.path.join(path, split.path)):
-                        missing_files.append(split.path)
-                # if number of missing files is greater than zero, redownload with informative message
-                if len(missing_files) > 0:
-                    logger.info(f"Dataset will be redownloaded, following files are missing: {missing_files}")
-                else:
-                    logger.info("Dataset has already been downloaded and contains all the desired files")
-                    return self
-            else:
-                # in the case of no splits, ensure the directory contains at least one file
-                if len(os.listdir(path)) >= 1:
-                    logger.info("Dataset has already been downloaded and contains all the desired files")
-                    return self
-                else:
-                    logger.info("Dataset will be redownloaded, expected file is missing")
-
-        res = self.forge_client.search(
-            f"mdf.source_id:{self.mdf['source_id']}", advanced=True
-        )
-        if globus:
-            self.forge_client.globus_download(
-                res,
-                dest=self.config.local_cache_dir,
-                dest_ep=self.config.destination_endpoint,
-                interval=interval,
-                download_datasets=True,
-            )
-        else:
-            https_config = {
-                "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
-                "base_url": "https://data.materialsdatafacility.org",
-                "folder_to_crawl": f"/foundry/{self.mdf['source_id']}/",
-                "source_id": self.mdf["source_id"]
-            }
-
-            # Begin finding files to download
-            task_generator = recursive_ls(self.transfer_client,
-                                          https_config['source_ep_id'],
-                                          https_config['folder_to_crawl'])
-            with ThreadPoolExecutor(parallel_https) as executor:
-                # First submit all files
-                futures = [executor.submit(lambda x: download_file(x, https_config), f)
-                           for f in tqdm(task_generator, disable=not verbose, desc="Finding files")]
-
-                # Check that they completed successfully
-                for result in tqdm(as_completed(futures), disable=not verbose, desc="Downloading files"):
-                    if result.exception() is not None:
-                        for f in futures:
-                            f.cancel()
-                        raise result.exception()
-
-        # after download check making sure directory exists, contains all indicated files
-        if os.path.isdir(path):
-            # checking all necessary files are present
-            if self.dataset.splits:
-                missing_files = []
-                for split in self.dataset.splits:
-                    if split.path[0] == '/':  # if absolute path, make it a relative path
-                        split.path = split.path[1:]
-                    if not os.path.isfile(os.path.join(path, split.path)):
-                        # keeping track of all files not downloaded
-                        missing_files.append(split.path)
-                if len(missing_files) > 0:
-                    raise FileNotFoundError(f"Downloaded directory does not contain the following files: {missing_files}")
-
-            else:
-                if len(os.listdir(path)) < 1:
-                    raise FileNotFoundError("Downloaded directory does not contain the expected file")
-        else:
-            raise NotADirectoryError("Unable to create directory to download data")
-
-        return self
 
     def get_keys(self, type=None, as_object=False):
         """Get keys for a Foundry dataset
@@ -697,77 +498,3 @@ class Foundry(FoundryMetadata):
             return tmp_data
         else:
             raise NotImplementedError
-
-    def _get_inputs_targets(self, split: str = None):
-        """Get Inputs and Outputs from a Foundry Dataset
-
-        Arguments:
-            split (string): Split to get inputs and outputs from.
-                    **Default:** ``None``
-
-        Returns: (Tuple) Tuple of the inputs and outputs
-        """
-        raw = self.load_data(as_hdf5=False)
-
-        if not split:
-            split = self.dataset.splits[0].type
-
-        if self.dataset.data_type.value == "hdf5":
-            inputs = []
-            targets = []
-            for key in self.dataset.keys:
-                if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
-                    continue
-
-                # Get a numpy array of all the values for each item for that key
-                val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
-                if key.type == 'input':
-                    inputs.append(val)
-                else:
-                    targets.append(val)
-
-            return (inputs, targets)
-
-        elif self.dataset.data_type.value == "tabular":
-            inputs = []
-            targets = []
-
-            for index, arr in enumerate([inputs, targets]):
-                df = raw[split][index]
-                for key in df.keys():
-                    arr.append(df[key].values)
-
-            return (inputs, targets)
-
-        else:
-            raise NotImplementedError
-
-    def to_torch(self, split: str = None):
-        """Convert Foundry Dataset to a PyTorch Dataset
-
-        Arguments:
-            split (string): Split to create PyTorch Dataset on.
-                    **Default:** ``None``
-
-        Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
-
-        """
-        from foundry.loaders.torch_wrapper import TorchDataset
-
-        inputs, targets = self._get_inputs_targets(split)
-        return TorchDataset(inputs, targets)
-
-    def to_tensorflow(self, split: str = None):
-        """Convert Foundry Dataset to a Tensorflow Sequence
-
-        Arguments:
-            split (string): Split to create Tensorflow Sequence on.
-                    **Default:** ``None``
-
-        Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split
-
-        """
-        from foundry.loaders.tf_wrapper import TensorflowSequence
-
-        inputs, targets = self._get_inputs_targets(split)
-        return TensorflowSequence(inputs, targets)

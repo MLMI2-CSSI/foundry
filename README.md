@@ -39,6 +39,8 @@ f = Foundry(index="mdf")
 
 f = f.load("10.18126/e73h-3w6n", globus=True)
 ```
+*NOTE*: If you run locally and don't want to install the [Globus Connect Personal endpoint](https://www.globus.org/globus-connect-personal), just set the `globus=False`.
+
 If running this code in a notebook, a table of metadata for the dataset will appear:
 
 <img width="903" alt="metadata" src="https://user-images.githubusercontent.com/16869564/197038472-0b6ae559-4a6b-4b20-88e5-679bb6eb4f5c.png">
@@ -64,6 +66,9 @@ for i in range(n_images):
 <img width="595" alt="Screen Shot 2022-10-20 at 2 22 43 PM" src="https://user-images.githubusercontent.com/16869564/197039252-6d9c78ba-dc09-4037-aac2-d6f7e8b46851.png">
 
 [See full examples](./examples)
+
+# Contributing
+Foundry is an Open Source project and we encourage contributions from the community. To contribute, please fork from the `main` branch and open a Pull Request on the `main` branch. A member of our team will review your PR shortly.
 
 # Primary Support
 This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure".
