@@ -12,7 +12,9 @@
 - **auth**
 - **utils**
 - **models**
+- **foundry_dataset**
 - **https_download**
+- **foundry_cache**
 - **https_upload**
 - **foundry**
 
