@@ -16,11 +16,13 @@ from .utils import _read_csv, _read_json, _read_excel
 
 from foundry.models import (
     FoundrySchema,
-    FoundryDataset,
     FoundryBase
 )
 
-from foundry.foundry_cache import FoundryCache
+from foundry.foundry_dataset import FoundryDataset
+
+# from foundry import FOUNDRY_CACHE
+# from foundry.foundry_cache import FoundryCache
 
 from foundry.https_upload import upload_to_endpoint
 
@@ -44,11 +46,15 @@ class Foundry(FoundryBase):
     index = ""
     auths: Any
 
-    def __init__(
-            self, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
-            globus=True, verbose=False, interval=10,
-            **data
-    ):
+    def __init__(self, 
+                 no_browser=False, 
+                 no_local_server=False, 
+                 index="mdf", 
+                 authorizers=None,
+                 globus=True, 
+                 verbose=False, 
+                 interval=10,
+                 **data):
         """Initialize a Foundry client
         Args:
             no_browser (bool):  Whether to open the browser for the Globus Auth URL.
@@ -68,7 +74,9 @@ class Foundry(FoundryBase):
         super().__init__(**data)
         self.index = index
         self.auths = None
-        self.cache = FoundryCache()
+        self.globus = globus
+        self.verbose = verbose
+        self.interval = interval
 
         if authorizers:
             self.auths = authorizers
@@ -189,11 +197,18 @@ class Foundry(FoundryBase):
             FoundryDataset: a FoundryDataset object created from the metadata
         """
         try:
-            schema = FoundrySchema(**metadata['projects']['foundry'])
+            foundry_schema = FoundrySchema(**metadata['projects']['foundry'])
             dc = metadata['dc']
             name = metadata['mdf']['source_id']
 
-            ds = FoundryDataset(**{'name': name, 'schema': schema, 'dc': dc})
+            ds = FoundryDataset(**{'dataset_name': name, 
+                                   'foundry_schema': foundry_schema,
+                                   'transfer_client': self.auths["transfer"],
+                                   'datacite_entry': dc, 
+                                   'globus': self.globus, 
+                                   'interval': self.interval, 
+                                   'verbose': self.verbose,
+                                   'forge_client': self.forge_client})
 
             return ds
 
@@ -257,10 +272,15 @@ class Foundry(FoundryBase):
         metadata = forge.search(q, advanced=True, limit=limit)
         return metadata
 
-    def publish_dataset(
-            self, foundry_metadata: Dict[str, Any], title: str, authors: List[str], https_data_path: str = None,
-            globus_data_source: str = None, update: bool = False, publication_year: int = None, test: bool = False,
-            **kwargs: Dict[str, Any],) -> Dict[str, Any]:
+    def publish_dataset(self, 
+                        foundry_metadata: Dict[str, Any], 
+                        title: str, authors: List[str], 
+                        https_data_path: str = None,
+                        globus_data_source: str = None, 
+                        update: bool = False, 
+                        publication_year: int = None, 
+                        test: bool = False,
+                        **kwargs: Dict[str, Any],) -> Dict[str, Any]:
         """Submit a dataset for publication; can choose to submit via HTTPS using `https_data_path` or via Globus
             Transfer using the `globus_data_source` argument. Only one upload method may be specified.
         Args:
@@ -404,97 +424,3 @@ class Foundry(FoundryBase):
     #     # return self.dlhub_client.get_task_status(res)
     #     pass
 
-    def get_keys(self, type=None, as_object=False):
-        """Get keys for a Foundry dataset
-
-        Arguments:
-            type (str): The type of key to be returned e.g., "input", "target"
-            as_object (bool): When ``False``, will return a list of keys in as strings
-                    When ``True``, will return the full key objects
-                    **Default:** ``False``
-        Returns: (list) String representations of keys or if ``as_object``
-                    is False otherwise returns the full key objects.
-
-        """
-
-        if as_object:
-            if type:
-                return [key for key in self.dataset.keys if key.type == type]
-            else:
-                return [key for key in self.dataset.keys]
-
-        else:
-            if type:
-                keys = [key.key for key in self.dataset.keys if key.type == type]
-            else:
-                keys = [key.key for key in self.dataset.keys]
-
-            key_list = []
-            for k in keys:
-                key_list = key_list + k
-            return key_list
-
-    def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
-        # Build the path to access the cached data
-        if source_id:
-            path = os.path.join(self.config.local_cache_dir, source_id)
-        else:
-            path = os.path.join(self.config.local_cache_dir,
-                                self.mdf["source_id"])
-
-        # Determine which file to load, defaults to config.dataframe_file
-        if not file:
-            file = self.config.dataframe_file
-        if path is None:
-            raise ValueError(f"Path to data file is invalid; check that dataset source_id is valid: "
-                             f"{source_id or self.mdf['source_id']}")
-        path_to_file = os.path.join(path, file)
-
-        # Check to see whether file exists at path
-        if not os.path.isfile(path_to_file):
-            raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
-
-        # Handle Foundry-defined types.
-        if self.dataset.data_type.value == "tabular":
-            # TODO: Add hashes and versioning to metadata and checking to the file
-            read_fns = [(_read_json, {"lines": False, "path_to_file": path_to_file}),
-                        (_read_json, {"lines": True, "path_to_file": path_to_file}),
-                        (_read_csv, {"path_to_file": path_to_file}),
-                        (_read_excel, {"path_to_file": path_to_file})]
-
-            for fn, params in read_fns:
-                try:
-                    self.dataset.dataframe = fn(**params)
-                except Exception as e:
-                    logger.info(f"Unable to read file with {fn.__name__} with params {params}: {e}")
-                if self.dataset.dataframe is not None:
-                    logger.info(f"Succeeded with {fn.__name__} with params {params}")
-                    break
-            if self.dataset.dataframe is None:
-                logger.fatal(f"Cannot read {path_to_file} as tabular data, failed to load")
-                raise ValueError(f"Cannot read tabular data from {path_to_file}")
-
-            return (
-                self.dataset.dataframe[self.get_keys("input")],
-                self.dataset.dataframe[self.get_keys("target")],
-            )
-
-        elif self.dataset.data_type.value == "hdf5":
-            f = h5py.File(path_to_file, "r")
-            special_types = ["input", "target"]
-            tmp_data = {s: {} for s in special_types}
-            for s in special_types:
-                for key in self.get_keys(s):
-                    if as_hdf5:
-                        tmp_data[s][key] = f[key]
-                    elif isinstance(f[key], h5py.Group):
-                        if is_pandas_pytable(f[key]):
-                            df = pd.read_hdf(path_to_file, key)
-                            tmp_data[s][key] = df
-                        else:
-                            tmp_data[s][key] = f[key]
-                    elif isinstance(f[key], h5py.Dataset):
-                        tmp_data[s][key] = f[key][0:]
-            return tmp_data
-        else:
-            raise NotImplementedError

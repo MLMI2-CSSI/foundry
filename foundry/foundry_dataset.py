@@ -3,19 +3,30 @@ import logging
 import os
 
 from json2table import convert
+from mdf_forge import Forge
 import numpy as np
+from pydantic import ValidationError, Extra
+from typing import List, Any
 
-from foundry.models import FoundrySchema
-from pydantic import ValidationError
+from .foundry_cache import FoundryCache
+from foundry.models import FoundrySchema, FoundrySplit
 
 
 logger = logging.getLogger(__name__)
 
 
-class FoundryDataset(FoundrySchema):
+class FoundryDataset():
     """Representation of an individual dataset.
         Provides access to metadata as well as functions to
         instantiate data into memory in different formats.
+        
+        Args:
+            dataset_name (str): name of dataset (equivalent to source_id in MDF)
+            splits List[FoundrySplit]: list of splits in the dataset
+            globus (bool): if True, use Globus to download the data else try HTTPS
+            interval (int): How often to wait before checking Globus transfer status
+            parallel_https (int): Number of files to download in parallel if using HTTPS
+            verbose (bool): Produce more debug messages to screen
 
         Desired functions:
             - Get as pandas
@@ -28,10 +39,55 @@ class FoundryDataset(FoundrySchema):
             - Get citation
         """
 
-    def __init__(self, source_id: str, datacite_entry: dict, foundry_schema: FoundrySchema):
-        self.source_id = source_id
+    def __init__(self, 
+                 dataset_name: str, 
+                 datacite_entry: dict,
+                 transfer_client: Any, 
+                 foundry_schema: FoundrySchema, 
+                 globus: bool = False,
+                 interval: int = 10,
+                 parallel_https: int = 4,
+                 verbose: bool = False,
+                 forge_client: Forge = None):
+
+        self.dataset_name = dataset_name
         self.dc = datacite_entry
+        self.transfer_client = transfer_client
         self.foundry_schema = foundry_schema
+        self.globus = globus
+        self.interval = interval
+        self.parallel_https = parallel_https
+        self.verbose = verbose
+        self._foundry_cache = FoundryCache(forge_client, transfer_client)
+ 
+    def get_as_dict(self, split: str=None):
+        """Convert FoundryDatset to a Pandas Dataframe object
+
+        Arguments:
+            split (string): Split to create PyTorch Dataset on.
+                    **Default:** ``None``
+
+        Returns: (Pandas.Dataframe) Pandas ddataframe of all the data from the specified split
+
+        """
+        self.download_if_not_downloaded()
+        return self._foundry_cache.load_as_dict(self.dataset_name,
+                                                self.foundry_schema,
+                                                self.globus)
+
+
+    def to_pandas(self, split: str=None):
+        """Convert FoundryDatset to a Pandas Dataframe object
+
+        Arguments:
+            split (string): Split to create PyTorch Dataset on.
+                    **Default:** ``None``
+
+        Returns: (Pandas.Dataframe) Pandas ddataframe of all the data from the specified split
+
+        """
+
+        self.download_if_not_downloaded()
 
     def to_torch(self, split: str = None):
         """Convert Foundry Dataset to a PyTorch Dataset
@@ -67,55 +123,13 @@ class FoundryDataset(FoundrySchema):
         return TensorflowSequence(inputs, targets)
 
     def download_if_not_downloaded(self):
-        ...
-
-    def load_data(self, source_id=None, globus=True, as_hdf5=False, splits=[]):
-        """Load in the data associated with the prescribed dataset
-
-        Tabular Data Type: Data are arranged in a standard data frame
-        stored in self.dataframe_file. The contents are read, and
-
-        File Data Type: <<Add desc>>
-
-        For more complicated data structures, users should
-        subclass FoundryDataset and override the load_data function
-
-        Args:
-           inputs (list): List of strings for input columns
-           targets (list): List of strings for output columns
-           source_id (string): Relative path to the source file
-           as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
-           splits (list): Labels of splits to be loaded
-
-        Returns:
-             (dict): a labeled dictionary of tuples
-        """
-        data = {}
-
-        # Handle splits if they exist. Return as a labeled dictionary of tuples
-        try:
-            if self.dataset.splits:
-                if not splits:
-                    for split in self.dataset.splits:
-                        data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
-                                                            as_hdf5=as_hdf5)
-                else:
-                    for split in self.dataset.splits:
-                        if split.label in splits:
-                            splits.remove(split.label)
-                            data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
-                                                                as_hdf5=as_hdf5)
-                    if len(splits) > 0:
-                        raise ValueError(f'The split(s) {splits} were not found in the dataset!')
-                return data
-            else:
-                # raise an error if splits are specified but not present in the dataset
-                if len(splits) > 0:
-                    raise ValueError(f"Splits to load were specified as {splits}, but no splits are present in dataset")
-                return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
-        except Exception as e:
-            raise Exception(
-                "Metadata not loaded into Foundry object, make sure to call load()") from e
+        self._foundry_cache.download_to_cache(self.dataset_name, 
+                                              self.foundry_schema.splits, 
+                                              self.globus, 
+                                              self.interval, 
+                                              self.parallel_https, 
+                                              self.verbose,
+                                              self.transfer_client)
 
     def get_citation(self) -> str:
         subjects = [subject['subject'] for subject in self.dc['subjects']]
@@ -203,6 +217,10 @@ class FoundryDataset(FoundrySchema):
         else:
             raise NotImplementedError
 
+    def clear_dataset_cache(self):
+        """Deletes the cached data for this specific datset"""
+        self._foundry_cache.clear_cache(self.dataset_name)
+
     def _repr_html_(self) -> str:
         """Not sure what this is for or if it is ever called"""
 
@@ -217,5 +235,5 @@ class FoundryDataset(FoundrySchema):
 
             buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
 
-            buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
+            buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.foundry_schema.json(exclude={"dataframe"})))}'
         return buf

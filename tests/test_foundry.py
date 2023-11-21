@@ -1,10 +1,13 @@
+import builtins
 import json
+import mock
 import os
 import shutil
 import pytest
 from filecmp import cmp
 from datetime import datetime
 from math import floor
+
 import numpy as np
 from pydantic import ValidationError
 import requests
@@ -200,8 +203,8 @@ pub_test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6
 
 
 # Quick function to delete any downloaded test data
-def _delete_test_data(foundry_obj):
-    path = os.path.join(foundry_obj.config.local_cache_dir, test_dataset)
+def _delete_test_data(dataset):
+    path = os.path.join(dataset._foundry_cache.local_cache_dir, test_dataset)
     if os.path.isdir(path):
         shutil.rmtree(path)
 
@@ -244,7 +247,7 @@ def test_search():
     assert ds[0].dc["titles"][0]["title"] is not None
     
     # assert ds.iloc[0]['source_id'] is not None
-    assert ds[0].name is not None
+    assert ds[0].dataset_name is not None
 
     # assert ds.iloc[0]['year'] is not None
     assert ds[0].dc.get("publicationYear", None) is not None
@@ -252,17 +255,16 @@ def test_search():
 
 def test_search_limit():
     f = foundry.Foundry(authorizers=auths)
-    q = "atom"
-    ds = f.search(q, limit=100)
+    ds = f.search(limit=10)
 
     assert isinstance(ds, list)
-    assert len(ds) < 101
+    assert len(ds) == 10
     
     # assert ds.iloc[0]['name'] is not None
     assert ds[0].dc["titles"][0]["title"] is not None
     
     # assert ds.iloc[0]['source_id'] is not None
-    assert ds[0].name is not None
+    assert ds[0].dataset_name is not None
 
     # assert ds.iloc[0]['year'] is not None
     assert ds[0].dc.get("publicationYear", None) is not None
@@ -274,27 +276,42 @@ def test_metadata_pull():
     assert dataset[0].dc["titles"][0]["title"] == expected_title
 
 
-@pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
-def test_download_https():
-    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths)
-    _delete_test_data(f)
-
-    assert f.dc["titles"][0]["title"] == expected_title
-    _delete_test_data(f)
-
-
-@pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
-def test_dataframe_load():
-    f = Foundry(test_dataset, download=True, globus=False, authorizers=auths)
-
-    res = f.load_data()
+def test_download_globus():
+    f = foundry.Foundry(globus=True, authorizers=auths)
+    dataset = f.search(test_dataset)[0]
+    res = dataset.get_as_dict()
     X, y = res['train']
 
     assert len(X) > 1
     assert isinstance(X, pd.DataFrame)
     assert len(y) > 1
     assert isinstance(y, pd.DataFrame)
-    _delete_test_data(f)
+    _delete_test_data(dataset)
+
+
+@pytest.mark.skip(reason='Not sure why, but http download is bringing up a globus auth page instead of a datafile')
+def test_download_https():
+    f = foundry.Foundry(globus=False, authorizers=auths)
+    dataset = f.search(test_dataset)[0]
+    res = dataset.get_as_dict()
+    X, y = res['train']
+
+    assert len(X) > 1
+    assert isinstance(X, pd.DataFrame)
+    assert len(y) > 1
+    assert isinstance(y, pd.DataFrame)
+    _delete_test_data(dataset)
+
+
+def test_delete_cache():
+    f = foundry.Foundry(globus=True, authorizers=auths)
+    dataset = f.search(test_dataset)[0]
+    res = dataset.get_as_dict()
+
+    with mock.patch.object(builtins, 'input', lambda _: 'y'):
+        dataset.clear_dataset_cache()
+
+    assert os.path.exists(os.path.join(dataset._foundry_cache.local_cache_dir, dataset.dataset_name)) == False
 
 
 @pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
@@ -308,7 +325,7 @@ def test_dataframe_load_split():
     assert isinstance(X, pd.DataFrame)
     assert len(y) > 1
     assert isinstance(y, pd.DataFrame)
-    _delete_test_data(f)
+    _delete_test_data(dataset)
 
 
 @pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
@@ -321,7 +338,7 @@ def test_dataframe_load_split_wrong_split_name():
     err = exc_info.value
     assert hasattr(err, '__cause__')
     assert isinstance(err.__cause__, ValueError)
-    _delete_test_data(f)
+    _delete_test_data(dataset)
 
 
 @pytest.mark.skip(reason='No clear examples of datasets without splits - likely to be protected against soon.')
@@ -330,7 +347,7 @@ def test_dataframe_load_split_but_no_splits():
 
     with pytest.raises(ValueError):
         f.load_data(splits=['train'])
-    _delete_test_data(f)
+    _delete_test_data(dataset)
 
 
 def test_dataframe_search_by_doi():
@@ -355,17 +372,7 @@ def test_dataframe_download_by_doi():
     assert isinstance(X, pd.DataFrame)
     assert len(y) > 1
     assert isinstance(y, pd.DataFrame)
-    _delete_test_data(f)
-
-
-@pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
-def test_download_globus():
-    f = Foundry(test_dataset, download=True, authorizers=auths, no_browser=True, no_local_server=True)
-    _delete_test_data(f)
-
-    assert f.dc["titles"][0]["title"] == expected_title
-    _delete_test_data(f)
+    _delete_test_data(dataset)
 
 
 @pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
@@ -380,7 +387,7 @@ def test_globus_dataframe_load():
     assert isinstance(X, pd.DataFrame)
     assert len(y) > 1
     assert isinstance(y, pd.DataFrame)
-    _delete_test_data(f)
+    _delete_test_data(dataset)
 
 
 @pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
@@ -542,7 +549,7 @@ def test_to_pytorch():
     assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
     assert len(raw['train'][0]) == len(ds)
 
-    _delete_test_data(f)
+    _delete_test_data(dataset)
 
 
 @pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
@@ -556,4 +563,4 @@ def test_to_tensorflow():
     assert raw['train'][0].iloc[0][0] == ds[0]['input'][0]
     assert len(raw['train'][0]) == len(ds)
 
-    _delete_test_data(f)
+    _delete_test_data(dataset)
