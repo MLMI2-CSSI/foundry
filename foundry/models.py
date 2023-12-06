@@ -148,6 +148,7 @@ class FoundryDataset(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+
 class FoundryBase(BaseModel, extra=Extra.allow):
     """Configuration information for Foundry instance
 

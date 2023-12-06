@@ -237,7 +237,7 @@ class Foundry(FoundryBase):
                 foundry_datasets.append(ds)
 
         logger.info(f"Search for '{query}' returned {len(foundry_datasets)} foundry datasets out of {len(metadata_list)} matches")
-        
+
         if as_list:
             return foundry_datasets
 

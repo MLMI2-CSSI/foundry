@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from typing import Any
 
 from .foundry_cache import FoundryCache
-from foundry.models import FoundrySchema, FoundrySplit
+from foundry.models import FoundrySchema
 
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class FoundryDataset():
     """Representation of an individual dataset.
         Provides access to metadata as well as functions to
         instantiate data into memory in different formats.
-        
+
         Args:
             dataset_name (str): name of dataset (equivalent to source_id in MDF)
             splits List[FoundrySplit]: list of splits in the dataset
@@ -39,11 +39,11 @@ class FoundryDataset():
             - Get citation
         """
 
-    def __init__(self, 
-                 dataset_name: str, 
+    def __init__(self,
+                 dataset_name: str,
                  datacite_entry: dict,
-                 transfer_client: Any, 
-                 foundry_schema: FoundrySchema, 
+                 transfer_client: Any,
+                 foundry_schema: FoundrySchema,
                  globus: bool = False,
                  interval: int = 10,
                  parallel_https: int = 4,
@@ -59,8 +59,8 @@ class FoundryDataset():
         self.parallel_https = parallel_https
         self.verbose = verbose
         self._foundry_cache = FoundryCache(forge_client, transfer_client)
- 
-    def get_as_dict(self, split: str=None):
+
+    def get_as_dict(self, split: str = None):
         """Convert FoundryDatset to a Pandas Dataframe object
 
         Arguments:
@@ -75,8 +75,7 @@ class FoundryDataset():
                                                 self.foundry_schema,
                                                 self.globus)
 
-
-    def to_pandas(self, split: str=None):
+    def to_pandas(self, split: str = None):
         """Convert FoundryDatset to a Pandas Dataframe object
 
         Arguments:
@@ -123,11 +122,11 @@ class FoundryDataset():
         return TensorflowSequence(inputs, targets)
 
     def download_if_not_downloaded(self):
-        self._foundry_cache.download_to_cache(self.dataset_name, 
-                                              self.foundry_schema.splits, 
-                                              self.globus, 
-                                              self.interval, 
-                                              self.parallel_https, 
+        self._foundry_cache.download_to_cache(self.dataset_name,
+                                              self.foundry_schema.splits,
+                                              self.globus,
+                                              self.interval,
+                                              self.parallel_https,
                                               self.verbose,
                                               self.transfer_client)
 
