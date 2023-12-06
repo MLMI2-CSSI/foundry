@@ -5,8 +5,8 @@ import os
 from json2table import convert
 from mdf_forge import Forge
 import numpy as np
-from pydantic import ValidationError, Extra
-from typing import List, Any
+from pydantic import ValidationError
+from typing import Any
 
 from .foundry_cache import FoundryCache
 from foundry.models import FoundrySchema, FoundrySplit
