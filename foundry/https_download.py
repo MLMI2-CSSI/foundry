@@ -66,7 +66,7 @@ def download_file(item, data_directory, https_config):
     destination = os.path.join(data_directory, https_config['source_id'], item['name'])
 
     parent_path = os.path.split(destination)[0]
-    print(f'>>>>> downloading from {url} to {destination}')
+
     # if parent directories don't exist, create them
     if not os.path.exists(parent_path):
         os.makedirs(parent_path)

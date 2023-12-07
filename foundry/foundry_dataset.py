@@ -67,7 +67,7 @@ class FoundryDataset():
             split (string): Split to create PyTorch Dataset on.
                     **Default:** ``None``
 
-        Returns: (Pandas.Dataframe) Pandas ddataframe of all the data from the specified split
+        Returns: (dict) Dictionary of all the data from the specified split
 
         """
         self.download_if_not_downloaded()
@@ -79,7 +79,7 @@ class FoundryDataset():
         """Convert FoundryDatset to a Pandas Dataframe object
 
         Arguments:
-            split (string): Split to create PyTorch Dataset on.
+            split (string): Split to create dataset on.
                     **Default:** ``None``
 
         Returns: (Pandas.Dataframe) Pandas ddataframe of all the data from the specified split
