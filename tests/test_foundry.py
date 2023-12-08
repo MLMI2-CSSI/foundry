@@ -311,7 +311,7 @@ def test_metadata_pull():
 
 
 def test_download_globus():
-    f = foundry.Foundry(globus=True, authorizers=auths)
+    f = foundry.Foundry(globus=False, authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
     res = dataset.get_as_dict()
     X, y = res['train']
