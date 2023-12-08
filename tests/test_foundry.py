@@ -228,7 +228,6 @@ def test_foundry_init():
         assert isinstance(f3.connect_client, MDFConnectClient)
 
 
-@pytest.mark.skip(reason='Checking if tests work')
 def test_list():
     f = foundry.Foundry(authorizers=auths)
     ds = f.list()
@@ -236,7 +235,6 @@ def test_list():
     assert len(ds) > 0
 
 
-@pytest.mark.skip(reason='Checking if tests work')
 def test_search():
     f = foundry.Foundry(authorizers=auths)
     q = "Elwood"
@@ -257,7 +255,6 @@ def test_search():
     assert dataset.dc.get("publicationYear", None) is not None
 
 
-@pytest.mark.skip(reason='Checking if tests work')
 def test_search_as_list():
     f = foundry.Foundry(authorizers=auths)
     q = "Elwood"
@@ -278,7 +275,6 @@ def test_search_as_list():
     assert dataset.dc.get("publicationYear", None) is not None
 
 
-@pytest.mark.skip(reason='Checking if tests work')
 def test_search_limit():
     f = foundry.Foundry(authorizers=auths)
     ds = f.search(limit=10)
@@ -298,7 +294,6 @@ def test_search_limit():
     assert dataset.dc.get("publicationYear", None) is not None
 
 
-@pytest.mark.skip(reason='Checking if tests work')
 def test_search_no_results():
     f = foundry.Foundry()
 
@@ -309,7 +304,6 @@ def test_search_no_results():
     assert hasattr(err, '__cause__')
 
 
-@pytest.mark.skip(reason='Checking if tests work')
 def test_metadata_pull():
     f = foundry.Foundry(download=False, authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
