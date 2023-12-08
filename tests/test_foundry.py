@@ -310,7 +310,6 @@ def test_metadata_pull():
     assert dataset.dc["titles"][0]["title"] == expected_title
 
 
-@pytest.mark.skip(reason='Download failing in GHA?')
 def test_download_globus():
     f = foundry.Foundry(globus=True, authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
