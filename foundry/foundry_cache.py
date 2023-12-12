@@ -21,34 +21,39 @@ class FoundryCache():
 
     def __init__(self,
                  forge_client: Forge,
-                 transfer_client: Any):
+                 transfer_client: Any,
+                 local_cache_dir: str = None):
         """
         Initializes a FoundryCache object.
 
         Args:
             forge_client (Forge): The Forge client object.
             transfer_client (Any): The transfer client object.
+            local_cache_dir (str): Optional location to store downloaded data - if not specified, defaults to either environmental variable ('FOUNDRY_LOCAL_CACHE_DIR') or './data'
         """
-        self.local_cache_dir = os.environ.get("FOUNDRY_LOCAL_CACHE_DIR", "./data")
+        if local_cache_dir:
+            self.local_cache_dir = local_cache_dir
+        else:
+            self.local_cache_dir = os.environ.get("FOUNDRY_LOCAL_CACHE_DIR", './data')
         self.forge_client = forge_client
         self.transfer_client = transfer_client
 
     def download_to_cache(self,
                           dataset_name: str,
                           splits: List[FoundrySplit] = None,
-                          globus: bool = False,
+                          use_globus: bool = False,
                           interval: int = 10,
                           parallel_https: int = 4,
                           verbose: bool = False,
                           transfer_client=None):
 
         """
-        Downloads the data from source to local storage.
+        Checks if the data is downloaded, and if not, downloads the data from source to local storage.
 
         Args:
             dataset_name (str): Name of the dataset (equivalent to source_id in MDF).
             splits (List[FoundrySplit], optional): List of splits in the dataset. Defaults to None.
-            globus (bool, optional): If True, use Globus to download the data; otherwise, try HTTPS. Defaults to False.
+            use_globus (bool, optional): If True, use Globus to download the data; otherwise, try HTTPS. Defaults to False.
             interval (int, optional): How often to wait before checking Globus transfer status. Defaults to 10.
             parallel_https (int, optional): Number of files to download in parallel if using HTTPS. Defaults to 4.
             verbose (bool, optional): Produce more debug messages to screen. Defaults to False.
@@ -58,7 +63,7 @@ class FoundryCache():
             FoundryCache: The FoundryCache object.
         """
         if not self.validate_local_dataset_storage(dataset_name, splits):
-            if globus:
+            if use_globus:
                 self.download_via_globus(dataset_name, interval)
             else:
                 self.download_via_http(dataset_name, parallel_https, verbose, self.transfer_client)
@@ -171,22 +176,40 @@ class FoundryCache():
             return False
 
     def load_as_dict(self,
+                     split: str,
                      dataset_name: str,
-                     foundry_schema: FoundrySchema = None,
-                     globus: bool = True,
-                     as_hdf5: bool = False):
+                     foundry_schema: FoundrySchema,
+                     use_globus: bool,
+                     interval: int,
+                     parallel_https: int,
+                     verbose: bool,
+                     transfer_client: Any,
+                     as_hdf5: bool):
         """
         Load in the data associated with the prescribed dataset.
 
         Args:
             dataset_name (str): Name of the dataset (equivalent to source_id in MDF).
             foundry_schema (FoundrySchema, optional): Schema element as obtained from MDF. Defaults to None.
-            globus (bool, optional): If True, download using Globus; otherwise, use HTTPS. Defaults to True.
+            use_globus (bool, optional): If True, use Globus to download the data; otherwise, try HTTPS. Defaults to False.
+            interval (int, optional): How often to wait before checking Globus transfer status. Defaults to 10.
+            parallel_https (int, optional): Number of files to download in parallel if using HTTPS. Defaults to 4.
+            verbose (bool, optional): Produce more debug messages to screen. Defaults to False.
+            transfer_client (Any, optional): The transfer client object. Defaults to None.
             as_hdf5 (bool, optional): If True and dataset is in HDF5 format, keep data in HDF5 format. Defaults to False.
 
         Returns:
             dict: A labeled dictionary of tuples.
         """
+        # Ensure local copy of data is available
+        download_to_cache(dataset_name,
+                          foundry_schema.splits,
+                          use_globus,
+                          interval,
+                          parallel_https,
+                          verbose,
+                          transfer_client)
+
         data = {}
 
         # Handle splits if they exist. Return as a labeled dictionary of tuples
@@ -196,13 +219,13 @@ class FoundryCache():
                     data[split.label] = self._load_data(foundry_schema=foundry_schema,
                                                         file=split.path,
                                                         source_id=dataset_name,
-                                                        globus=globus,
+                                                        use_globus=use_globus,
                                                         as_hdf5=as_hdf5)
                 return data
             else:
                 return {"data": self._load_data(foundry_schema=foundry_schema,
                                                 source_id=dataset_name,
-                                                globus=globus,
+                                                use_globus=use_globus,
                                                 as_hdf5=as_hdf5)}
         except Exception as e:
             raise Exception(
@@ -212,7 +235,7 @@ class FoundryCache():
                    foundry_schema: FoundrySchema,
                    file: str = "foundry_dataframe.json",
                    source_id: str = None,
-                   globus: bool = True,
+                   use_globus: bool = True,
                    as_hdf5: bool = False):
         """
         Load the data from the cached file.
@@ -221,7 +244,7 @@ class FoundryCache():
             foundry_schema (FoundrySchema): The FoundrySchema object.
             file (str, optional): The name of the file to load. Defaults to "foundry_dataframe.json".
             source_id (str, optional): The source ID of the dataset. Defaults to None.
-            globus (bool, optional): If True, download using Globus; otherwise, use HTTPS. Defaults to True.
+            use_globus (bool, optional): If True, download using Globus; otherwise, use HTTPS. Defaults to True.
             as_hdf5 (bool, optional): If True and dataset is in HDF5 format, keep data in HDF5 format. Defaults to False.
 
         Returns:
