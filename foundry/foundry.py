@@ -97,13 +97,14 @@ class Foundry(FoundryBase):
     auths: Any
 
     def __init__(self,
-                 no_browser=False,
-                 no_local_server=False,
-                 index="mdf",
-                 authorizers=None,
-                 globus=True,
-                 verbose=False,
-                 interval=10,
+                 no_browser: bool = False,
+                 no_local_server: bool = False,
+                 index:str = "mdf",
+                 authorizers: dict = None,
+                 use_globus: bool = True,
+                 verbose: bool = False,
+                 interval: int = 10,
+                 local_cache_dir: str = None,
                  **data):
         """Initialize a Foundry client
 
@@ -112,9 +113,10 @@ class Foundry(FoundryBase):
             no_local_server (bool): Whether a local server is available. This should be `False` when on a remote server (e.g., Google Colab).
             index (str): Index to use for search and data publication. Choices are `mdf` or `mdf-test`.
             authorizers (dict): A dictionary of authorizers to use, following the `mdf_toolbox` format.
-            globus (bool): If True, download using Globus, otherwise use HTTPS.
+            use_globus (bool): If True, download using Globus, otherwise use HTTPS.
             verbose (bool): If True, print additional debug information.
             interval (int): How often to poll Globus to check if transfers are complete.
+            local_cache_dir (str): Optional location to store downloaded data - if not specified, defaults to either environmental variable ('FOUNDRY_LOCAL_CACHE_DIR') or './data'
             data (dict): Other arguments, e.g., results from an MDF search result that are used to populate Foundry metadata fields.
 
         Returns:
@@ -123,7 +125,7 @@ class Foundry(FoundryBase):
         super().__init__(**data)
         self.index = index
         self.auths = None
-        self.globus = globus
+        self.use_globus = use_globus
         self.verbose = verbose
         self.interval = interval
 
@@ -277,10 +279,11 @@ class Foundry(FoundryBase):
                                    'foundry_schema': foundry_schema,
                                    'transfer_client': self.auths["transfer"],
                                    'datacite_entry': dc,
-                                   'globus': self.globus,
+                                   'use_globus': self.use_globus,
                                    'interval': self.interval,
                                    'verbose': self.verbose,
-                                   'forge_client': self.forge_client})
+                                   'forge_client': self.forge_client,
+                                   'local_cache_dir': self.local_cache_dir})
 
             return ds
 

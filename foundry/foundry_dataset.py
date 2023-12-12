@@ -23,7 +23,7 @@ class FoundryDataset():
         Args:
             dataset_name (str): name of dataset (equivalent to source_id in MDF)
             splits List[FoundrySplit]: list of splits in the dataset
-            globus (bool): if True, use Globus to download the data else try HTTPS
+            use_globus (bool): if True, use Globus to download the data else try HTTPS
             interval (int): How often to wait before checking Globus transfer status
             parallel_https (int): Number of files to download in parallel if using HTTPS
             verbose (bool): Produce more debug messages to screen
@@ -44,36 +44,42 @@ class FoundryDataset():
                  datacite_entry: dict,
                  transfer_client: Any,
                  foundry_schema: FoundrySchema,
-                 globus: bool = False,
+                 use_globus: bool = False,
                  interval: int = 10,
                  parallel_https: int = 4,
                  verbose: bool = False,
-                 forge_client: Forge = None):
+                 forge_client: Forge = None,
+                 local_cache_dir: str = None):
 
         self.dataset_name = dataset_name
         self.dc = datacite_entry
         self.transfer_client = transfer_client
         self.foundry_schema = foundry_schema
-        self.globus = globus
+        self.use_globus = use_globus
         self.interval = interval
         self.parallel_https = parallel_https
         self.verbose = verbose
-        self._foundry_cache = FoundryCache(forge_client, transfer_client)
+        self._foundry_cache = FoundryCache(forge_client, transfer_client, local_cache_dir)
 
-    def get_as_dict(self, split: str = None):
-        """Convert FoundryDatset to a Pandas Dataframe object
+    def get_as_dict(self, split: str = None, as_hdf5: bool = False):
+        """Convert FoundryDatset to a dictionary
 
         Arguments:
-            split (string): Split to create PyTorch Dataset on.
+            split (string): Split to create dataset on.
                     **Default:** ``None``
 
         Returns: (dict) Dictionary of all the data from the specified split
 
         """
-        self.download_if_not_downloaded()
-        return self._foundry_cache.load_as_dict(self.dataset_name,
+        return self._foundry_cache.load_as_dict(split,
+                                                self.dataset_name,
                                                 self.foundry_schema,
-                                                self.globus)
+                                                self.use_globus,
+                                                self.interval,
+                                                self.parallel_https,
+                                                self.verbose,
+                                                self.transfer_client,
+                                                as_hdf5)
 
     def to_pandas(self, split: str = None):
         """Convert FoundryDatset to a Pandas Dataframe object
@@ -86,8 +92,6 @@ class FoundryDataset():
 
         """
 
-        self.download_if_not_downloaded()
-
     def to_torch(self, split: str = None):
         """Convert Foundry Dataset to a PyTorch Dataset
 
@@ -98,8 +102,6 @@ class FoundryDataset():
         Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
 
         """
-
-        self.download_if_not_downloaded()
 
         from foundry.loaders.torch_wrapper import TorchDataset
 
@@ -120,15 +122,6 @@ class FoundryDataset():
 
         inputs, targets = self._get_inputs_targets(split)
         return TensorflowSequence(inputs, targets)
-
-    def download_if_not_downloaded(self):
-        self._foundry_cache.download_to_cache(self.dataset_name,
-                                              self.foundry_schema.splits,
-                                              self.globus,
-                                              self.interval,
-                                              self.parallel_https,
-                                              self.verbose,
-                                              self.transfer_client)
 
     def get_citation(self) -> str:
         subjects = [subject['subject'] for subject in self.dc['subjects']]
