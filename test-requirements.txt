@@ -1,5 +1,6 @@
 pytest>=7
 pytest-cov>=2.12
+pytest-mock
 flake8
 jsonschema
 mock
