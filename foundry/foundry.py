@@ -128,6 +128,8 @@ class Foundry(FoundryBase):
         self.use_globus = use_globus
         self.verbose = verbose
         self.interval = interval
+        if local_cache_dir:
+            self.local_cache_dir = local_cache_dir
 
         if authorizers:
             self.auths = authorizers

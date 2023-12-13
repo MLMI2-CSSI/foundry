@@ -38,6 +38,7 @@ class FoundryCache():
         self.forge_client = forge_client
         self.transfer_client = transfer_client
 
+
     def download_to_cache(self,
                           dataset_name: str,
                           splits: List[FoundrySplit] = None,
@@ -202,13 +203,13 @@ class FoundryCache():
             dict: A labeled dictionary of tuples.
         """
         # Ensure local copy of data is available
-        download_to_cache(dataset_name,
-                          foundry_schema.splits,
-                          use_globus,
-                          interval,
-                          parallel_https,
-                          verbose,
-                          transfer_client)
+        self.download_to_cache(dataset_name,
+                               foundry_schema.splits,
+                               use_globus,
+                               interval,
+                               parallel_https,
+                               verbose,
+                               transfer_client)
 
         data = {}
 
