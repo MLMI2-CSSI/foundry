@@ -34,6 +34,7 @@ If you want to contribute, start working through the Foundry codebase, navigate 
 * Tests should follow [testing best practices](https://www..org/community/contribute/tests)
 
   guide.
+* Any contributions should include adequate in-line and function-level documentation; docstrings should be in the [Google docstring](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings) format
 
 ## Pull Request Process
 

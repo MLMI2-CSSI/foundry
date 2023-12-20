@@ -35,10 +35,9 @@ logger = logging.getLogger(__name__)
 
 class Foundry(FoundryBase):
     """Foundry Client Base Class
-    TODO:
-    -------
-    Add Docstring
 
+    Foundry object used for all interactions with Foundry datasets and models. Interfaces with MDF Connect Client,
+        Globus Compute, Globus Auth, Globus Transfer, Globus Search, DLHub, and relevant Globus Endpoints
     """
 
     dlhub_client: Any
@@ -53,6 +52,7 @@ class Foundry(FoundryBase):
             self, no_browser=False, no_local_server=False, index="mdf", authorizers=None, **data
     ):
         """Initialize a Foundry client
+
         Args:
             no_browser (bool):  Whether to open the browser for the Globus Auth URL.
             no_local_server (bool): Whether a local server is available.
@@ -147,6 +147,7 @@ class Foundry(FoundryBase):
 
     def load(self, name, download=True, globus=False, verbose=False, metadata=None, authorizers=None, **kwargs):
         """Load the metadata for a Foundry dataset into the client
+
         Args:
             name (str): Name of the foundry dataset
             download (bool): If True, download the data associated with the package (default is True)
@@ -210,12 +211,14 @@ class Foundry(FoundryBase):
 
     def search(self, q=None, limit=None):
         """Search available Foundry datasets
-        q (str): query string to match
-        limit (int): maximum number of results to return
 
-        Returns
-        -------
-            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication year, and DOI
+        Args:
+            q (str): query string to match
+            limit (int): maximum number of results to return
+
+        Returns:
+            (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication
+                year, and DOI
         """
         if not q:
             q = None
@@ -240,22 +243,24 @@ class Foundry(FoundryBase):
 
     def list(self):
         """List available Foundry datasets
-        Returns
-        -------
-            (pandas.DataFrame): DataFrame with summary list of Foundry datasets including name, title, publication year, and DOI
+
+        Returns:
+            (pandas.DataFrame): DataFrame with summary list of Foundry datasets including name, title, publication
+                year, and DOI
         """
         return self.search()
 
     def run(self, name, inputs, funcx_endpoint=None, **kwargs):
-        """Run a model on data
+        """Run a model on inputted data
 
         Args:
-           name (str): DLHub model name
-           inputs: Data to send to DLHub as inputs (should be JSON serializable)
-           funcx_endpoint (optional): UUID for the funcx endpoint to run the model on, if not the default (eg River)
+            name (str): DLHub model name
+            inputs: Data to send to DLHub as inputs (should be JSON serializable, example types include dict, list,
+                np.ndarray, etc)
+            funcx_endpoint (str) (optional): UUID for the funcx endpoint to run the model on, if not the default (eg River)
 
         Returns:
-             Returns results after invocation via the DLHub service
+             Results after invocation via the DLHub service
         """
         if funcx_endpoint is not None:
             self.dlhub_client.fx_endpoint = funcx_endpoint
@@ -273,14 +278,13 @@ class Foundry(FoundryBase):
         subclass Foundry and override the load_data function
 
         Args:
-           inputs (list): List of strings for input columns
-           targets (list): List of strings for output columns
-           source_id (string): Relative path to the source file
+           source_id (str): Name of the dataset in MDF/Foundry index (``source_name`` + version information)
+           globus (bool): If True, download using Globus, otherwise, HTTPS
            as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
            splits (list): Labels of splits to be loaded
 
         Returns:
-             (dict): a labeled dictionary of tuples
+            data (dict): a labeled dictionary of tuples
         """
         data = {}
 
@@ -310,6 +314,14 @@ class Foundry(FoundryBase):
                 "Metadata not loaded into Foundry object, make sure to call load()") from e
 
     def _repr_html_(self) -> str:
+        """Format the Foundry object for notebook rendering as HTML output
+
+        Args:
+            self (Foundry)
+
+        Returns:
+            buf (str): buffer containing the HTML to render
+        """
         if not self.dc:
             buf = str(self)
         else:
@@ -325,6 +337,16 @@ class Foundry(FoundryBase):
         return buf
 
     def get_citation(self) -> str:
+        """Obtain BibTeX citation for the dataset
+
+        Uses the dataset currently loaded in the Foundry object described by `self`
+
+        Args:
+            self (Foundry)
+
+        Returns:
+            bibtex (str): The BibTeX citation in string format
+        """
         subjects = [subject['subject'] for subject in self.dc['subjects']]
         doi_str = f"doi = {{{self.dc['identifier']['identifier']}}}"
         url_str = f"url = {{https://doi.org/{self.dc['identifier']['identifier']}}}"
@@ -346,6 +368,7 @@ class Foundry(FoundryBase):
             **kwargs: Dict[str, Any],) -> Dict[str, Any]:
         """Submit a dataset for publication; can choose to submit via HTTPS using `https_data_path` or via Globus
             Transfer using the `globus_data_source` argument. Only one upload method may be specified.
+
         Args:
             foundry_metadata (dict): Dict of metadata describing data package
             title (string): Title of data package
@@ -378,11 +401,9 @@ class Foundry(FoundryBase):
             related_dois (list): DOIs related to this dataset,
                     not including the dataset's own DOI (for example, an associated paper's DOI).
 
-        Returns
-        -------
-        (dict) MDF Connect Response: Response from MDF Connect to allow tracking
-            of dataset. Contains `source_id`, which can be used to check the
-            status of the submission
+        Returns:
+            res (MDF Connect Response): Response from MDF Connect to allow tracking of dataset. Contains
+                `source_id`, which can be used to check the status of the submission
         """
         # ensure metadata is properly formatted
         self.validate_metadata(foundry_metadata)
@@ -461,23 +482,27 @@ class Foundry(FoundryBase):
                                                                                    "pytorch",
                                                                                    "tensorflow",
                                                                                    "sklearn")
-            serv_options (dict): the servable_type specific arguments that are necessary for publishing. arguments can be found at
-                                 https://dlhub-sdk.readthedocs.io/en/latest/source/dlhub_sdk.models.servables.html under the appropriate
-                                 ``create_model`` signature. use the argument names as keys and their values as the values.
+            serv_options (dict): the servable_type specific arguments that are necessary for publishing. arguments can
+                be found at https://dlhub-sdk.readthedocs.io/en/latest/source/dlhub_sdk.models.servables.html
+                under the appropriate ``create_model`` signature. use the argument names as keys and their values as
+                the values.
             affiliations (list): list of affiliations for each author
             paper_doi (str): DOI of a paper that describes the servable
+
         Returns:
             (string): task id of this submission, can be used to check for success
+
         Raises:
             ValueError: If the given servable_type is not in the list of acceptable types
             Exception: If the serv_options are incomplete or the request to publish results in an error
         """
-        return self.dlhub_client.easy_publish(title, creators, short_name, servable_type, serv_options, affiliations, paper_doi)
+        return self.dlhub_client.easy_publish(title, creators, short_name, servable_type, serv_options, affiliations,
+                                              paper_doi)
 
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
 
-        Arguments:
+        Args:
             source_id (str): The ``source_id`` (``source_name`` + version information) of the
                     submission to check. Returned in the ``res`` result from ``publish()`` via MDF Connect Client.
             short (bool): When ``False``, will print a status summary containing
@@ -491,47 +516,38 @@ class Foundry(FoundryBase):
                     **Default:** ``False``
 
         Returns:
-            If ``raw`` is ``True``, *dict*: The full status result.
+            (dict): Brief status result of dataset publication. If `raw` is True, the full status result.
         """
         return self.connect_client.check_status(source_id, short, raw)
 
-    # def check_model_status(self, res):
-    #     """Check status of model or function publication to DLHub
-    #
-    #     TODO: currently broken on DLHub side of things
-    #     """
-    #     # return self.dlhub_client.get_task_status(res)
-    #     pass
-
     def configure(self, **kwargs):
         """Set Foundry config
+
         Keyword Args:
-            file (str): Path to the file containing
-            (default: self.config.metadata_file)
+            file (str): Path to the file containing (default: self.config.metadata_file)
+            dataframe_file (str): filename for the dataframe file default:"foundry_dataframe.json"
+            data_file (str): : filename for the data file default:"foundry.hdf5"
+            destination_endpoint (str): Globus endpoint UUID where Foundry data should move
+            local_cache_dir (str): Where to place collected data default:"./data"
 
-        dataframe_file (str): filename for the dataframe file default:"foundry_dataframe.json"
-        data_file (str): : filename for the data file default:"foundry.hdf5"
-        destination_endpoint (str): Globus endpoint UUID where Foundry data should move
-        local_cache_dir (str): Where to place collected data default:"./data"
-
-        Returns
-        -------
-        (Foundry): self: for chaining
+        Returns:
+            self (Foundry): for chaining
         """
         self.config = FoundryConfig(**kwargs)
         return self
 
-    def download(self, globus: bool = True, interval: int = 20, parallel_https: int = 4, verbose: bool = False) -> 'Foundry':
+    def download(self, globus: bool = True, interval: int = 20, parallel_https: int = 4, verbose: bool = False) -> \
+            'Foundry':
         """Download a Foundry dataset
 
         Args:
-            globus: if True, use Globus to download the data else try HTTPS
-            interval: How often to wait before checking Globus transfer status
-            parallel_https: Number of files to download in parallel if using HTTPS
-            verbose: Produce more debug messages to screen
+            globus (bool): if True, use Globus to download the data else try HTTPS
+            interval (int): How often to wait before checking Globus transfer status
+            parallel_https (int): Number of files to download in parallel if using HTTPS
+            verbose (bool): Produce more debug messages to screen
 
         Returns:
-            self, for chaining
+            self (Foundry): for chaining
         """
         # Check if the dir already exists
         path = os.path.join(self.config.local_cache_dir, self.mdf["source_id"])
@@ -620,14 +636,14 @@ class Foundry(FoundryBase):
     def get_keys(self, type=None, as_object=False):
         """Get keys for a Foundry dataset
 
-        Arguments:
+        Args:
             type (str): The type of key to be returned e.g., "input", "target"
             as_object (bool): When ``False``, will return a list of keys in as strings
                     When ``True``, will return the full key objects
                     **Default:** ``False``
-        Returns: (list) String representations of keys or if ``as_object``
-                    is False otherwise returns the full key objects.
-
+        Returns:
+            key_list (list): String representations of keys or if ``as_object`` is False otherwise returns the full
+                key objects
         """
 
         if as_object:
@@ -648,6 +664,25 @@ class Foundry(FoundryBase):
             return key_list
 
     def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
+        """Handle the bulk of loading a dataset logic
+
+        Args:
+            file (str): Relative path to the data file (specified via splits). Supported file types include tabular
+                (eg JSON, JSON lines, csv) and HDF5
+            source_id (str): Name of the dataset in MDF/Foundry index (``source_name`` + version information)
+            globus (bool): If True, download using Globus, otherwise, HTTPS. Necessary for test functionality
+            as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
+
+        Returns:
+            (Pandas.dataframe): Tabular dataset formatted to Pandas dataframe
+            tmp_data (dict): HDF5 data (if applicable) reformatted into dict form for easy output
+
+        Raises:
+            ValueError: If path to the data file is valid. Or, if tabular data cannot be read
+            FileNotFoundError: If no file was found at the expected path
+            NotImplementedError: If file type inputted is not supported
+
+        """
         # Build the path to access the cached data
         if source_id:
             path = os.path.join(self.config.local_cache_dir, source_id)
@@ -719,7 +754,8 @@ class Foundry(FoundryBase):
             split (string): Split to get inputs and outputs from.
                     **Default:** ``None``
 
-        Returns: (Tuple) Tuple of the inputs and outputs
+        Returns:
+            (Tuple): Tuple of the inputs and outputs
         """
         raw = self.load_data(as_hdf5=False)
 
@@ -760,10 +796,10 @@ class Foundry(FoundryBase):
         """Convert Foundry Dataset to a PyTorch Dataset
 
         Arguments:
-            split (string): Split to create PyTorch Dataset on.
-                    **Default:** ``None``
+            split (string): Split to create PyTorch Dataset on. Default is None.
 
-        Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
+        Returns:
+            (TorchDataset): PyTorch Dataset of all the data from the specified split
 
         """
         from foundry.loaders.torch_wrapper import TorchDataset
@@ -775,10 +811,10 @@ class Foundry(FoundryBase):
         """Convert Foundry Dataset to a Tensorflow Sequence
 
         Arguments:
-            split (string): Split to create Tensorflow Sequence on.
-                    **Default:** ``None``
+            split (string): Split to create Tensorflow Sequence on. Default is None.
 
-        Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split
+        Returns:
+            (TensorflowSequence): Tensorflow Sequence of all the data from the specified split
 
         """
         from foundry.loaders.tf_wrapper import TensorflowSequence
