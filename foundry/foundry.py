@@ -665,13 +665,14 @@ class Foundry(FoundryBase):
                 key_list = key_list + k
             return key_list
 
-    def _load_data(self, file=None, source_id=None, as_hdf5=False):
+    def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
         """Handle the bulk of loading a dataset logic
 
         Args:
             file (str): Relative path to the data file (specified via splits). Supported file types include tabular
                 (eg JSON, JSON lines, csv) and HDF5
             source_id (str): Name of the dataset in MDF/Foundry index (``source_name`` + version information)
+            globus (bool): If True, download using Globus, otherwise, HTTPS. Necessary for test functionality
             as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
 
         Returns:
