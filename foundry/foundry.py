@@ -150,8 +150,8 @@ class Foundry(FoundryBase):
 
         Args:
             name (str): Name of the foundry dataset
-            download (bool): If True, download the data associated with the package (default is True)
-            globus (bool): If True, download using Globus, otherwise https
+            download (bool): If True, download the data associated with the package. Default is True.
+            globus (bool): If True, download using Globus, otherwise HTTPS. Default is False.
             verbose (bool): If True print additional debug information
             metadata (dict): **For debug purposes.** A search result analog to prepopulate metadata.
         Keyword Args: (TODO: make this a regular arg instead?)
@@ -536,12 +536,12 @@ class Foundry(FoundryBase):
         self.config = FoundryConfig(**kwargs)
         return self
 
-    def download(self, globus: bool = True, interval: int = 20, parallel_https: int = 4, verbose: bool = False) -> \
+    def download(self, globus: bool = False, interval: int = 20, parallel_https: int = 4, verbose: bool = False) -> \
             'Foundry':
         """Download a Foundry dataset
 
         Args:
-            globus (bool): if True, use Globus to download the data else try HTTPS
+            globus (bool): if True, use Globus to download the data else try HTTPS. Default is False
             interval (int): How often to wait before checking Globus transfer status
             parallel_https (int): Number of files to download in parallel if using HTTPS
             verbose (bool): Produce more debug messages to screen
