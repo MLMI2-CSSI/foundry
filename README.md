@@ -37,9 +37,9 @@ from foundry import Foundry
 f = Foundry(index="mdf")
 
 
-f = f.load("10.18126/e73h-3w6n", globus=True)
+f = f.load("10.18126/e73h-3w6n", globus=False)
 ```
-*NOTE*: If you run locally and don't want to install the [Globus Connect Personal endpoint](https://www.globus.org/globus-connect-personal), just set the `globus=False`.
+*NOTE*: This will download the dataset using HTTPS; if you want to download a very large dataset, set `globus=True` and be sure to install the [Globus Connect Personal endpoint](https://www.globus.org/globus-connect-personal).
 
 If running this code in a notebook, a table of metadata for the dataset will appear:
 
