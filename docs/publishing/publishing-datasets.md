@@ -187,9 +187,16 @@ publisher = "Materials Data Facility"
 # publication year (optional)
 publication_year = 2023
 
+# links (optional)
+# These are urls that link to additional information about the dataset
+# in the form [{"type":str, "doi":str, "url":str, "description":str, "bibtex":str}]
+links = {"type": "other_paper",
+        "doi": "10.1072/xyz",
+        "url": "https://doi.org/10.1072/xyz"
+          }
 
 f = Foundry()
-res = f.publish_dataset(metadata, data_source, title, authors, short_name=short_name))
+res = f.publish_dataset(metadata, data_source, title, authors, short_name=short_name, links=links)
 ```
 
 The `publish_dataset()` method returns a result object that you can inspect for information about the state of the publication. For the above publication, `res` would have the format:
