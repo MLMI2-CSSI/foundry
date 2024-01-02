@@ -120,8 +120,8 @@ For a full list of the metadata keys in DataCite, see their [Metadata Schema 4.4
 
 * **`key (str) [required]`**A name mapping to a column name (e.g., for csv files) or key within a data structure (e.g., for HDF5 files)
 * **`type (str) [required]`** The type of key this entry represents. Currently suported types are _**\["input", "target" ]**_
-* **`units (str)[optional]`** The scientific units associated with a key. _Default: None_
-* **`description (str)[optional]`** A free text description of the key. _Default: None_
+* **`units (str)[optional]` **_****_ The scientific units associated with a key. _Default: None_
+* **`description (str)[optional]` **_****_ A free text description of the key. _Default: None_
 * **`labels (list) (str) [optional]`:** A list of strings mapped to integers in a key column
 
 #### **splits (**list of objects**) \[required]:**
@@ -130,7 +130,7 @@ For a full list of the metadata keys in DataCite, see their [Metadata Schema 4.4
 
 * **`type (str) [required]`**The type of split (e.g., "train", "test", "validation")
 * **`path (str) [required]`** A path to the file or folder containing the split data
-* **`label (str)`** A descriptive name for the split if required. _Default: None_
+* **`label (str)` **_****_ A descriptive name for the split if required. _Default: None_
 
 #### **short\_name (str) \[required]:**&#x20;
 
