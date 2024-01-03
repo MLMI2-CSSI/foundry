@@ -6,7 +6,7 @@ description: Common pitfalls and issues and how to solve them
 
 ## Issues with loading or publishing Keras or Tensorflow models
 
-![A common error that arises when there is a Keras or Tensorflow version mismatch](../../.gitbook/assets/screen-shot-2021-07-15-at-10.05.40-am.png)
+![A common error that arises when there is a Keras or Tensorflow version mismatch](../.gitbook/assets/screen-shot-2021-07-15-at-10.05.40-am.png)
 
 There is a difference between the older, plain Keras package installed via `import keras`, and the currently maintained and up-to-date Keras package installed via `from tensorflow import keras`. Currently, the DLHub SDK (which Foundry uses under-the-hood to publish, pull, and run models and functions) uses whichever version of Keras you have installed.
 

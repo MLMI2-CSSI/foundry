@@ -1,10 +1,10 @@
-# Overview
+# About Foundry-ML
 
 Foundry is an open source machine learning platform for scientists. Our core services and software support dataset publication, running inference with pre-trained published models with cloud computing, and we are in the process of building a web interface that makes both data and models easy to use and share. Our collection of datasets and models primarily consists of datasets for materials science and chemistry, but we are continuing to expand to other scientific domains.
 
 Foundry's functionality is built on a variety of existing services, bringing together useful tools and features into one easy-to-use platform. Our API layer facilitates communication with these other services through a unified interface (see Figure below). This is true for both researchers publishing data as well as data and model consumers.
 
-![](../../.gitbook/assets/foundry-overview.png)
+![](.gitbook/assets/foundry-overview.png)
 
 **Datasets:** For dataset publication, we use the [Materials Data Facility (MDF)](https://materialsdatafacility.org/). Using Foundry alone, you can publish a dataset to Foundry's collection, which is made available via MDF storage resources. Because we use MDF as our data provider, the data are a made available and discoverable via MDF as well. We plan to add more data providers in the future.
 

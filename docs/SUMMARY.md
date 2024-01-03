@@ -24,12 +24,12 @@
 ## Support
 
 * [Troubleshooting](support/troubleshooting.md)
-* [Project Support](project-support.md)
+* [Project Support](support/project-support.md)
 
 ## Under Development
 
 * [Command Line Interface (CLI)](under-development/command-line-interface.md)
 * [Foundry Benchmarks](under-development/foundry-benchmarks.md)
 * [Foundry Data Environments](under-development/foundry-data-environments.md)
-* [Foundry Models and Functions](concepts/foundry-models-and-functions.md)
+* [Foundry Models and Functions](under-development/foundry-models-and-functions.md)
 * [Publishing Models](under-development/publishing-models.md)

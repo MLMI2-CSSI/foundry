@@ -31,7 +31,7 @@ To show all available Foundry datasets, you can use the Foundry [`list()` method
 f.list()
 ```
 
-![The returned Dataframe from f.list()](<../.gitbook/assets/Screen Shot 2022-01-27 at 1.29.23 PM (1).png>)
+![The returned Dataframe from f.list()](<../.gitbook/assets/Screen Shot 2022-01-27 at 1.29.23 PM.png>)
 
 ### Loading Datasets
 
@@ -54,7 +54,7 @@ All datasets are accessible via HTTPS and Globus by authenticated or anonymous d
 
 The image below is what `f` looks like when printed in a notebook. This table contains the dataset's [metadata](../publishing/describing-datasets.md#descriptive-metadata).
 
-![](../../.gitbook/assets/image.png)
+![](<../.gitbook/assets/image (4).png>)
 
 Once the data are accessible locally, access the data with the [`load_data()` method](../advanced-usage/methods.md#.load\_data). Load data allows you to load data from a specific [split](../publishing/describing-datasets.md#splits) that is defined for the dataset, here we use `train`.&#x20;
 
@@ -78,7 +78,7 @@ for i in range(n_images):
                    coords[key_list[i]][:,1], s = 20, c = 'r', alpha=0.5)
 ```
 
-![Overlay of a STEM image with atomic coordinate labels (red dots)](<../../.gitbook/assets/image (1).png>)
+![Overlay of a STEM image with atomic coordinate labels (red dots)](<../.gitbook/assets/image (1).png>)
 
 ## Using Foundry on Cloud Computing Resources
 

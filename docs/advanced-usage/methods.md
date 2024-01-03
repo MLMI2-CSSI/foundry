@@ -80,7 +80,7 @@ List available Foundry data packages
 
 **Returns** (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, and publication year
 
-![Table returned by f.list() of all datasets in the MDF index](<../.gitbook/assets/Screen Shot 2022-01-27 at 1.29.23 PM (1).png>)
+![Table returned by f.list() of all datasets in the MDF index](<../.gitbook/assets/Screen Shot 2022-01-27 at 1.29.23 PM.png>)
 
 ####
 
