@@ -28,7 +28,7 @@ If you want to contribute, start working through the Foundry codebase, navigate 
     of the contribution must be compared against the cost of maintaining the
 
     feature.
-* Tests should follow [testing best practices](https://www..org/community/contribute/tests) guide.
+* Tests should follow [Pythonic testing best practices](https://www.w3resource.com/python-interview/what-are-the-common-testing-best-practices-in-python.php) and utilize the [pytest framework](https://realpython.com/pytest-python-testing/)&#x20;
 
 ## Pull Request Process
 
