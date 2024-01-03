@@ -38,7 +38,6 @@ class FoundryCache():
         self.forge_client = forge_client
         self.transfer_client = transfer_client
 
-
     def download_to_cache(self,
                           dataset_name: str,
                           splits: List[FoundrySplit] = None,
@@ -166,7 +165,7 @@ class FoundryCache():
                     logger.debug("Dataset has already been downloaded and contains all the desired files")
                     return True
             else:
-                if len(os.listdir(path)) <= 1:
+                if len(os.listdir(path)) >= 1:
                     logger.info("Dataset has already been downloaded and contains all the desired files")
                     return True
                 else:
