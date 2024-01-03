@@ -61,7 +61,7 @@ class FoundryDataset():
         self.verbose = verbose
         self._foundry_cache = FoundryCache(forge_client, transfer_client, local_cache_dir)
 
-    def get_as_dict(self, split: str = None, as_hdf5: bool = False):
+    def (self, split: str = None, as_hdf5: bool = False):
         """Convert FoundryDatset to a dictionary
 
         Arguments:

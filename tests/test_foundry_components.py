@@ -7,13 +7,12 @@ from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 import mdf_toolbox
 import pandas as pd
-import pytest
 
 from foundry import foundry
 
 is_gha = os.getenv("GITHUB_ACTIONS")
-
-
+client_id = os.getenv("CLIENT_ID")
+client_secret = os.getenv("CLIENT_SECRET")
 
 
 @pytest.fixture
@@ -45,8 +44,9 @@ def auths():
         search_auth = mdf_toolbox.login(services=["search"], make_clients=False)
 
     auths['search_authorizer'] = search_auth['search']
-    
+
     yield auths
+
 
 @pytest.fixture()
 def testing_data_dir():
@@ -58,7 +58,6 @@ def elwood_data():
     test_dataset_name = "elwood_md_v1.2"
     test_doi = "10.18126/8p6m-e135"
     expected_title = "Project Elwood: MD Simulated Monomer Properties"
-
     yield test_dataset_name, test_doi, expected_title
 
 
@@ -74,7 +73,7 @@ def iris_data():
 def test_loading_as_dict(auths, elwood_data, testing_data_dir):
     # test loading the dataset from a local (static) copy
     test_dataset_name, test_doi, expected_title = elwood_data
-    
+
     f = foundry.Foundry(authorizers=auths, local_cache_dir=testing_data_dir)
     search_results = f.search(test_dataset_name, as_list=True)
     elwood_data = search_results[0].get_as_dict()
@@ -90,14 +89,12 @@ def test_loading_as_dict(auths, elwood_data, testing_data_dir):
 #     test_dataset_name, test_doi, expected_title = elwood_data
 #     mocker.patch("foundry.FoundryCache.forge_client.globus_download")
 #     mocker.patch("FoundryCache.load_as_dict", )
-# 
 #     f = foundry.Foundry(authorizers=auths, local_cache_dir='./test_data/')
 #     f.search()
 
 
-
-
 # Foundry class testing
+
 
 def test_foundry_init(auths, elwood_data):
     test_dataset_name, test_doi, expected_title = elwood_data
@@ -117,12 +114,12 @@ def test_search(auths, elwood_data):
 
     assert isinstance(ds, pd.DataFrame)
     assert len(ds) > 0
-    
+
     dataset = ds.iloc[0].FoundryDataset
 
     # assert ds.iloc[0]['name'] is not None
     assert dataset.dc["titles"][0]["title"] == expected_title
-    
+
     # assert ds.iloc[0]['source_id'] is not None
     assert dataset.dataset_name == test_dataset_name
 
@@ -140,12 +137,12 @@ def test_search_as_list(auths, elwood_data):
 
     assert isinstance(ds, list)
     assert len(ds) > 0
-    
+
     dataset = ds[0]
 
     # assert ds.iloc[0]['name'] is not None
     assert dataset.dc["titles"][0]["title"] == expected_title
-    
+
     # assert ds.iloc[0]['source_id'] is not None
     assert dataset.dataset_name == test_dataset_name
 
@@ -160,6 +157,7 @@ def test_search_limit(auths, elwood_data):
     assert isinstance(ds, pd.DataFrame)
     assert len(ds) == 10
 
+
 def test_search_no_results():
     f = foundry.Foundry()
 
@@ -168,4 +166,3 @@ def test_search_no_results():
 
     err = exc_info.value
     assert hasattr(err, '__cause__')
-
