@@ -4,6 +4,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import h5py
 from mdf_forge import Forge
+import numpy as np
 import pandas as pd
 import shutil
 from tqdm.auto import tqdm
@@ -29,7 +30,9 @@ class FoundryCache():
         Args:
             forge_client (Forge): The Forge client object.
             transfer_client (Any): The transfer client object.
-            local_cache_dir (str): Optional location to store downloaded data - if not specified, defaults to either environmental variable ('FOUNDRY_LOCAL_CACHE_DIR') or './data'
+            local_cache_dir (str, optional): The local cache directory. Defaults to None.
+                If not specified, defaults to either environmental variable
+                ('FOUNDRY_LOCAL_CACHE_DIR') or './data'.
         """
         if local_cache_dir:
             self.local_cache_dir = local_cache_dir
@@ -230,6 +233,119 @@ class FoundryCache():
         except Exception as e:
             raise Exception(
                 "FoundryDataset not loaded!") from e
+
+    def load_as_torch(self,
+                      split: str,
+                      dataset_name: str,
+                      foundry_schema: FoundrySchema,
+                      use_globus: bool,
+                      interval: int,
+                      parallel_https: int,
+                      verbose: bool,
+                      transfer_client: Any,
+                      as_hdf5: bool):
+        """Convert Foundry Dataset to a PyTorch Dataset
+
+        Arguments:
+            split (string): Split to create PyTorch Dataset on.
+                    **Default:** ``None``
+
+        Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
+
+        """
+        # Ensure local copy of data is available
+        self.download_to_cache(dataset_name,
+                               foundry_schema.splits,
+                               use_globus,
+                               interval,
+                               parallel_https,
+                               verbose,
+                               transfer_client)
+
+        from foundry.loaders.torch_wrapper import TorchDataset
+
+        inputs, targets = self._get_inputs_targets(split)
+        return TorchDataset(inputs, targets)
+
+    def load_as_tensorflow(self,
+                           split: str,
+                           dataset_name: str,
+                           foundry_schema: FoundrySchema,
+                           use_globus: bool,
+                           interval: int,
+                           parallel_https: int,
+                           verbose: bool,
+                           transfer_client: Any,
+                           as_hdf5: bool):
+        """Convert Foundry Dataset to a Tensorflow Sequence
+
+        Arguments:
+            split (string): Split to create Tensorflow Sequence on.
+                    **Default:** ``None``
+
+        Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split
+
+        """
+
+        # Ensure local copy of data is available
+        self.download_to_cache(dataset_name,
+                               foundry_schema.splits,
+                               use_globus,
+                               interval,
+                               parallel_https,
+                               verbose,
+                               transfer_client)
+
+        from foundry.loaders.tf_wrapper import TensorflowSequence
+
+        inputs, targets = self._get_inputs_targets(split)
+        return TensorflowSequence(inputs, targets)
+
+    def _get_inputs_targets(self, split: str = None):
+        """Get Inputs and Outputs from a Foundry Dataset
+
+        Helper function for loading the data from files into memory in various forms.
+
+        Arguments:
+            split (string): Split to get inputs and outputs from.
+                    **Default:** ``None``
+
+        Returns: (Tuple) Tuple of the inputs and outputs
+        """
+        raw = self.load_data(as_hdf5=False)
+
+        if not split:
+            split = self.dataset.splits[0].type
+
+        if self.dataset.data_type.value == "hdf5":
+            inputs = []
+            targets = []
+            for key in self.dataset.keys:
+                if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
+                    continue
+
+                # Get a numpy array of all the values for each item for that key
+                val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
+                if key.type == 'input':
+                    inputs.append(val)
+                else:
+                    targets.append(val)
+
+            return (inputs, targets)
+
+        elif self.dataset.data_type.value == "tabular":
+            inputs = []
+            targets = []
+
+            for index, arr in enumerate([inputs, targets]):
+                df = raw[split][index]
+                for key in df.keys():
+                    arr.append(df[key].values)
+
+            return (inputs, targets)
+
+        else:
+            raise NotImplementedError
 
     def _load_data(self,
                    foundry_schema: FoundrySchema,
