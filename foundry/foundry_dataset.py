@@ -1,10 +1,7 @@
-import json
 import logging
 import os
 
-from json2table import convert
 from mdf_forge import Forge
-import numpy as np
 from pydantic import ValidationError
 from typing import Any
 
@@ -61,8 +58,8 @@ class FoundryDataset():
         self.verbose = verbose
         self._foundry_cache = FoundryCache(forge_client, transfer_client, local_cache_dir)
 
-    def (self, split: str = None, as_hdf5: bool = False):
-        """Convert FoundryDatset to a dictionary
+    def get_as_dict(self, split: str = None, as_hdf5: bool = False):
+        """Returns the data from the dataset as a dictionary
 
         Arguments:
             split (string): Split to create dataset on.
@@ -91,9 +88,10 @@ class FoundryDataset():
         Returns: (Pandas.Dataframe) Pandas ddataframe of all the data from the specified split
 
         """
+        pass
 
-    def to_torch(self, split: str = None):
-        """Convert Foundry Dataset to a PyTorch Dataset
+    def get_as_torch(self, split: str = None):
+        """Returns the data from the dataset as a TorchDataset
 
         Arguments:
             split (string): Split to create PyTorch Dataset on.
@@ -103,12 +101,16 @@ class FoundryDataset():
 
         """
 
-        from foundry.loaders.torch_wrapper import TorchDataset
+        return self._foundry_cache.load_as_torch(split,
+                                                 self.dataset_name,
+                                                 self.foundry_schema,
+                                                 self.use_globus,
+                                                 self.interval,
+                                                 self.parallel_https,
+                                                 self.verbose,
+                                                 self.transfer_client)
 
-        inputs, targets = self._get_inputs_targets(split)
-        return TorchDataset(inputs, targets)
-
-    def to_tensorflow(self, split: str = None):
+    def get_as_tensorflow(self, split: str = None):
         """Convert Foundry Dataset to a Tensorflow Sequence
 
         Arguments:
@@ -118,10 +120,14 @@ class FoundryDataset():
         Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split
 
         """
-        from foundry.loaders.tf_wrapper import TensorflowSequence
-
-        inputs, targets = self._get_inputs_targets(split)
-        return TensorflowSequence(inputs, targets)
+        return self._foundry_cache.load_as_tensorflow(split,
+                                                      self.dataset_name,
+                                                      self.foundry_schema,
+                                                      self.use_globus,
+                                                      self.interval,
+                                                      self.parallel_https,
+                                                      self.verbose,
+                                                      self.transfer_client)
 
     def get_citation(self) -> str:
         subjects = [subject['subject'] for subject in self.dc['subjects']]
@@ -163,69 +169,6 @@ class FoundryDataset():
                 logger.error(error_message)
             raise e
 
-    def _get_inputs_targets(self, split: str = None):
-        """Get Inputs and Outputs from a Foundry Dataset
-
-        Helper function for loading the data from files into memory in various forms.
-
-        Arguments:
-            split (string): Split to get inputs and outputs from.
-                    **Default:** ``None``
-
-        Returns: (Tuple) Tuple of the inputs and outputs
-        """
-        raw = self.load_data(as_hdf5=False)
-
-        if not split:
-            split = self.dataset.splits[0].type
-
-        if self.dataset.data_type.value == "hdf5":
-            inputs = []
-            targets = []
-            for key in self.dataset.keys:
-                if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
-                    continue
-
-                # Get a numpy array of all the values for each item for that key
-                val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
-                if key.type == 'input':
-                    inputs.append(val)
-                else:
-                    targets.append(val)
-
-            return (inputs, targets)
-
-        elif self.dataset.data_type.value == "tabular":
-            inputs = []
-            targets = []
-
-            for index, arr in enumerate([inputs, targets]):
-                df = raw[split][index]
-                for key in df.keys():
-                    arr.append(df[key].values)
-
-            return (inputs, targets)
-
-        else:
-            raise NotImplementedError
-
     def clear_dataset_cache(self):
         """Deletes the cached data for this specific datset"""
         self._foundry_cache.clear_cache(self.dataset_name)
-
-    def _repr_html_(self) -> str:
-        """Not sure what this is for or if it is ever called"""
-
-        if not self.dc:
-            buf = str(self)
-        else:
-            title = self.dc['titles'][0]['title']
-            authors = [creator['creatorName']
-                       for creator in self.dc['creators']]
-            authors = '; '.join(authors)
-            DOI = "DOI: " + self.dc['identifier']['identifier']
-
-            buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
-
-            buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.foundry_schema.json(exclude={"dataframe"})))}'
-        return buf

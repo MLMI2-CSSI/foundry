@@ -255,6 +255,12 @@ def test_search():
     assert dataset.dc.get("publicationYear", None) is not None
 
 
+def test_dataset_get_citation():
+    f = foundry.Foundry(authorizers=auths)
+    ds = f.search(test_dataset).iloc[0].FoundryDataset
+    assert ds.get_citation() is not None
+
+
 def test_search_as_list():
     f = foundry.Foundry(authorizers=auths)
     q = "Elwood"

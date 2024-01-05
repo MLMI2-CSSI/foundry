@@ -99,7 +99,7 @@ class Foundry(FoundryBase):
     def __init__(self,
                  no_browser: bool = False,
                  no_local_server: bool = False,
-                 index:str = "mdf",
+                 index: str = "mdf",
                  authorizers: dict = None,
                  use_globus: bool = True,
                  verbose: bool = False,
@@ -116,7 +116,9 @@ class Foundry(FoundryBase):
             use_globus (bool): If True, download using Globus, otherwise use HTTPS.
             verbose (bool): If True, print additional debug information.
             interval (int): How often to poll Globus to check if transfers are complete.
-            local_cache_dir (str): Optional location to store downloaded data - if not specified, defaults to either environmental variable ('FOUNDRY_LOCAL_CACHE_DIR') or './data'
+            local_cache_dir (str): Optional location to store downloaded data.
+                                  If not specified, defaults to either environmental variable ('FOUNDRY_LOCAL_CACHE_DIR')
+                                  or './data'
             data (dict): Other arguments, e.g., results from an MDF search result that are used to populate Foundry metadata fields.
 
         Returns:
