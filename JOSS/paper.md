@@ -22,6 +22,9 @@ authors:
     orcid: 0000-0002-1323-5939
     equal-contrib: false
     affiliation: 2
+  - name: Steve Wangen
+    equal-contrib: false
+    affiliation: 6
   - name: Marcus Schwarting
     orcid: 0000-0001-6817-7265
     equal-contrib: false
@@ -94,6 +97,10 @@ affiliations:
  - name: Department of Computer Science, University of Wisconsin-Madison
    
    index: 5
+  
+ - name: Data Science Institute, University of Wisconsin-Madison
+   
+   index: 6
 
 date: Mar 14, 2023
 
