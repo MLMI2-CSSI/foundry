@@ -16,7 +16,6 @@ setuptools.setup(
     install_requires=[
         "mdf_forge>=0.8.0",
         "globus-sdk>=3,<4",
-        "dlhub_sdk>=1.0.0",
         "numpy>=1.15.4",
         "pandas>=0.23.4",
         "pydantic>=1.4",
