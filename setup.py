@@ -18,7 +18,7 @@ setuptools.setup(
         "globus-sdk>=3,<4",
         "numpy>=1.15.4",
         "pandas>=0.23.4",
-        "pydantic>=1.4",
+        "pydantic<2.0.0",
         "mdf_connect_client>=0.4.0",
         "h5py>=2.10.0",
         "json2table"
