@@ -144,7 +144,7 @@ class FoundryConfig(BaseModel):
     metadata_file: Optional[str] = "foundry_metadata.json"
     destination_endpoint: Optional[str] = None
     local: Optional[bool] = False
-    local_cache_dir = "./data"
+    local_cache_dir: Optional[str] = "./data"
     metadata_key: Optional[str] = "foundry"
     organization: Optional[str] = "foundry"
 
