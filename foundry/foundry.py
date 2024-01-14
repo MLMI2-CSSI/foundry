@@ -14,7 +14,6 @@ from tqdm.auto import tqdm
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
-from dlhub_sdk import DLHubClient
 from globus_sdk import AuthClient
 
 from .auth import PubAuths
@@ -37,10 +36,9 @@ class Foundry(FoundryBase):
     """Foundry Client Base Class
 
     Foundry object used for all interactions with Foundry datasets and models. Interfaces with MDF Connect Client,
-        Globus Compute, Globus Auth, Globus Transfer, Globus Search, DLHub, and relevant Globus Endpoints
+        Globus Compute, Globus Auth, Globus Transfer, Globus Search, and relevant Globus Endpoints
     """
 
-    dlhub_client: Any
     forge_client: Any
     connect_client: Any
     transfer_client: Any
@@ -84,9 +82,7 @@ class Foundry(FoundryBase):
                     "search",
                     "petrel",
                     "transfer",
-                    "dlhub",
                     "openid",
-                    "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
                     "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
                     "https://auth.globus.org/scopes/82f1b5c6-6e9b-11e5-ba47-22000b92c6ec/https",  # NCSA HTTPS
                     "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all",  # Globus Search Lambda
@@ -115,8 +111,9 @@ class Foundry(FoundryBase):
             search_client=self.auths["search"],
             transfer_client=self.auths["transfer"],
             data_mdf_authorizer=self.auths["data_mdf"],
-            petrel_authorizer=self.auths["petrel"],
+            petrel_authorizer=self.auths["petrel"]
         )
+
 
         self.transfer_client = self.auths['transfer']
 
@@ -132,18 +129,6 @@ class Foundry(FoundryBase):
             authorizer=self.auths["mdf_connect"], test=test
         )
 
-        self.dlhub_client = DLHubClient(
-            dlh_authorizer=self.auths["dlhub"],
-            search_authorizer=self.auths["search_authorizer"],
-            fx_authorizer=self.auths[
-                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
-            ],
-            openid_authorizer=self.auths['openid'],
-            sl_authorizer=self.auths[
-                "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all"
-            ],
-            force_login=False,
-        )
 
     def load(self, name, download=True, globus=False, verbose=False, metadata=None, authorizers=None, **kwargs):
         """Load the metadata for a Foundry dataset into the client
@@ -249,23 +234,7 @@ class Foundry(FoundryBase):
                 year, and DOI
         """
         return self.search()
-
-    def run(self, name, inputs, funcx_endpoint=None, **kwargs):
-        """Run a model on inputted data
-
-        Args:
-            name (str): DLHub model name
-            inputs: Data to send to DLHub as inputs (should be JSON serializable, example types include dict, list,
-                np.ndarray, etc)
-            funcx_endpoint (str) (optional): UUID for the funcx endpoint to run the model on, if not the default (eg River)
-
-        Returns:
-             Results after invocation via the DLHub service
-        """
-        if funcx_endpoint is not None:
-            self.dlhub_client.fx_endpoint = funcx_endpoint
-        return self.dlhub_client.run(name, inputs=inputs, **kwargs)
-
+    
     def load_data(self, source_id=None, globus=True, as_hdf5=False, splits=[]):
         """Load in the data associated with the prescribed dataset
 
@@ -469,36 +438,6 @@ class Foundry(FoundryBase):
             res = None
         return res
 
-    def publish_model(self, title, creators, short_name, servable_type, serv_options, affiliations=None, paper_doi=None):
-        """Simplified publishing method for servables
-
-        Args:
-            title (string): title for the servable
-            creators (string | list): either the creator's name (FamilyName, GivenName) or a list of the creators' names
-            short_name (string): shorthand name for the servable
-            servable_type (string): the type of the servable, must be a member of ("static_method",
-                                                                                   "class_method",
-                                                                                   "keras",
-                                                                                   "pytorch",
-                                                                                   "tensorflow",
-                                                                                   "sklearn")
-            serv_options (dict): the servable_type specific arguments that are necessary for publishing. arguments can
-                be found at https://dlhub-sdk.readthedocs.io/en/latest/source/dlhub_sdk.models.servables.html
-                under the appropriate ``create_model`` signature. use the argument names as keys and their values as
-                the values.
-            affiliations (list): list of affiliations for each author
-            paper_doi (str): DOI of a paper that describes the servable
-
-        Returns:
-            (string): task id of this submission, can be used to check for success
-
-        Raises:
-            ValueError: If the given servable_type is not in the list of acceptable types
-            Exception: If the serv_options are incomplete or the request to publish results in an error
-        """
-        return self.dlhub_client.easy_publish(title, creators, short_name, servable_type, serv_options, affiliations,
-                                              paper_doi)
-
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
 
@@ -594,6 +533,7 @@ class Foundry(FoundryBase):
                 "folder_to_crawl": f"/foundry/{self.mdf['source_id']}/",
                 "source_id": self.mdf["source_id"]
             }
+            print(https_config)
 
             # Begin finding files to download
             task_generator = recursive_ls(self.transfer_client,
@@ -611,6 +551,7 @@ class Foundry(FoundryBase):
                             f.cancel()
                         raise result.exception()
 
+        print(path)
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
             # checking all necessary files are present
@@ -845,3 +786,4 @@ class Foundry(FoundryBase):
                 The error message returned is: '{error_description}'."""
                 logger.error(error_message)
             raise e
+
