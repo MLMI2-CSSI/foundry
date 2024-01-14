@@ -114,7 +114,6 @@ class Foundry(FoundryBase):
             petrel_authorizer=self.auths["petrel"]
         )
 
-
         self.transfer_client = self.auths['transfer']
 
         self.auth_client = AuthClient(authorizer=self.auths['openid'])
@@ -128,7 +127,6 @@ class Foundry(FoundryBase):
         self.connect_client = MDFConnectClient(
             authorizer=self.auths["mdf_connect"], test=test
         )
-
 
     def load(self, name, download=True, globus=False, verbose=False, metadata=None, authorizers=None, **kwargs):
         """Load the metadata for a Foundry dataset into the client
@@ -234,7 +232,7 @@ class Foundry(FoundryBase):
                 year, and DOI
         """
         return self.search()
-    
+
     def load_data(self, source_id=None, globus=True, as_hdf5=False, splits=[]):
         """Load in the data associated with the prescribed dataset
 
@@ -533,7 +531,6 @@ class Foundry(FoundryBase):
                 "folder_to_crawl": f"/foundry/{self.mdf['source_id']}/",
                 "source_id": self.mdf["source_id"]
             }
-            print(https_config)
 
             # Begin finding files to download
             task_generator = recursive_ls(self.transfer_client,
@@ -551,7 +548,6 @@ class Foundry(FoundryBase):
                             f.cancel()
                         raise result.exception()
 
-        print(path)
         # after download check making sure directory exists, contains all indicated files
         if os.path.isdir(path):
             # checking all necessary files are present
@@ -786,4 +782,3 @@ class Foundry(FoundryBase):
                 The error message returned is: '{error_description}'."""
                 logger.error(error_message)
             raise e
-

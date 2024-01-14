@@ -53,14 +53,13 @@ def _get_files(tc, ep, queue, max_depth):
 
 
 # TODO (wardlt): Avoid passing dictionaries, as documenting their content is tedious
-def download_file(item, https_config, base_directory="data/"):
+def download_file(item, https_config, base_directory="data/", timeout=1800):
     """Download a file to disk
 
     Args:
         item: Dictionary defining the path to the file
         https_config: Configuration defining the URL of the server and the name of the dataset
     """
-    print('download_file')
     base_url = https_config.get('base_url', '').rstrip('/')
     path = item.get('path', '').strip('/')
 
@@ -76,12 +75,6 @@ def download_file(item, https_config, base_directory="data/"):
 
     url = f"{base_url}/{full_path}"
 
-    #url = f"{https_config['base_url']}{item['path']}{item['name']}"
-    print(item['path'])
-    print(item['name'])
-    print(f'Full Path:{full_path}')
-    print(f'URL: {url}')
-
     # build destination path for data file
     destination = os.path.join(base_directory, https_config['source_id'], item['name'])
     parent_path = os.path.split(destination)[0]
@@ -90,136 +83,25 @@ def download_file(item, https_config, base_directory="data/"):
     if not os.path.exists(parent_path):
         os.makedirs(parent_path)
 
-    response = requests.get(url)
+    try:
+        with requests.get(url, stream=True, timeout=timeout) as response:
+            response.raise_for_status()
 
-    # write file to local destination
-    with open(destination, "wb") as f:
-        f.write(response.content)
+            downloaded_size = 0
+            print(f"\rStarting Download of: {url}")
+
+            with open(destination, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded_size += len(chunk)
+                        # Calculate and print the download progress
+                        print(f"\rDownloading... {downloaded_size/(1<<20):,.2f} MB", end="")
+            return destination
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading file: {e}")
+    except IOError as e:
+        print(f"Error writing file to disk: {e}")
 
     # TODO (wardlt): Should we just return the key?
     return {destination + " status": True}
-
-# def download_file(item, https_config, base_directory="data/", timeout=1800):
-#     """
-#     Download a file to disk with progress feedback.
-
-#     Args:
-#         item (dict): Dictionary defining the path to the file.
-#         https_config (dict): Configuration defining the URL of the server and the dataset name.
-#         base_directory (str): Base directory for downloads. Default is "data/".
-#         timeout (int): Timeout for the HTTPS request in seconds. Default is 30.
-
-#     Returns:
-#         str: The path to the downloaded file or None if the download failed.
-#     """
-#     print(https_config)
-
-#     # Validate https_config and item
-#     if 'base_url' not in https_config or 'source_id' not in https_config:
-#         print("Error: Missing required keys in https_config")
-#         return None
-#     if 'path' not in item or 'name' not in item:
-#         print("Error: Missing required keys in item")
-#         return None
-
-#     url = f"{https_config['base_url']}{item['path']}{item['name']}"
-#     destination = os.path.join(base_directory, https_config['source_id'], item['name'])
-#     parent_path = os.path.dirname(destination)
-
-#     print(f"URL: {url}  \n Destination: {destination} \n Parent Path: {parent_path}")
-
-#     os.makedirs(parent_path, exist_ok=True)
-
-#     try:
-#         with requests.get(url, stream=True, timeout=timeout) as response:
-#             response.raise_for_status()
-
-#             # Get the total file size from headers
-#             total_size = int(response.headers.get('content-length', 0))
-#             downloaded_size = 0
-
-#             with open(destination, "wb") as f:
-#                 for chunk in response.iter_content(chunk_size=8192):
-#                     if chunk:
-#                         f.write(chunk)
-#                         downloaded_size += len(chunk)
-#                         # Calculate and print the download progress
-#                         progress = (downloaded_size / total_size) * 100
-#                         print(f"\rDownloading... {progress:.2f}%", end="")
-#             print("\nDownload complete.")
-#             return destination
-#     except requests.exceptions.RequestException as e:
-#         print(f"Error downloading file: {e}")
-#     except IOError as e:
-#         print(f"Error writing file to disk: {e}")
-
-#     return None
-
-# import os
-# import requests
-
-# def download_file(item, https_config, base_directory="data/", timeout=30):
-#     """
-#     Download a file to disk with improved path handling.
-
-#     Args:
-#         item (dict): Dictionary defining the path to the file.
-#         https_config (dict): Configuration defining the URL of the server and the dataset name.
-#         base_directory (str): Base directory for downloads. Default is "data/".
-#         timeout (int): Timeout for the HTTPS request in seconds. Default is 30.
-
-#     Returns:
-#         str: The path to the downloaded file or None if the download failed.
-#     """
-#     # Validate https_config and item
-#     if 'base_url' not in https_config or 'source_id' not in https_config:
-#         print("Error: Missing required keys in https_config")
-#         return None
-#     if 'path' not in item or 'name' not in item:
-#         print("Error: Missing required keys in item")
-#         return None
-
-#     print(https_config)
-#     print(item)
-#     # Normalize URL and destination paths
-#     base_url = https_config['base_url'].rstrip('/')  # Remove trailing slash if present
-#     file_path = item['path'].strip('/')  # Remove leading/trailing slashes
-#     file_name = item['name']
-
-#     # Avoid duplication between file_path and file_name
-#     if file_path.endswith(file_name):
-#         file_name = ''  # If file_name is part of file_path, set file_name to empty
-
-
-#     print(file_path)
-
-#     url = f"{base_url}/{file_path}/{file_name}"
-#     destination = os.path.join(base_directory, https_config['source_id'], file_path, file_name)
-#     parent_path = os.path.dirname(destination)
-#     print(f"URL: {url}  \n Destination: {destination} \n Parent Path: {parent_path}")
-
-
-#     os.makedirs(parent_path, exist_ok=True)
-
-#     try:
-#         with requests.get(url, stream=True, timeout=timeout) as response:
-#             response.raise_for_status()
-
-#             total_size = int(response.headers.get('content-length', 0))
-#             downloaded_size = 0
-
-#             with open(destination, "wb") as f:
-#                 for chunk in response.iter_content(chunk_size=8192):
-#                     if chunk:
-#                         f.write(chunk)
-#                         downloaded_size += len(chunk)
-#                         progress = (downloaded_size / total_size) * 100
-#                         print(f"\rDownloading... {progress:.2f}%", end="")
-#             print("\nDownload complete.")
-#             return destination
-#     except requests.exceptions.RequestException as e:
-#         print(f"Error downloading file: {e}")
-#     except IOError as e:
-#         print(f"Error writing file to disk: {e}")
-
-#     return None
