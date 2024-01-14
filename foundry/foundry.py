@@ -5,7 +5,7 @@ from json2table import convert
 import numpy as np
 import pandas as pd
 from pydantic import ValidationError
-from typing import Any, Dict, List
+from typing import Any, Dict, List, AnyStr
 import logging
 import warnings
 import os
@@ -43,7 +43,7 @@ class Foundry(FoundryBase):
     connect_client: Any
     transfer_client: Any
     auth_client: Any
-    index = ""
+    index: AnyStr = ""
     auths: Any
 
     def __init__(
