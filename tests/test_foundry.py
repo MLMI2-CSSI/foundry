@@ -14,14 +14,12 @@ from mdf_forge import Forge
 from foundry import Foundry
 from foundry.auth import PubAuths
 from foundry.https_upload import upload_to_endpoint
-from dlhub_sdk import DLHubClient
 from globus_sdk import AuthClient
 from mdf_connect_client import MDFConnectClient
 
-
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
-is_gha = os.getenv("GITHUB_ACTIONS")
+confidential_login = (os.getenv("GITHUB_ACTIONS") or (client_id and client_secret))
 
 services = [
     "data_mdf",
@@ -29,7 +27,6 @@ services = [
     "search",
     "petrel",
     "transfer",
-    "dlhub",
     "openid",
     "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
     "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
@@ -37,7 +34,9 @@ services = [
     "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all",  # Globus Search Lambda
 ]
 
-if is_gha:
+if confidential_login:
+    # Use confidential login if the tests are being run on GitHub Actions or
+    # if a client ID and secret are provided
     auths = mdf_toolbox.confidential_login(client_id=client_id,
                                            client_secret=client_secret,
                                            services=services, make_clients=True)
@@ -46,6 +45,7 @@ if is_gha:
                                                  client_secret=client_secret,
                                                  services=["search"], make_clients=False)
 else:
+    # Otherwise try to allow the user to login directly
     auths = mdf_toolbox.login(services=services, make_clients=True)
     search_auth = mdf_toolbox.login(services=["search"], make_clients=False)
 
@@ -211,16 +211,13 @@ def test_foundry_init():
     assert isinstance(f.forge_client, Forge)
     assert isinstance(f.connect_client, MDFConnectClient)
 
-    if not is_gha:
-        assert isinstance(f.dlhub_client, DLHubClient)
+    if not confidential_login:
 
         f2 = Foundry(authorizers=auths, no_browser=False, no_local_server=True)
-        assert isinstance(f2.dlhub_client, DLHubClient)
         assert isinstance(f2.forge_client, Forge)
         assert isinstance(f2.connect_client, MDFConnectClient)
 
         f3 = Foundry(authorizers=auths, no_browser=True, no_local_server=False)
-        assert isinstance(f3.dlhub_client, DLHubClient)
         assert isinstance(f3.forge_client, Forge)
         assert isinstance(f3.connect_client, MDFConnectClient)
 
@@ -330,7 +327,7 @@ def test_dataframe_load_doi():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
+@pytest.mark.skipif(bool(confidential_login), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_download_globus():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
     _delete_test_data(f)
@@ -340,7 +337,7 @@ def test_download_globus():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
+@pytest.mark.skipif(bool(confidential_login), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_globus_dataframe_load():
     f = Foundry(authorizers=auths, no_browser=True, no_local_server=True)
 
@@ -358,7 +355,7 @@ def test_globus_dataframe_load():
     _delete_test_data(f)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
+@pytest.mark.skipif(bool(confidential_login), reason="Not run as part of GHA CI")
 def test_publish_with_https():
     """System test: Assess the end-to-end publication of a dataset via HTTPS
     """
@@ -456,7 +453,7 @@ def test_ACL_creation_and_deletion():
     pass
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
+@pytest.mark.skipif(bool(confidential_login), reason="Not run as part of GHA CI")
 def test_publish_with_globus():
     # TODO: automate dealing with curation and cleaning after tests
 
