@@ -18,7 +18,7 @@ jobs:
       CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
     steps:
       - name: Check out repo's default branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup python
         uses: actions/setup-python@v4
         with:
