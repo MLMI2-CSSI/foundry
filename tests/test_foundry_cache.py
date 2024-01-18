@@ -1,17 +1,11 @@
-import os
 from pathlib import Path
 import pytest
 from unittest.mock import MagicMock
 
-from foundry.models import FoundrySplit, FoundrySchema, FoundryDatasetType, FoundryKey
+from foundry.models import FoundrySplit, FoundrySchema, FoundryKey
 from foundry.foundry_cache import FoundryCache
-from foundry.models import FoundryKey, FoundrySchema, FoundryDatasetType
 import pandas as pd
-import pytest
-from unittest.mock import MagicMock
-from unittest.mock import patch
-import pandas as pd
-from unittest.mock import patch
+
 
 @pytest.fixture
 def mock_foundry_cache():
@@ -32,7 +26,7 @@ def mock_nonexistent_foundry_cache():
 def test_validate_local_dataset_storage_exists(mock_foundry_cache):
     cache = mock_foundry_cache
     dataset_name = "elwood_md_v1.2"
-    assert cache.validate_local_dataset_storage(dataset_name) == True
+    assert cache.validate_local_dataset_storage(dataset_name) is True
 
 
 def test_validate_local_dataset_storage_missing_files(mock_foundry_cache):
@@ -66,18 +60,54 @@ def test_validate_local_dataset_storage_not_present(mock_nonexistent_foundry_cac
 def mock_tabular_foundry_schema():
     # foundry_key_1 = FoundryKey(key=["column1", "column2"], type='input')
     # foundry_key_2 = FoundryKey(key=["column2", "column4"], type='output')
-    foundry_key_1 = FoundryKey(key=['SMILES'], type='input', classes=None, description='Canonical SMILES string of molecule', filter=None, units='arb')
-    foundry_key_2 = FoundryKey(key=['E_coh (MPa)'], type='target', classes=None, description='Simulated cohesive energy (in MPa)', filter=None, units='MPa')
-    foundry_key_3 = FoundryKey(key=['T_g (K)'], type='target', classes=None, description='Simulated glass transition temperature (in Kelvin)', filter=None, units='Kelvin')
-    foundry_key_4 = FoundryKey(key=['R_gyr (A^2)'], type='target', classes=None, description='Simulated squared radius of gyration (in Angstroms^2)', filter=None, units='Angstrom^2')
-    foundry_key_5 = FoundryKey(key=['Densities (kg/m^3)'], type='target', classes=None, description='Simulated density (in kg/m^3)', filter=None, units='kg/m^3')
-    foundry_schema = FoundrySchema(name="test_schema",
-                                   version="1.0",
-                                   data_type='tabular',
-                                   source_id="elwood_md_v1.2",
-                                   domain=["domain"],
-                                   keys=[foundry_key_1, foundry_key_2, foundry_key_3, foundry_key_4, foundry_key_5]
-                                )
+    foundry_key_1 = FoundryKey(
+        key=['SMILES'],
+        type='input',
+        classes=None,
+        description='Canonical SMILES string of molecule',
+        filter=None,
+        units='arb'
+    )
+    foundry_key_2 = FoundryKey(
+        key=['E_coh (MPa)'],
+        type='target',
+        classes=None,
+        description='Simulated cohesive energy (in MPa)',
+        filter=None,
+        units='MPa'
+    )
+    foundry_key_3 = FoundryKey(
+        key=['T_g (K)'],
+        type='target',
+        classes=None,
+        description='Simulated glass transition temperature (in Kelvin)',
+        filter=None,
+        units='Kelvin'
+    )
+    foundry_key_4 = FoundryKey(
+        key=['R_gyr (A^2)'],
+        type='target',
+        classes=None,
+        description='Simulated squared radius of gyration (in Angstroms^2)',
+        filter=None,
+        units='Angstrom^2'
+    )
+    foundry_key_5 = FoundryKey(
+        key=['Densities (kg/m^3)'],
+        type='target',
+        classes=None,
+        description='Simulated density (in kg/m^3)',
+        filter=None,
+        units='kg/m^3'
+    )
+    foundry_schema = FoundrySchema(
+        name="test_schema",
+        version="1.0",
+        data_type='tabular',
+        source_id="elwood_md_v1.2",
+        domain=["domain"],
+        keys=[foundry_key_1, foundry_key_2, foundry_key_3, foundry_key_4, foundry_key_5]
+    )
     yield foundry_schema
 
 
@@ -85,19 +115,56 @@ def mock_tabular_foundry_schema():
 def mock_hdf5_foundry_schema():
     # foundry_key_1 = FoundryKey(key=["column1", "column2"], type='input')
     # foundry_key_2 = FoundryKey(key=["column2", "column4"], type='output')
-    foundry_key_1 = FoundryKey(key=['SMILES'], type='input', classes=None, description='Canonical SMILES string of molecule', filter=None, units='arb')
-    foundry_key_2 = FoundryKey(key=['E_coh (MPa)'], type='target', classes=None, description='Simulated cohesive energy (in MPa)', filter=None, units='MPa')
-    foundry_key_3 = FoundryKey(key=['T_g (K)'], type='target', classes=None, description='Simulated glass transition temperature (in Kelvin)', filter=None, units='Kelvin')
-    foundry_key_4 = FoundryKey(key=['R_gyr (A^2)'], type='target', classes=None, description='Simulated squared radius of gyration (in Angstroms^2)', filter=None, units='Angstrom^2')
-    foundry_key_5 = FoundryKey(key=['Densities (kg/m^3)'], type='target', classes=None, description='Simulated density (in kg/m^3)', filter=None, units='kg/m^3')
-    foundry_schema = FoundrySchema(name="test_schema",
-                                   version="1.0",
-                                   data_type='hdf5',
-                                   source_id="test_dataset",
-                                   domain=["domain"],
-                                   keys=[foundry_key_1, foundry_key_2, foundry_key_3, foundry_key_4, foundry_key_5]
-                                )
+    foundry_key_1 = FoundryKey(
+        key=['SMILES'],
+        type='input',
+        classes=None,
+        description='Canonical SMILES string of molecule',
+        filter=None,
+        units='arb'
+    )
+    foundry_key_2 = FoundryKey(
+        key=['E_coh (MPa)'],
+        type='target',
+        classes=None,
+        description='Simulated cohesive energy (in MPa)',
+        filter=None,
+        units='MPa'
+    )
+    foundry_key_3 = FoundryKey(
+        key=['T_g (K)'],
+        type='target',
+        classes=None,
+        description='Simulated glass transition temperature (in Kelvin)',
+        filter=None,
+        units='Kelvin'
+    )
+    foundry_key_4 = FoundryKey(
+        key=['R_gyr (A^2)'],
+        type='target',
+        classes=None,
+        description='Simulated squared radius of gyration (in Angstroms^2)',
+        filter=None,
+        units='Angstrom^2'
+    )
+    foundry_key_5 = FoundryKey(
+        key=['Densities (kg/m^3)'],
+        type='target',
+        classes=None,
+        description='Simulated density (in kg/m^3)',
+        filter=None,
+        units='kg/m^3'
+    )
+    foundry_schema = FoundrySchema(
+        name="test_schema",
+        version="1.0",
+        data_type='hdf5',
+        source_id="test_dataset",
+        domain=["domain"],
+        keys=[foundry_key_1, foundry_key_2, foundry_key_3, foundry_key_4, foundry_key_5]
+    )
     yield foundry_schema
+
 
 @pytest.fixture
 def mock_read_functions():

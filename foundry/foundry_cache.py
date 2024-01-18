@@ -32,12 +32,12 @@ class FoundryCache():
             transfer_client (Any): The transfer client object.
             local_cache_dir (str, optional): The local cache directory. Defaults to None.
                 If not specified, defaults to either environmental variable
-                ('FOUNDRY_LOCAL_CACHE_DIR') or './data'.
+                ('FOUNDRY_LOCAL_CACHE_DIR') or './data/'.
         """
         if local_cache_dir:
             self.local_cache_dir = local_cache_dir
         else:
-            self.local_cache_dir = os.environ.get("FOUNDRY_LOCAL_CACHE_DIR", './data')
+            self.local_cache_dir = os.environ.get("FOUNDRY_LOCAL_CACHE_DIR", './data/')
         self.forge_client = forge_client
         self.transfer_client = transfer_client
 
