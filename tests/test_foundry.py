@@ -314,7 +314,7 @@ def test_search_no_results():
     assert hasattr(err, '__cause__')
 
 
-# @pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #4')
+@pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #4')
 def test_metadata_pull():
     f = foundry.Foundry(download=False, authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
