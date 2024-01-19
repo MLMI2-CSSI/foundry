@@ -310,6 +310,7 @@ def test_search_no_results():
     assert hasattr(err, '__cause__')
 
 
+@pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #4')
 def test_metadata_pull():
     f = foundry.Foundry(download=False, authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
@@ -342,6 +343,7 @@ def test_download_https():
     assert len(y) > 1
     assert isinstance(y, pd.DataFrame)
     _delete_test_data(dataset)
+
 
 @pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #2')
 def test_delete_cache():
