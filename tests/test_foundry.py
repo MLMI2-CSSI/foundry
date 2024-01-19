@@ -255,14 +255,14 @@ def test_search():
     assert dataset.dc.get("publicationYear", None) is not None
 
 
-@pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #7')
+# @pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #7')
 def test_dataset_get_citation():
     f = foundry.Foundry(authorizers=auths)
     ds = f.search(test_dataset).iloc[0].FoundryDataset
     assert ds.get_citation() is not None
 
 
-@pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #6')
+# @pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #6')
 def test_search_as_list():
     f = foundry.Foundry(authorizers=auths)
     q = "Elwood"
@@ -303,7 +303,7 @@ def test_search_limit():
     assert dataset.dc.get("publicationYear", None) is not None
 
 
-@pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #5')
+# @pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #5')
 def test_search_no_results():
     f = foundry.Foundry()
 
@@ -314,7 +314,7 @@ def test_search_no_results():
     assert hasattr(err, '__cause__')
 
 
-@pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #4')
+# @pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #4')
 def test_metadata_pull():
     f = foundry.Foundry(download=False, authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
