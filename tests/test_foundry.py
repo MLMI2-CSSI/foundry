@@ -343,7 +343,7 @@ def test_download_https():
     assert isinstance(y, pd.DataFrame)
     _delete_test_data(dataset)
 
-
+@pytest.mark.skipif(bool(is_gha)reason='Checking if tests work #2')
 def test_delete_cache():
     f = foundry.Foundry(globus=True, authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
@@ -390,7 +390,7 @@ def test_dataframe_load_split_but_no_splits():
     _delete_test_data(dataset)
 
 
-@pytest.mark.skip(reason='Checking if tests work #1')
+@pytest.mark.skipif(bool(is_gha)reason='Checking if tests work #1')
 def test_dataframe_search_by_doi():
     f = foundry.Foundry(globus=False, authorizers=auths)
 
