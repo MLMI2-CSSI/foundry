@@ -390,7 +390,7 @@ def test_dataframe_load_split_but_no_splits():
     _delete_test_data(dataset)
 
 
-# @pytest.mark.skip(reason='Checking if tests work')
+@pytest.mark.skip(reason='Checking if tests work #1')
 def test_dataframe_search_by_doi():
     f = foundry.Foundry(globus=False, authorizers=auths)
 
