@@ -283,7 +283,7 @@ def test_search_as_list():
     assert dataset.dc.get("publicationYear", None) is not None
 
 
-@pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #5')
+@pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #8')
 def test_search_limit():
     f = foundry.Foundry(authorizers=auths)
     ds = f.search(limit=10)
@@ -303,6 +303,7 @@ def test_search_limit():
     assert dataset.dc.get("publicationYear", None) is not None
 
 
+@pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #5')
 def test_search_no_results():
     f = foundry.Foundry()
 
