@@ -118,6 +118,7 @@ class Foundry(FoundryBase):
             interval (int): How often to poll Globus to check if transfers are complete.
             local_cache_dir (str): Optional location to store downloaded data.
                                    If not specified, defaults to either environmental variable ('FOUNDRY_LOCAL_CACHE_DIR') or './data'
+
             data (dict): Other arguments, e.g., results from an MDF search result that are used to populate Foundry metadata fields.
 
         Returns:
