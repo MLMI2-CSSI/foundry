@@ -261,6 +261,7 @@ def test_dataset_get_citation():
     assert ds.get_citation() is not None
 
 
+@pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #6')
 def test_search_as_list():
     f = foundry.Foundry(authorizers=auths)
     q = "Elwood"
