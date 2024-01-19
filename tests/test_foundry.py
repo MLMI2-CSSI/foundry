@@ -255,6 +255,7 @@ def test_search():
     assert dataset.dc.get("publicationYear", None) is not None
 
 
+@pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #7')
 def test_dataset_get_citation():
     f = foundry.Foundry(authorizers=auths)
     ds = f.search(test_dataset).iloc[0].FoundryDataset

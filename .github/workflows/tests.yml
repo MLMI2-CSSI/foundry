@@ -46,7 +46,7 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pytest -s tests/test_foundry.py --cov=./foundry --cov-report=xml
+          pytest -s -v tests/ --cov=./foundry --cov-report=xml
       - name: Upload coverage to Codecov
         run: |
           curl -Os https://uploader.codecov.io/v0.1.0_4653/linux/codecov
