@@ -281,7 +281,6 @@ def test_search_as_list():
     assert dataset.dc.get("publicationYear", None) is not None
 
 
-# @pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #8')
 def test_search_limit():
     f = foundry.Foundry(authorizers=auths)
     ds = f.search(limit=10)
@@ -335,7 +334,6 @@ def test_download_https():
     _delete_test_data(dataset)
 
 
-# @pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #2')
 def test_delete_cache():
     f = foundry.Foundry(globus=True, authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
