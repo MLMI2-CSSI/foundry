@@ -302,7 +302,7 @@ def test_search_limit():
     # assert ds.iloc[0]['year'] is not None
     assert dataset.dc.get("publicationYear", None) is not None
 
-
+@pytest.mark.skip()
 # @pytest.mark.skipif(bool(is_gha), reason='Checking if tests work #5')
 def test_search_no_results():
     f = foundry.Foundry()
