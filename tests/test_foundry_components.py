@@ -158,6 +158,7 @@ def test_search_limit(auths, elwood_data):
     assert len(ds) == 10
 
 
+@pytest.mark.skipif(is_gha, reason="Skipping test that causes issues in GHA")
 def test_search_no_results():
     f = foundry.Foundry()
 
