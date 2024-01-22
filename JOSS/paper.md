@@ -24,17 +24,17 @@ authors:
     affiliation: 2
   - name: Steve Wangen
     equal-contrib: false
-    affiliation: 6
+    affiliation: 3
   - name: Marcus Schwarting
     orcid: 0000-0001-6817-7265
     equal-contrib: false
-    affiliation: 3
+    affiliation: 4
   - name: Isaac Darling
     equal-contrib: false
-    affiliation: 3
+    affiliation: 4
   - name: Ethan Truelove
     equal-contrib: false
-    affiliation: 3
+    affiliation: 4
   - name: Aadit Ambadkar
     equal-contrib: false
     affiliation: 1
@@ -46,61 +46,61 @@ authors:
     affiliation: 1
   - name: Jingrui Wei
     equal-contrib: false
-    affiliation: 4  
+    affiliation: 5  
   - name: Xiangguo Li
     equal-contrib: false
-    affiliation: 4  
+    affiliation: 5  
   - name: Ryan Jacobs
     orcid: 0000-0003-2229-6730
     equal-contrib: false
-    affiliation: 4   
+    affiliation: 5   
   - name: Lane Schultz
     equal-contrib: false
-    affiliation: 4 
+    affiliation: 5 
   - name: Doyeon Kim
     equal-contrib: false
-    affiliation: 4 
+    affiliation: 5 
   - name: Michael Ferris
     orcid: 0000-0002-7652-6776
     equal-contrib: false
-    affiliation: 5  
+    affiliation: 6  
   - name: Paul M. Voyles
     orcid: 0000-0001-9438-4284
     equal-contrib: false
-    affiliation: 4
+    affiliation: 5
   - name: Dane Morgan
     orcid: 0000-0002-4911-0046
     equal-contrib: false
-    affiliation: 4
+    affiliation: 5
   - name: Ian Foster
     orcid: 0000-0003-2129-5269
     equal-contrib: false
-    affiliation: "1, 2, 3"
+    affiliation: "1, 2, 4"
   - name: Ben Blaiszik
     orcid: 0000-0002-5326-4902
     equal-contrib: false
     affiliation: "1, 2"
 
 affiliations:
- - name: Globus, University of Chicago
+ - name: Globus, University of Chicago, Chicago, IL, United States of America
    index: 1
 
- - name: Data Science and Learning Division, Argonne National Laboratory
+ - name: Data Science and Learning Division, Argonne National Laboratory, Lemont, IL, United States of America
    index: 2
 
- - name: Department of Computer Science, University of Chicago
+ - name: Data Science Institute, University of Wisconsin-Madison, Madison, WI, United States of America
    index: 3
 
- - name: Department of Materials Science and Engineering, University of Wisconsin-Madison
+ - name: Department of Computer Science, University of Chicago, Chicago, IL, United States of America
    index: 4
 
- - name: Department of Computer Science, University of Wisconsin-Madison
-   
+ - name: Department of Materials Science and Engineering, University of Wisconsin-Madison, Madison, WI, United States of America
    index: 5
-  
- - name: Data Science Institute, University of Wisconsin-Madison
-   
+
+ - name: Department of Computer Science, University of Wisconsin-Madison, Madison, WI, United States of America
    index: 6
+  
+
 
 date: Mar 14, 2023
 
