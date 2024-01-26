@@ -85,17 +85,6 @@ def test_loading_as_dict(auths, elwood_data, testing_data_dir):
     assert isinstance(y, pd.DataFrame)
 
 
-# def test_download_via_globus(auths, elwood_data, mocker):
-#     test_dataset_name, test_doi, expected_title = elwood_data
-#     mocker.patch("foundry.FoundryCache.forge_client.globus_download")
-#     mocker.patch("FoundryCache.load_as_dict", )
-#     f = foundry.Foundry(authorizers=auths, local_cache_dir='./test_data/')
-#     f.search()
-
-
-# Foundry class testing
-
-
 def test_foundry_init(auths, elwood_data):
     test_dataset_name, test_doi, expected_title = elwood_data
 

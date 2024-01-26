@@ -78,18 +78,6 @@ class FoundryDataset():
                                                 self.transfer_client,
                                                 as_hdf5)
 
-    def to_pandas(self, split: str = None):
-        """Convert FoundryDatset to a Pandas Dataframe object
-
-        Arguments:
-            split (string): Split to create dataset on.
-                    **Default:** ``None``
-
-        Returns: (Pandas.Dataframe) Pandas ddataframe of all the data from the specified split
-
-        """
-        pass
-
     def get_as_torch(self, split: str = None):
         """Returns the data from the dataset as a TorchDataset
 

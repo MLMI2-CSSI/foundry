@@ -29,7 +29,10 @@ logger = logging.getLogger(__name__)
 
 class HiddenColumnDataFrame(pd.DataFrame):
     """
-    A subclass of pd.DataFrame that supports hiding a specific column.
+    A subclass of pd.DataFrame that supports hiding a specific column. This is
+    intended to mimic display of search results from an earlier version while
+    providing access to associated FoundryDataset objects for each entry in the
+    dataframe via the `get_dataset_by_[name/doi]()` function.
 
     Parameters:
     *args: positional arguments
@@ -293,26 +296,6 @@ class Foundry(FoundryBase):
 
         except Exception as e:
             logger.error(f"The mdf entry {metadata['mdf']['source_id']} is missing a {e} section - cannot generate a foundry dataset object")
-
-    def get_dataset_by_name(self, name: str) -> FoundryDataset:
-        """Query foundry datasets by name
-
-        This method queries the foundry datasets by name, where the name is equivalent to the 'source_id' in MDF.
-        It should only return a single result.
-
-        Args:
-            name (str): The name (source_id) of the desired dataset.
-
-        Returns:
-            FoundryDataset: A FoundryDataset object representing the result of the query.
-        """
-
-        forge = self.forge_client.match_field(
-                    "mdf.organizations", self.organization
-                    ).match_resource_types("dataset")
-        metadata = forge.match_field("mdf.source_id", name).search()[0]
-        ds = self.dataset_from_metadata(metadata)
-        return ds
 
     def get_metadata_by_doi(self, doi: str) -> dict:
         """Query foundry datasets by DOI
