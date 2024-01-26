@@ -20,9 +20,9 @@ jobs:
       CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
     name: build
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache : 'pip'
@@ -46,7 +46,7 @@ jobs:
 
       - name: Test with pytest
         run: |
-          pytest -s tests/test_foundry.py --cov=./foundry --cov-report=xml
+          pytest -s -v tests/ --cov=./foundry --cov-report=xml
       - name: Upload coverage to Codecov
         run: |
           curl -Os https://uploader.codecov.io/v0.1.0_4653/linux/codecov
