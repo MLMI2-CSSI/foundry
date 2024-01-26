@@ -42,7 +42,7 @@ Find all files in a Globus directory recursively
 ## <kbd>function</kbd> `download_file`
 
 ```python
-download_file(item, https_config)
+download_file(item, data_directory, https_config)
 ```
 
 Download a file to disk 

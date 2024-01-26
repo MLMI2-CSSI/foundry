@@ -16,6 +16,17 @@
 ## <kbd>class</kbd> `FoundryDataset`
 Representation of an individual dataset. Provides access to metadata as well as functions to instantiate data into memory in different formats. 
 
+
+
+**Args:**
+ 
+ - <b>`dataset_name`</b> (str):  name of dataset (equivalent to source_id in MDF) 
+ - <b>`splits List[FoundrySplit]`</b>:  list of splits in the dataset 
+ - <b>`use_globus`</b> (bool):  if True, use Globus to download the data else try HTTPS 
+ - <b>`interval`</b> (int):  How often to wait before checking Globus transfer status 
+ - <b>`parallel_https`</b> (int):  Number of files to download in parallel if using HTTPS 
+ - <b>`verbose`</b> (bool):  Produce more debug messages to screen 
+
 Desired functions: 
     - Get as pandas 
     - Get as tensorflow dataset 
@@ -26,12 +37,23 @@ Desired functions:
     - Validate against schema 
     - Get citation 
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L31"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L39"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
 ```python
-__init__(source_id: str, datacite_entry: dict, foundry_schema: FoundrySchema)
+__init__(
+    dataset_name: str,
+    datacite_entry: dict,
+    transfer_client: Any,
+    foundry_schema: FoundrySchema,
+    use_globus: bool = False,
+    interval: int = 10,
+    parallel_https: int = 4,
+    verbose: bool = False,
+    forge_client: Forge = None,
+    local_cache_dir: str = None
+)
 ```
 
 
@@ -43,74 +65,45 @@ __init__(source_id: str, datacite_entry: dict, foundry_schema: FoundrySchema)
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L69"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L160"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-### <kbd>method</kbd> `download_if_not_downloaded`
+### <kbd>method</kbd> `clear_dataset_cache`
 
 ```python
-download_if_not_downloaded()
+clear_dataset_cache()
 ```
 
-
-
-
+Deletes the cached data for this specific datset 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L120"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L61"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-### <kbd>method</kbd> `get_citation`
-
-```python
-get_citation() → str
-```
-
-
-
-
-
----
-
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L72"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>method</kbd> `load_data`
+### <kbd>method</kbd> `get_as_dict`
 
 ```python
-load_data(source_id=None, globus=True, as_hdf5=False, splits=[])
+get_as_dict(split: str = None, as_hdf5: bool = False)
 ```
 
-Load in the data associated with the prescribed dataset 
-
-Tabular Data Type: Data are arranged in a standard data frame stored in self.dataframe_file. The contents are read, and 
-
-File Data Type: <<Add desc>> 
-
-For more complicated data structures, users should subclass FoundryDataset and override the load_data function 
+Returns the data from the dataset as a dictionary 
 
 
 
-**Args:**
+**Arguments:**
  
- - <b>`inputs`</b> (list):  List of strings for input columns 
- - <b>`targets`</b> (list):  List of strings for output columns 
- - <b>`source_id`</b> (string):  Relative path to the source file 
- - <b>`as_hdf5`</b> (bool):  If True and dataset is in hdf5 format, keep data in hdf5 format 
- - <b>`splits`</b> (list):  Labels of splits to be loaded 
+ - <b>`split`</b> (string):  Split to create dataset on. 
+ - <b>`**Default`</b>: ** ``None`` 
 
-
-
-**Returns:**
- 
- - <b>`(dict)`</b>:  a labeled dictionary of tuples 
+Returns: (dict) Dictionary of all the data from the specified split 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L54"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L101"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-### <kbd>method</kbd> `to_tensorflow`
+### <kbd>method</kbd> `get_as_tensorflow`
 
 ```python
-to_tensorflow(split: str = None)
+get_as_tensorflow(split: str = None)
 ```
 
 Convert Foundry Dataset to a Tensorflow Sequence 
@@ -126,15 +119,15 @@ Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the speci
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L36"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L81"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-### <kbd>method</kbd> `to_torch`
+### <kbd>method</kbd> `get_as_torch`
 
 ```python
-to_torch(split: str = None)
+get_as_torch(split: str = None)
 ```
 
-Convert Foundry Dataset to a PyTorch Dataset 
+Returns the data from the dataset as a TorchDataset 
 
 
 
@@ -144,6 +137,20 @@ Convert Foundry Dataset to a PyTorch Dataset
  - <b>`**Default`</b>: ** ``None`` 
 
 Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split 
+
+---
+
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L120"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `get_citation`
+
+```python
+get_citation() → str
+```
+
+
+
+
 
 ---
 

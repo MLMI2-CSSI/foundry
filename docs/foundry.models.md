@@ -136,7 +136,7 @@ Foundry Dataset Schema for Foundry Datasets. This includes specifications of inp
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L110"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L131"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryDataset`
 
@@ -149,7 +149,7 @@ Foundry Dataset Schema for Foundry Datasets. This includes specifications of inp
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L131"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L152"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryBase`
 Configuration information for Foundry instance 
