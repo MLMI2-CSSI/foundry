@@ -1,21 +1,29 @@
-import json
 import logging
 import os
 
-from json2table import convert
-import numpy as np
-
-from foundry.models import FoundrySchema
+from mdf_forge import Forge
 from pydantic import ValidationError
+from typing import Any
+
+from .foundry_cache import FoundryCache
+from foundry.models import FoundrySchema
 
 
 logger = logging.getLogger(__name__)
 
 
-class FoundryDataset(FoundrySchema):
+class FoundryDataset():
     """Representation of an individual dataset.
         Provides access to metadata as well as functions to
         instantiate data into memory in different formats.
+
+        Args:
+            dataset_name (str): name of dataset (equivalent to source_id in MDF)
+            splits List[FoundrySplit]: list of splits in the dataset
+            use_globus (bool): if True, use Globus to download the data else try HTTPS
+            interval (int): How often to wait before checking Globus transfer status
+            parallel_https (int): Number of files to download in parallel if using HTTPS
+            verbose (bool): Produce more debug messages to screen
 
         Desired functions:
             - Get as pandas
@@ -28,13 +36,50 @@ class FoundryDataset(FoundrySchema):
             - Get citation
         """
 
-    def __init__(self, source_id: str, datacite_entry: dict, foundry_schema: FoundrySchema):
-        self.source_id = source_id
-        self.dc = datacite_entry
-        self.foundry_schema = foundry_schema
+    def __init__(self,
+                 dataset_name: str,
+                 datacite_entry: dict,
+                 transfer_client: Any,
+                 foundry_schema: FoundrySchema,
+                 use_globus: bool = False,
+                 interval: int = 10,
+                 parallel_https: int = 4,
+                 verbose: bool = False,
+                 forge_client: Forge = None,
+                 local_cache_dir: str = None):
 
-    def to_torch(self, split: str = None):
-        """Convert Foundry Dataset to a PyTorch Dataset
+        self.dataset_name = dataset_name
+        self.dc = datacite_entry
+        self.transfer_client = transfer_client
+        self.foundry_schema = foundry_schema
+        self.use_globus = use_globus
+        self.interval = interval
+        self.parallel_https = parallel_https
+        self.verbose = verbose
+        self._foundry_cache = FoundryCache(forge_client, transfer_client, local_cache_dir)
+
+    def get_as_dict(self, split: str = None, as_hdf5: bool = False):
+        """Returns the data from the dataset as a dictionary
+
+        Arguments:
+            split (string): Split to create dataset on.
+                    **Default:** ``None``
+
+        Returns: (dict) Dictionary of all the data from the specified split
+
+        """
+        return self._foundry_cache.load_as_dict(split,
+                                                self.dataset_name,
+                                                self.foundry_schema,
+                                                self.use_globus,
+                                                self.interval,
+                                                self.parallel_https,
+                                                self.verbose,
+                                                self.transfer_client,
+                                                as_hdf5)
+
+    def get_as_torch(self, split: str = None):
+        """Returns the data from the dataset as a TorchDataset
 
         Arguments:
             split (string): Split to create PyTorch Dataset on.
@@ -44,14 +89,16 @@ class FoundryDataset(FoundrySchema):
 
         """
 
-        self.download_if_not_downloaded()
+        return self._foundry_cache.load_as_torch(split,
+                                                 self.dataset_name,
+                                                 self.foundry_schema,
+                                                 self.use_globus,
+                                                 self.interval,
+                                                 self.parallel_https,
+                                                 self.verbose,
+                                                 self.transfer_client)
 
-        from foundry.loaders.torch_wrapper import TorchDataset
-
-        inputs, targets = self._get_inputs_targets(split)
-        return TorchDataset(inputs, targets)
-
-    def to_tensorflow(self, split: str = None):
+    def get_as_tensorflow(self, split: str = None):
         """Convert Foundry Dataset to a Tensorflow Sequence
 
         Arguments:
@@ -61,61 +108,14 @@ class FoundryDataset(FoundrySchema):
         Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split
 
         """
-        from foundry.loaders.tf_wrapper import TensorflowSequence
-
-        inputs, targets = self._get_inputs_targets(split)
-        return TensorflowSequence(inputs, targets)
-
-    def download_if_not_downloaded(self):
-        ...
-
-    def load_data(self, source_id=None, globus=True, as_hdf5=False, splits=[]):
-        """Load in the data associated with the prescribed dataset
-
-        Tabular Data Type: Data are arranged in a standard data frame
-        stored in self.dataframe_file. The contents are read, and
-
-        File Data Type: <<Add desc>>
-
-        For more complicated data structures, users should
-        subclass FoundryDataset and override the load_data function
-
-        Args:
-           inputs (list): List of strings for input columns
-           targets (list): List of strings for output columns
-           source_id (string): Relative path to the source file
-           as_hdf5 (bool): If True and dataset is in hdf5 format, keep data in hdf5 format
-           splits (list): Labels of splits to be loaded
-
-        Returns:
-             (dict): a labeled dictionary of tuples
-        """
-        data = {}
-
-        # Handle splits if they exist. Return as a labeled dictionary of tuples
-        try:
-            if self.dataset.splits:
-                if not splits:
-                    for split in self.dataset.splits:
-                        data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
-                                                            as_hdf5=as_hdf5)
-                else:
-                    for split in self.dataset.splits:
-                        if split.label in splits:
-                            splits.remove(split.label)
-                            data[split.label] = self._load_data(file=split.path, source_id=source_id, globus=globus,
-                                                                as_hdf5=as_hdf5)
-                    if len(splits) > 0:
-                        raise ValueError(f'The split(s) {splits} were not found in the dataset!')
-                return data
-            else:
-                # raise an error if splits are specified but not present in the dataset
-                if len(splits) > 0:
-                    raise ValueError(f"Splits to load were specified as {splits}, but no splits are present in dataset")
-                return {"data": self._load_data(source_id=source_id, globus=globus, as_hdf5=as_hdf5)}
-        except Exception as e:
-            raise Exception(
-                "Metadata not loaded into Foundry object, make sure to call load()") from e
+        return self._foundry_cache.load_as_tensorflow(split,
+                                                      self.dataset_name,
+                                                      self.foundry_schema,
+                                                      self.use_globus,
+                                                      self.interval,
+                                                      self.parallel_https,
+                                                      self.verbose,
+                                                      self.transfer_client)
 
     def get_citation(self) -> str:
         subjects = [subject['subject'] for subject in self.dc['subjects']]
@@ -157,65 +157,6 @@ class FoundryDataset(FoundrySchema):
                 logger.error(error_message)
             raise e
 
-    def _get_inputs_targets(self, split: str = None):
-        """Get Inputs and Outputs from a Foundry Dataset
-
-        Helper function for loading the data from files into memory in various forms.
-
-        Arguments:
-            split (string): Split to get inputs and outputs from.
-                    **Default:** ``None``
-
-        Returns: (Tuple) Tuple of the inputs and outputs
-        """
-        raw = self.load_data(as_hdf5=False)
-
-        if not split:
-            split = self.dataset.splits[0].type
-
-        if self.dataset.data_type.value == "hdf5":
-            inputs = []
-            targets = []
-            for key in self.dataset.keys:
-                if len(raw[split][key.type][key.key[0]].keys()) != self.dataset.n_items:
-                    continue
-
-                # Get a numpy array of all the values for each item for that key
-                val = np.array([raw[split][key.type][key.key[0]][k] for k in raw[split][key.type][key.key[0]].keys()])
-                if key.type == 'input':
-                    inputs.append(val)
-                else:
-                    targets.append(val)
-
-            return (inputs, targets)
-
-        elif self.dataset.data_type.value == "tabular":
-            inputs = []
-            targets = []
-
-            for index, arr in enumerate([inputs, targets]):
-                df = raw[split][index]
-                for key in df.keys():
-                    arr.append(df[key].values)
-
-            return (inputs, targets)
-
-        else:
-            raise NotImplementedError
-
-    def _repr_html_(self) -> str:
-        """Not sure what this is for or if it is ever called"""
-
-        if not self.dc:
-            buf = str(self)
-        else:
-            title = self.dc['titles'][0]['title']
-            authors = [creator['creatorName']
-                       for creator in self.dc['creators']]
-            authors = '; '.join(authors)
-            DOI = "DOI: " + self.dc['identifier']['identifier']
-
-            buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
-
-            buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.dataset.json(exclude={"dataframe"})))}'
-        return buf
+    def clear_dataset_cache(self):
+        """Deletes the cached data for this specific datset"""
+        self._foundry_cache.clear_cache(self.dataset_name)

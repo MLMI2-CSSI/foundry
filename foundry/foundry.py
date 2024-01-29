@@ -1,9 +1,7 @@
-import h5py
 import mdf_toolbox
 import pandas as pd
 from typing import Any, Dict, List
 import logging
-import os
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
@@ -11,16 +9,17 @@ from dlhub_sdk import DLHubClient
 from globus_sdk import AuthClient
 
 from .auth import PubAuths
-from .utils import is_pandas_pytable, is_doi
-from .utils import _read_csv, _read_json, _read_excel
+from .utils import is_doi
 
 from foundry.models import (
     FoundrySchema,
-    FoundryDataset,
     FoundryBase
 )
 
-from foundry.foundry_cache import FoundryCache
+from foundry.foundry_dataset import FoundryDataset
+
+# from foundry import FOUNDRY_CACHE
+# from foundry.foundry_cache import FoundryCache
 
 from foundry.https_upload import upload_to_endpoint
 
@@ -28,11 +27,67 @@ logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
+class HiddenColumnDataFrame(pd.DataFrame):
+    """
+    A subclass of pd.DataFrame that supports hiding a specific column. This is
+    intended to mimic display of search results from an earlier version while
+    providing access to associated FoundryDataset objects for each entry in the
+    dataframe via the `get_dataset_by_[name/doi]()` function.
+
+    Parameters:
+    *args: positional arguments
+        Positional arguments passed to the parent class constructor.
+    hidden_column: str, optional
+        The name of the column to be hidden.
+    **kwargs: keyword arguments
+        Keyword arguments passed to the parent class constructor.
+
+    Attributes:
+    hidden_column: str or None
+        The name of the hidden column.
+
+    Methods:
+    _repr_html_():
+        Overrides the _repr_html_ method of the parent class to hide the specified column in the HTML representation.
+    get_dataset_by_name(dataset_name):
+        Returns the FoundryDataset associated with the given dataset name. Can also handle a DOI.
+    get_dataset_by_doi(doi):
+        Returns the FoundryDataset associated with the given DOI.
+
+    """
+
+    def __init__(self, *args, hidden_column=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.hidden_column = hidden_column
+
+    def _repr_html_(self):
+        if self.hidden_column is not None and self.hidden_column in self.columns:
+            return self.drop(self.hidden_column, axis=1)._repr_html_()
+
+    def get_dataset_by_name(self, dataset_name):
+        if is_doi(dataset_name):
+            return self.get_dataset_by_doi(dataset_name)
+        else:
+            return self[self.dataset_name == dataset_name]['FoundryDataset'].iloc[0]
+
+    def get_dataset_by_doi(self, doi):
+        return self[self.DOI == doi]['FoundryDataset'].iloc[0]
+
+
 class Foundry(FoundryBase):
     """Foundry Client Base Class
-    TODO:
-    -------
-    Add Docstring
+
+    This class represents a client for interacting with the Foundry service. It provides methods for searching and
+    accessing datasets, as well as publishing new datasets.
+
+    Attributes:
+        dlhub_client (Any): The DLHub client.
+        forge_client (Any): The Forge client.
+        connect_client (Any): The MDF Connect client.
+        transfer_client (Any): The Globus transfer client.
+        auth_client (Any): The authentication client.
+        index (str): The index to use for search and data publication.
+        auths (Any): The authorizers used for authentication.
 
     """
 
@@ -44,31 +99,42 @@ class Foundry(FoundryBase):
     index = ""
     auths: Any
 
-    def __init__(
-            self, no_browser=False, no_local_server=False, index="mdf", authorizers=None,
-            globus=True, verbose=False, interval=10,
-            **data
-    ):
+    def __init__(self,
+                 no_browser: bool = False,
+                 no_local_server: bool = False,
+                 index: str = "mdf",
+                 authorizers: dict = None,
+                 use_globus: bool = True,
+                 verbose: bool = False,
+                 interval: int = 10,
+                 local_cache_dir: str = None,
+                 **data):
         """Initialize a Foundry client
+
         Args:
-            no_browser (bool):  Whether to open the browser for the Globus Auth URL.
-            no_local_server (bool): Whether a local server is available.
-                    This should be `False` when on remote server (e.g., Google Colab ).
-            index (str): Index to use for search and data publication. Choices `mdf` or `mdf-test`
-            authorizers (dict): A dictionary of authorizers to use, following the `mdf_toolbox` format
-            globus (bool): If True, download using Globus, otherwise https
-            verbose (bool): If True print additional debug information
-            interval (int): How often to poll Globus to check if transfers are complete
-            data (dict): Other arguments, e.g., results from an MDF search result that are used
-                    to populate Foundry metadata fields
+            no_browser (bool): Whether to open the browser for the Globus Auth URL.
+            no_local_server (bool): Whether a local server is available. This should be `False` when on a remote server (e.g., Google Colab).
+            index (str): Index to use for search and data publication. Choices are `mdf` or `mdf-test`.
+            authorizers (dict): A dictionary of authorizers to use, following the `mdf_toolbox` format.
+            use_globus (bool): If True, download using Globus, otherwise use HTTPS.
+            verbose (bool): If True, print additional debug information.
+            interval (int): How often to poll Globus to check if transfers are complete.
+            local_cache_dir (str): Optional location to store downloaded data.
+                                   If not specified, defaults to either environmental variable ('FOUNDRY_LOCAL_CACHE_DIR') or './data'
+
+            data (dict): Other arguments, e.g., results from an MDF search result that are used to populate Foundry metadata fields.
 
         Returns:
-            an initialized and authenticated Foundry client
+            An initialized and authenticated Foundry client.
         """
         super().__init__(**data)
         self.index = index
         self.auths = None
-        self.cache = FoundryCache()
+        self.use_globus = use_globus
+        self.verbose = verbose
+        self.interval = interval
+        if local_cache_dir:
+            self.local_cache_dir = local_cache_dir
 
         if authorizers:
             self.auths = authorizers
@@ -140,17 +206,31 @@ class Foundry(FoundryBase):
             force_login=False,
         )
 
-    def search(self, query: str = None, limit: int = None) -> [FoundryDataset]:
+    def search(self, query: str = None, limit: int = None, as_list: bool = False) -> [FoundryDataset]:
         """Search available Foundry datasets
 
+        This method searches for available Foundry datasets based on the provided query string.
+        If a DOI is provided as the query, it retrieves the metadata for that specific dataset.
+        If a query string is provided, it retrieves the metadata for datasets that match the query.
+        The limit parameter can be used to specify the maximum number of results to return.
+
         Args:
-            query (str): query string to match
-            limit (int): maximum number of results to return
+            query (str): The query string to match. If a DOI is provided, it retrieves the metadata for that specific dataset.
+            limit (int): The maximum number of results to return.
+            as_list (bool): If True, the search results will be returned as a list instead of a DataFrame.
 
         Returns:
-            List[FoundryDataset]: List of search results as FoundryDatset objects
-        """
+            List[FoundryDataset] or DataFrame: A list of search results as FoundryDataset objects or a DataFrame if as_list is False.
 
+        Raises:
+            Exception: If no results are found for the provided query.
+
+        Example:
+            >>> foundry = Foundry()
+            >>> results = foundry.search(query="materials science", limit=10)
+            >>> print(len(results))
+            10
+        """
         if (query is not None) and (is_doi(query)):
             metadata_list = [self.get_metadata_by_doi(query)]
         else:
@@ -166,6 +246,12 @@ class Foundry(FoundryBase):
                 foundry_datasets.append(ds)
 
         logger.info(f"Search for '{query}' returned {len(foundry_datasets)} foundry datasets out of {len(metadata_list)} matches")
+
+        if as_list:
+            return foundry_datasets
+
+        foundry_datasets = self.search_results_to_dataframe(foundry_datasets)
+
         return foundry_datasets
 
     def list(self, limit: int = None):
@@ -174,8 +260,8 @@ class Foundry(FoundryBase):
         Args:
             limit (int): maximum number of results to return
 
-        Returns
-            List[FoundryDataset]: List of FoundryDatset objects
+        Returns:
+            List[FoundryDataset]: List of FoundryDataset objects
         """
         return self.search(limit=limit)
 
@@ -187,37 +273,29 @@ class Foundry(FoundryBase):
 
         Returns:
             FoundryDataset: a FoundryDataset object created from the metadata
+
+        Raises:
+            Exception: If the mdf entry is missing a section, cannot generate a foundry dataset object
         """
         try:
-            schema = FoundrySchema(**metadata['projects']['foundry'])
+            foundry_schema = FoundrySchema(**metadata['projects']['foundry'])
             dc = metadata['dc']
             name = metadata['mdf']['source_id']
 
-            ds = FoundryDataset(**{'name': name, 'schema': schema, 'dc': dc})
+            ds = FoundryDataset(**{'dataset_name': name,
+                                   'foundry_schema': foundry_schema,
+                                   'transfer_client': self.auths["transfer"],
+                                   'datacite_entry': dc,
+                                   'use_globus': self.use_globus,
+                                   'interval': self.interval,
+                                   'verbose': self.verbose,
+                                   'forge_client': self.forge_client,
+                                   'local_cache_dir': self.local_cache_dir})
 
             return ds
 
         except Exception as e:
             logger.error(f"The mdf entry {metadata['mdf']['source_id']} is missing a {e} section - cannot generate a foundry dataset object")
-
-    def get_dataset_by_name(self, name: str) -> FoundryDataset:
-        """Query foundry datasets by name
-
-        Name is equivalent of 'source_id' in MDF. Should only return a single result.
-
-        Args:
-            doi (str): doi of desired datset
-
-        Returns:
-            FoundryDataset: a FoundryDatset object for the result of the query
-        """
-
-        forge = self.forge_client.match_field(
-                    "mdf.organizations", self.organization
-                    ).match_resource_types("dataset")
-        metadata = forge.match_field("mdf.source_id", name).search()[0]
-        ds = self.dataset_from_metadata(metadata)
-        return ds
 
     def get_metadata_by_doi(self, doi: str) -> dict:
         """Query foundry datasets by DOI
@@ -225,7 +303,7 @@ class Foundry(FoundryBase):
         Should only return a single result.
 
         Args:
-            doi (str): doi of desired datset
+            doi (str): doi of desired dataset
 
         Returns:
             metadata (dict): result from a forge query
@@ -243,24 +321,69 @@ class Foundry(FoundryBase):
 
         Args:
             q (str): query string
+                The query string to be submitted to the forge client.
             limit (int): maximum number of results to return
+                The maximum number of results to be returned by the foundry client.
 
         Returns:
             metadata (dict): result from a forge query
+                The result from the forge query, represented as a dictionary.
         """
 
-        # forge = self.forge_client.match_field(
-        #             "mdf.organizations", self.organization
-        #             ).match_resource_types("dataset")
-
         forge = self.forge_client.match_resource_types("dataset").match_organizations('foundry')
-        metadata = forge.search(q, advanced=True, limit=limit)
+        metadata = forge.search(advanced=True)
+        if q:
+            metadata = self.filter_datasets_by_query(q, metadata)
+        if limit:
+            metadata = metadata[:limit]
         return metadata
 
-    def publish_dataset(
-            self, foundry_metadata: Dict[str, Any], title: str, authors: List[str], https_data_path: str = None,
-            globus_data_source: str = None, update: bool = False, publication_year: int = None, test: bool = False,
-            **kwargs: Dict[str, Any],) -> Dict[str, Any]:
+    def filter_datasets_by_query(self, query_string: str, metadata: List[Dict]) -> List[Dict]:
+        """
+        Filters the given metadata based on the provided query string.
+
+        Args:
+            query_string (str): The query string to filter the metadata.
+            metadata (list): The list of metadata to be filtered.
+
+        Returns:
+            list[dict]: A list of dicts that match the query string.
+        """
+        matches = []
+        for md in metadata:
+            if str(md).lower().find(query_string.lower()) != -1:
+                matches.append(md)
+        return matches
+
+    def search_results_to_dataframe(self, results):
+        """
+        Convert a list of results into a pandas DataFrame.
+
+        Args:
+            results (list): A list of results.
+
+        Returns:
+            DataFrame: A pandas DataFrame containing the converted results.
+        """
+        series_list = []
+        for result in results:
+            series_list.append(pd.Series({'dataset_name': result.dataset_name,
+                                          'title': result.dc['titles'][0]['title'],
+                                          'year': result.dc['publicationYear'],
+                                          'DOI': result.dc['identifier']['identifier'],
+                                          'FoundryDataset': result}))
+        df = HiddenColumnDataFrame(series_list, hidden_column='FoundryDataset')
+        return df
+
+    def publish_dataset(self,
+                        foundry_metadata: Dict[str, Any],
+                        title: str, authors: List[str],
+                        https_data_path: str = None,
+                        globus_data_source: str = None,
+                        update: bool = False,
+                        publication_year: int = None,
+                        test: bool = False,
+                        **kwargs: Dict[str, Any],) -> Dict[str, Any]:
         """Submit a dataset for publication; can choose to submit via HTTPS using `https_data_path` or via Globus
             Transfer using the `globus_data_source` argument. Only one upload method may be specified.
         Args:
@@ -403,98 +526,3 @@ class Foundry(FoundryBase):
     #     """
     #     # return self.dlhub_client.get_task_status(res)
     #     pass
-
-    def get_keys(self, type=None, as_object=False):
-        """Get keys for a Foundry dataset
-
-        Arguments:
-            type (str): The type of key to be returned e.g., "input", "target"
-            as_object (bool): When ``False``, will return a list of keys in as strings
-                    When ``True``, will return the full key objects
-                    **Default:** ``False``
-        Returns: (list) String representations of keys or if ``as_object``
-                    is False otherwise returns the full key objects.
-
-        """
-
-        if as_object:
-            if type:
-                return [key for key in self.dataset.keys if key.type == type]
-            else:
-                return [key for key in self.dataset.keys]
-
-        else:
-            if type:
-                keys = [key.key for key in self.dataset.keys if key.type == type]
-            else:
-                keys = [key.key for key in self.dataset.keys]
-
-            key_list = []
-            for k in keys:
-                key_list = key_list + k
-            return key_list
-
-    def _load_data(self, file=None, source_id=None, globus=True, as_hdf5=False):
-        # Build the path to access the cached data
-        if source_id:
-            path = os.path.join(self.config.local_cache_dir, source_id)
-        else:
-            path = os.path.join(self.config.local_cache_dir,
-                                self.mdf["source_id"])
-
-        # Determine which file to load, defaults to config.dataframe_file
-        if not file:
-            file = self.config.dataframe_file
-        if path is None:
-            raise ValueError(f"Path to data file is invalid; check that dataset source_id is valid: "
-                             f"{source_id or self.mdf['source_id']}")
-        path_to_file = os.path.join(path, file)
-
-        # Check to see whether file exists at path
-        if not os.path.isfile(path_to_file):
-            raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
-
-        # Handle Foundry-defined types.
-        if self.dataset.data_type.value == "tabular":
-            # TODO: Add hashes and versioning to metadata and checking to the file
-            read_fns = [(_read_json, {"lines": False, "path_to_file": path_to_file}),
-                        (_read_json, {"lines": True, "path_to_file": path_to_file}),
-                        (_read_csv, {"path_to_file": path_to_file}),
-                        (_read_excel, {"path_to_file": path_to_file})]
-
-            for fn, params in read_fns:
-                try:
-                    self.dataset.dataframe = fn(**params)
-                except Exception as e:
-                    logger.info(f"Unable to read file with {fn.__name__} with params {params}: {e}")
-                if self.dataset.dataframe is not None:
-                    logger.info(f"Succeeded with {fn.__name__} with params {params}")
-                    break
-            if self.dataset.dataframe is None:
-                logger.fatal(f"Cannot read {path_to_file} as tabular data, failed to load")
-                raise ValueError(f"Cannot read tabular data from {path_to_file}")
-
-            return (
-                self.dataset.dataframe[self.get_keys("input")],
-                self.dataset.dataframe[self.get_keys("target")],
-            )
-
-        elif self.dataset.data_type.value == "hdf5":
-            f = h5py.File(path_to_file, "r")
-            special_types = ["input", "target"]
-            tmp_data = {s: {} for s in special_types}
-            for s in special_types:
-                for key in self.get_keys(s):
-                    if as_hdf5:
-                        tmp_data[s][key] = f[key]
-                    elif isinstance(f[key], h5py.Group):
-                        if is_pandas_pytable(f[key]):
-                            df = pd.read_hdf(path_to_file, key)
-                            tmp_data[s][key] = df
-                        else:
-                            tmp_data[s][key] = f[key]
-                    elif isinstance(f[key], h5py.Dataset):
-                        tmp_data[s][key] = f[key][0:]
-            return tmp_data
-        else:
-            raise NotImplementedError

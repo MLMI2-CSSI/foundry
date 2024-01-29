@@ -53,7 +53,7 @@ def _get_files(tc, ep, queue, max_depth):
 
 
 # TODO (wardlt): Avoid passing dictionaries, as documenting their content is tedious
-def download_file(item, https_config):
+def download_file(item, data_directory, https_config):
     """Download a file to disk
 
     Args:
@@ -63,7 +63,7 @@ def download_file(item, https_config):
     url = f"{https_config['base_url']}{item['path']}{item['name']}"
 
     # build destination path for data file
-    destination = os.path.join("data/", https_config['source_id'], item['name'])
+    destination = os.path.join(data_directory, https_config['source_id'], item['name'])
 
     parent_path = os.path.split(destination)[0]
 
