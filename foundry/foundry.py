@@ -391,7 +391,7 @@ class Foundry(FoundryBase):
             dataset_doi=kwargs.get("dataset_doi", ""),
             related_dois=kwargs.get("related_dois", [])
         )
-        self.connect_client.add_organization(self.config.organization)
+        self.connect_client.set_organization(self.config.organization)
         self.connect_client.set_project_block(
             self.config.metadata_key, foundry_metadata)
 
