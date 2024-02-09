@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <picture>
   <source srcset="https://raw.githubusercontent.com/MLMI2-CSSI/foundry/main/assets/foundry-white.png" height=175" media="(prefers-color-scheme: dark)">
@@ -105,6 +105,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="http://kjschmidt.com"><img src="https://avatars.githubusercontent.com/u/16869564?v=4?s=100" width="100px;" alt="KJ Schmidt "/><br /><sub><b>KJ Schmidt </b></sub></a><br /><a href="#infra-kjschmidt913" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=kjschmidt913" title="Tests">⚠️</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=kjschmidt913" title="Code">💻</a> <a href="#data-kjschmidt913" title="Data">🔣</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ascourtas"><img src="https://avatars.githubusercontent.com/u/18538526?v=4?s=100" width="100px;" alt="ascourtas"/><br /><sub><b>ascourtas</b></sub></a><br /><a href="#infra-ascourtas" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=ascourtas" title="Tests">⚠️</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=ascourtas" title="Code">💻</a> <a href="#data-ascourtas" title="Data">🔣</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/blue442"><img src="https://avatars.githubusercontent.com/u/1233784?v=4?s=100" width="100px;" alt="Steve Wangen"/><br /><sub><b>Steve Wangen</b></sub></a><br /><a href="#infra-blue442" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=blue442" title="Tests">⚠️</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=blue442" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ribhavb"><img src="https://avatars.githubusercontent.com/u/68833659?v=4?s=100" width="100px;" alt="ribhavb"/><br /><sub><b>ribhavb</b></sub></a><br /><a href="https://github.com/MLMI2-CSSI/foundry/commits?author=ribhavb" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
