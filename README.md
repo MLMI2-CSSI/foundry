@@ -1,4 +1,7 @@
 
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 <picture>
   <source srcset="https://raw.githubusercontent.com/MLMI2-CSSI/foundry/main/assets/foundry-white.png" height=175" media="(prefers-color-scheme: dark)">
   <img src="https://raw.githubusercontent.com/MLMI2-CSSI/foundry/main/assets/foundry-black.png" height="175">
@@ -89,3 +92,25 @@ This work was performed under financial assistance award 70NANB14H012 from U.S. 
 https://www.materialsdatafacility.org
 
 [![All Contributors](https://img.shields.io/github/all-contributors/projectOwner/projectName?color=ee8449&style=flat-square)](#contributors)
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.dlhub.org"><img src="https://avatars.githubusercontent.com/u/4753182?v=4?s=100" width="100px;" alt="Ben Blaiszik"/><br /><sub><b>Ben Blaiszik</b></sub></a><br /><a href="#infra-blaiszik" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=blaiszik" title="Tests">⚠️</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=blaiszik" title="Code">💻</a> <a href="#data-blaiszik" title="Data">🔣</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
