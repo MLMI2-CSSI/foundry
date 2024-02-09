@@ -1,0 +1,29 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "blaiszik",
+      "name": "Ben Blaiszik",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4753182?v=4",
+      "profile": "https://www.dlhub.org",
+      "contributions": [
+        "infra",
+        "test",
+        "code",
+        "data"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "foundry",
+  "projectOwner": "MLMI2-CSSI"
+}
