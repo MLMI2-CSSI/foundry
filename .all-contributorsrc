@@ -18,6 +18,18 @@
         "code",
         "data"
       ]
+    },
+    {
+      "login": "ascourtas",
+      "name": "ascourtas",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18538526?v=4",
+      "profile": "https://github.com/ascourtas",
+      "contributions": [
+        "infra",
+        "test",
+        "code",
+        "data"
+      ]
     }
   ],
   "contributorsPerLine": 7,
