@@ -18,6 +18,18 @@
         "code",
         "data"
       ]
+    },
+    {
+      "login": "kjschmidt913",
+      "name": "KJ Schmidt",
+      "avatar_url": "https://avatars.githubusercontent.com/u/16869564?v=4",
+      "profile": "http://kjschmidt.com",
+      "contributions": [
+        "infra",
+        "test",
+        "code",
+        "data"
+      ]
     }
   ],
   "contributorsPerLine": 7,
