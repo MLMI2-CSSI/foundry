@@ -42,6 +42,17 @@
         "code",
         "data"
       ]
+    },
+    {
+      "login": "blue442",
+      "name": "Steve Wangen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1233784?v=4",
+      "profile": "https://github.com/blue442",
+      "contributions": [
+        "infra",
+        "test",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
