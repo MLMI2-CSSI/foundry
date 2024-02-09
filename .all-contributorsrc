@@ -21,9 +21,21 @@
     },
     {
       "login": "kjschmidt913",
-      "name": "KJ Schmidt",
+      "name": "KJ Schmidt ",
       "avatar_url": "https://avatars.githubusercontent.com/u/16869564?v=4",
       "profile": "http://kjschmidt.com",
+      "contributions": [
+        "infra",
+        "test",
+        "code",
+        "data"
+      ]
+    },
+    {
+      "login": "ascourtas",
+      "name": "ascourtas",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18538526?v=4",
+      "profile": "https://github.com/ascourtas",
       "contributions": [
         "infra",
         "test",
