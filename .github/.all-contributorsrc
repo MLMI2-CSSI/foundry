@@ -1,0 +1,14 @@
+{
+  "projectName": "your-project-name",
+  "projectOwner": "your-github-username",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": ["README.md"],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "none",
+  "contributorsPerLine": 7,
+  "contributors": [],
+  "botUsername": "all-contributors[bot]",
+  "skipCi": true
+}
