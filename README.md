@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <picture>
   <source srcset="https://raw.githubusercontent.com/MLMI2-CSSI/foundry/main/assets/foundry-white.png" height=175" media="(prefers-color-scheme: dark)">
@@ -104,6 +104,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tbody>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://www.dlhub.org"><img src="https://avatars.githubusercontent.com/u/4753182?v=4?s=100" width="100px;" alt="Ben Blaiszik"/><br /><sub><b>Ben Blaiszik</b></sub></a><br /><a href="#infra-blaiszik" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=blaiszik" title="Tests">⚠️</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=blaiszik" title="Code">💻</a> <a href="#data-blaiszik" title="Data">🔣</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://kjschmidt.com"><img src="https://avatars.githubusercontent.com/u/16869564?v=4?s=100" width="100px;" alt="KJ Schmidt"/><br /><sub><b>KJ Schmidt</b></sub></a><br /><a href="#infra-kjschmidt913" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=kjschmidt913" title="Tests">⚠️</a> <a href="https://github.com/MLMI2-CSSI/foundry/commits?author=kjschmidt913" title="Code">💻</a> <a href="#data-kjschmidt913" title="Data">🔣</a></td>
     </tr>
   </tbody>
 </table>
