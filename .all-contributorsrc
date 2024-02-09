@@ -53,6 +53,15 @@
         "test",
         "code"
       ]
+    },
+    {
+      "login": "ethantruelove",
+      "name": "ethantruelove",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19912525?v=4",
+      "profile": "https://github.com/ethantruelove",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
