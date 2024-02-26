@@ -4,9 +4,9 @@
 
 ## What is Foundry?
 
-Foundry is a Python package that simplifies the discovery and usage of machine-learning ready datasets and published models in materials science and chemistry. We provide software tools that make it easy to load datasets and work with them in local or cloud environments and to perform inference using published ML models.&#x20;
+Foundry is a Python package that simplifies the discovery and usage of machine-learning ready datasets in materials science and chemistry. We provide software tools that make it easy to load datasets and work with them in local or cloud environments.&#x20;
 
-**Capability Status:** Researchers can contribute by publishing new [datasets](publishing/publishing-datasets.md) and [models](under-development/publishing-models.md) through a self-service publication process. Our dataset capabilities are currently in **production** and our model capabilities are still **in development**.
+**Capability Status:** Researchers can contribute by publishing new [datasets](publishing/publishing-datasets.md) through a self-service publication process. Our dataset capabilities are currently in **production.**
 
 ## Installation
 

@@ -16,7 +16,7 @@ The Foundry client provides access to all of the methods described here for list
 
 ```python
 from foundry import Foundry
-f = Foundry(index="mdf")
+f = Foundry()
 ```
 
 {% hint style="success" %}
