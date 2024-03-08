@@ -11,16 +11,14 @@
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L34"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L35"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `Foundry`
 Foundry Client Base Class 
 
-**TODO:**
- 
-------- Add Docstring 
+Foundry object used for all interactions with Foundry datasets and models. Interfaces with MDF Connect Client,  Globus Compute, Globus Auth, Globus Transfer, Globus Search, and relevant Globus Endpoints 
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L50"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L49"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
@@ -36,6 +34,8 @@ __init__(
 
 Initialize a Foundry client 
 
+
+
 **Args:**
  
  - <b>`no_browser`</b> (bool):   Whether to open the browser for the Globus Auth URL. 
@@ -44,15 +44,15 @@ Initialize a Foundry client
  - <b>`authorizers`</b> (dict):  A dictionary of authorizers to use, following the `mdf_toolbox` format 
  - <b>`data`</b> (dict):  Other arguments, e.g., results from an MDF search result that are used  to populate Foundry metadata fields 
 
-Returns 
-------- an initialized and authenticated Foundry client 
+**Returns:**
+ an initialized and authenticated Foundry client 
 
 
 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L453"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L439"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_status`
 
@@ -64,7 +64,7 @@ Check the status of your submission.
 
 
 
-**Arguments:**
+**Args:**
  
  - <b>`source_id`</b> (str):  The ``source_id`` (``source_name`` + version information) of the  submission to check. Returned in the ``res`` result from ``publish()`` via MDF Connect Client. 
  - <b>`short`</b> (bool):  When ``False``, will print a status summary containing  all of the status steps for the dataset.  When ``True``, will print a short finished/processing message,  useful for checking many datasets' status at once. 
@@ -76,11 +76,11 @@ Check the status of your submission.
 
 **Returns:**
  
- - <b>`If ``raw`` is ``True``, *dict*`</b>:  The full status result. 
+ - <b>`(dict)`</b>:  Brief status result of dataset publication. If `raw` is True, the full status result. 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L482"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L460"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `configure`
 
@@ -88,22 +88,25 @@ Check the status of your submission.
 configure(**kwargs)
 ```
 
-Set Foundry config Keyword Args:  file (str): Path to the file containing  (default: self.config.metadata_file) 
+Set Foundry config 
 
-dataframe_file (str): filename for the dataframe file default:"foundry_dataframe.json" data_file (str): : filename for the data file default:"foundry.hdf5" destination_endpoint (str): Globus endpoint UUID where Foundry data should move local_cache_dir (str): Where to place collected data default:"./data" 
+Keyword Args:  file (str): Path to the file containing (default: self.config.metadata_file)  dataframe_file (str): filename for the dataframe file default:"foundry_dataframe.json"  data_file (str): : filename for the data file default:"foundry.hdf5"  destination_endpoint (str): Globus endpoint UUID where Foundry data should move  local_cache_dir (str): Where to place collected data default:"./data" 
 
-Returns 
-------- (Foundry): self: for chaining 
+
+
+**Returns:**
+ 
+ - <b>`self`</b> (Foundry):  for chaining 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L500"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L476"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `download`
 
 ```python
 download(
-    globus: bool = True,
+    globus: bool = False,
     interval: int = 20,
     parallel_https: int = 4,
     verbose: bool = False
@@ -116,19 +119,20 @@ Download a Foundry dataset
 
 **Args:**
  
- - <b>`globus`</b>:  if True, use Globus to download the data else try HTTPS 
- - <b>`interval`</b>:  How often to wait before checking Globus transfer status 
- - <b>`parallel_https`</b>:  Number of files to download in parallel if using HTTPS 
- - <b>`verbose`</b>:  Produce more debug messages to screen 
+ - <b>`globus`</b> (bool):  if True, use Globus to download the data else try HTTPS. Default is False 
+ - <b>`interval`</b> (int):  How often to wait before checking Globus transfer status 
+ - <b>`parallel_https`</b> (int):  Number of files to download in parallel if using HTTPS 
+ - <b>`verbose`</b> (bool):  Produce more debug messages to screen 
 
 
 
 **Returns:**
- self, for chaining 
+ 
+ - <b>`self`</b> (Foundry):  for chaining 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L322"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L306"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_citation`
 
@@ -136,13 +140,24 @@ Download a Foundry dataset
 get_citation() → str
 ```
 
+Obtain BibTeX citation for the dataset 
+
+Uses the dataset currently loaded in the Foundry object described by `self` 
 
 
 
+**Args:**
+  self (Foundry) 
+
+
+
+**Returns:**
+ 
+ - <b>`bibtex`</b> (str):  The BibTeX citation in string format 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L596"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L573"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_keys`
 
@@ -154,15 +169,19 @@ Get keys for a Foundry dataset
 
 
 
-**Arguments:**
+**Args:**
  
  - <b>`type`</b> (str):  The type of key to be returned e.g., "input", "target" 
  - <b>`as_object`</b> (bool):  When ``False``, will return a list of keys in as strings  When ``True``, will return the full key objects 
- - <b>`**Default`</b>: ** ``False`` Returns: (list) String representations of keys or if ``as_object`` is False otherwise returns the full key objects. 
+ - <b>`**Default`</b>: ** ``False`` 
+
+**Returns:**
+ 
+ - <b>`key_list`</b> (list):  String representations of keys or if ``as_object`` is False otherwise returns the full  key objects 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L236"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L227"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `list`
 
@@ -170,12 +189,17 @@ Get keys for a Foundry dataset
 list()
 ```
 
-List available Foundry datasets Returns 
--------  (pandas.DataFrame): DataFrame with summary list of Foundry datasets including name, title, publication year, and DOI 
+List available Foundry datasets 
+
+
+
+**Returns:**
+ 
+ - <b>`(pandas.DataFrame)`</b>:  DataFrame with summary list of Foundry datasets including name, title, publication  year, and DOI 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L141"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L131"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `load`
 
@@ -193,23 +217,25 @@ load(
 
 Load the metadata for a Foundry dataset into the client 
 
+
+
 **Args:**
  
  - <b>`name`</b> (str):  Name of the foundry dataset 
- - <b>`download`</b> (bool):  If True, download the data associated with the package (default is True) 
- - <b>`globus`</b> (bool):  If True, download using Globus, otherwise https 
+ - <b>`download`</b> (bool):  If True, download the data associated with the package. Default is True. 
+ - <b>`globus`</b> (bool):  If True, download using Globus, otherwise HTTPS. Default is False. 
  - <b>`verbose`</b> (bool):  If True print additional debug information 
- - <b>`metadata`</b> (dict):  **For debug purposes.** A search result analog to prepopulate metadata. 
-
-Keyword Args: 
+ - <b>`metadata`</b> (dict):  **For debug purposes.** A search result analog to prepopulate metadata. Keyword Args: (TODO: make this a regular arg instead?) 
  - <b>`interval`</b> (int):  How often to poll Globus to check if transfers are complete 
 
-Returns 
-------- self 
+
+
+**Returns:**
+ self 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L259"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L236"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `load_data`
 
@@ -229,9 +255,8 @@ For more complicated data structures, users should subclass Foundry and override
 
 **Args:**
  
- - <b>`inputs`</b> (list):  List of strings for input columns 
- - <b>`targets`</b> (list):  List of strings for output columns 
- - <b>`source_id`</b> (string):  Relative path to the source file 
+ - <b>`source_id`</b> (str):  Name of the dataset in MDF/Foundry index (``source_name`` + version information) 
+ - <b>`globus`</b> (bool):  If True, download using Globus, otherwise, HTTPS 
  - <b>`as_hdf5`</b> (bool):  If True and dataset is in hdf5 format, keep data in hdf5 format 
  - <b>`splits`</b> (list):  Labels of splits to be loaded 
 
@@ -239,11 +264,11 @@ For more complicated data structures, users should subclass Foundry and override
 
 **Returns:**
  
- - <b>`(dict)`</b>:  a labeled dictionary of tuples 
+ - <b>`data`</b> (dict):  a labeled dictionary of tuples 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L338"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L332"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `publish_dataset`
 
@@ -262,6 +287,8 @@ publish_dataset(
 ```
 
 Submit a dataset for publication; can choose to submit via HTTPS using `https_data_path` or via Globus  Transfer using the `globus_data_source` argument. Only one upload method may be specified. 
+
+
 
 **Args:**
  
@@ -285,79 +312,15 @@ Keyword Args:
  - <b>`dataset_doi`</b> (str):  The DOI for this dataset (not an associated paper). 
  - <b>`related_dois`</b> (list):  DOIs related to this dataset,  not including the dataset's own DOI (for example, an associated paper's DOI). 
 
-Returns 
-------- (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset. Contains `source_id`, which can be used to check the status of the submission 
-
----
-
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L427"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>method</kbd> `publish_model`
-
-```python
-publish_model(
-    title,
-    creators,
-    short_name,
-    servable_type,
-    serv_options,
-    affiliations=None,
-    paper_doi=None
-)
-```
-
-Simplified publishing method for servables 
-
-
-
-**Args:**
- 
- - <b>`title`</b> (string):  title for the servable 
- - <b>`creators`</b> (string | list):  either the creator's name (FamilyName, GivenName) or a list of the creators' names 
- - <b>`short_name`</b> (string):  shorthand name for the servable 
- - <b>`servable_type`</b> (string):  the type of the servable, must be a member of ("static_method",  "class_method",  "keras",  "pytorch",  "tensorflow",  "sklearn") 
- - <b>`serv_options`</b> (dict):  the servable_type specific arguments that are necessary for publishing. arguments can be found at 
- - <b>`https`</b>: //dlhub-sdk.readthedocs.io/en/latest/source/dlhub_sdk.models.servables.html under the appropriate ``create_model`` signature. use the argument names as keys and their values as the values. 
- - <b>`affiliations`</b> (list):  list of affiliations for each author 
- - <b>`paper_doi`</b> (str):  DOI of a paper that describes the servable 
-
-**Returns:**
- 
- - <b>`(string)`</b>:  task id of this submission, can be used to check for success 
-
-**Raises:**
- 
- - <b>`ValueError`</b>:  If the given servable_type is not in the list of acceptable types 
- - <b>`Exception`</b>:  If the serv_options are incomplete or the request to publish results in an error 
-
----
-
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L244"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>method</kbd> `run`
-
-```python
-run(name, inputs, funcx_endpoint=None, **kwargs)
-```
-
-Run a model on data 
-
-
-
-**Args:**
- 
- - <b>`name`</b> (str):  DLHub model name 
- - <b>`inputs`</b>:  Data to send to DLHub as inputs (should be JSON serializable) 
- - <b>`funcx_endpoint`</b> (optional):  UUID for the funcx endpoint to run the model on, if not the default (eg River) 
-
 
 
 **Returns:**
-  Returns results after invocation via the DLHub service 
+ 
+ - <b>`res`</b> (MDF Connect Response):  Response from MDF Connect to allow tracking of dataset. Contains  `source_id`, which can be used to check the status of the submission 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L206"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L195"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `search`
 
@@ -365,14 +328,24 @@ Run a model on data
 search(q=None, limit=None)
 ```
 
-Search available Foundry datasets q (str): query string to match limit (int): maximum number of results to return 
+Search available Foundry datasets 
 
-Returns 
--------  (pandas.DataFrame): DataFrame with summary list of Foundry data packages including name, title, publication year, and DOI 
+
+
+**Args:**
+ 
+ - <b>`q`</b> (str):  query string to match 
+ - <b>`limit`</b> (int):  maximum number of results to return 
+
+
+
+**Returns:**
+ 
+ - <b>`(pandas.DataFrame)`</b>:  DataFrame with summary list of Foundry data packages including name, title, publication  year, and DOI 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L750"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L747"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `to_tensorflow`
 
@@ -386,14 +359,17 @@ Convert Foundry Dataset to a Tensorflow Sequence
 
 **Arguments:**
  
- - <b>`split`</b> (string):  Split to create Tensorflow Sequence on. 
- - <b>`**Default`</b>: ** ``None`` 
+ - <b>`split`</b> (string):  Split to create Tensorflow Sequence on. Default is None. 
 
-Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split 
+
+
+**Returns:**
+ 
+ - <b>`(TensorflowSequence)`</b>:  Tensorflow Sequence of all the data from the specified split 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L735"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L732"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `to_torch`
 
@@ -407,10 +383,37 @@ Convert Foundry Dataset to a PyTorch Dataset
 
 **Arguments:**
  
- - <b>`split`</b> (string):  Split to create PyTorch Dataset on. 
- - <b>`**Default`</b>: ** ``None`` 
+ - <b>`split`</b> (string):  Split to create PyTorch Dataset on. Default is None. 
 
-Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split 
+
+
+**Returns:**
+ 
+ - <b>`(TorchDataset)`</b>:  PyTorch Dataset of all the data from the specified split 
+
+---
+
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L762"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `validate_metadata`
+
+```python
+validate_metadata(metadata)
+```
+
+Validate the JSON message against the FoundryMetadata model 
+
+
+
+**Arguments:**
+ 
+ - <b>`metadata`</b> (dict):  Metadata information provided by the user. 
+
+
+
+**Raises:**
+ 
+ - <b>`ValidationError`</b>:  if metadata supplied by user does not meet the specificiation of a FoundryMetadata object. 
 
 
 

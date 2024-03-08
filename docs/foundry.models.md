@@ -75,7 +75,7 @@ remove_duplicate_dependencies()
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L61"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L62"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryDatasetType`
 Foundry Dataset Types Enumeration of the possible Foundry dataset types 
@@ -86,7 +86,7 @@ Foundry Dataset Types Enumeration of the possible Foundry dataset types
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L72"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L73"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryKeyClass`
 
@@ -99,7 +99,7 @@ Foundry Dataset Types Enumeration of the possible Foundry dataset types
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L77"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L78"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryKey`
 
@@ -112,7 +112,7 @@ Foundry Dataset Types Enumeration of the possible Foundry dataset types
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L86"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L87"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundrySplit`
 
@@ -125,7 +125,18 @@ Foundry Dataset Types Enumeration of the possible Foundry dataset types
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L92"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L93"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+## <kbd>class</kbd> `FoundryMetadata`
+Foundry Dataset Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more 
+
+
+
+
+
+---
+
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L110"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryDataset`
 Foundry Dataset Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more 
@@ -136,7 +147,7 @@ Foundry Dataset Schema for Foundry Datasets. This includes specifications of inp
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L113"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L131"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryConfig`
 Foundry Configuration Configuration information for Foundry Dataset 
@@ -156,9 +167,9 @@ Foundry Configuration Configuration information for Foundry Dataset
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L137"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L155"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-## <kbd>class</kbd> `FoundryMetadata`
+## <kbd>class</kbd> `FoundryBase`
 
 
 
