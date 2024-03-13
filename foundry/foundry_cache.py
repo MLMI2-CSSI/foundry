@@ -10,9 +10,10 @@ import shutil
 from tqdm.auto import tqdm
 from typing import List, Any
 
-from foundry.https_download import recursive_ls, download_file
-from foundry.models import FoundrySplit, FoundrySchema
-from .utils import _read_csv, _read_json, _read_excel, is_pandas_pytable
+from .https_download import recursive_ls, download_file
+from foundry.project_model import Split as FoundrySplit
+from foundry.models import FoundrySchema
+from foundry.utils import _read_csv, _read_json, _read_excel, is_pandas_pytable
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,10 @@ class FoundryCache():
     def __init__(self,
                  forge_client: Forge,
                  transfer_client: Any,
+                 use_globus,
+                 interval,
+                 parallel_https,
+                 verbose,
                  local_cache_dir: str = None):
         """
         Initializes a FoundryCache object.
@@ -30,9 +35,13 @@ class FoundryCache():
         Args:
             forge_client (Forge): The Forge client object.
             transfer_client (Any): The transfer client object.
+            use_globus (bool): Flag indicating whether to use Globus for downloading.
+            interval (int): How often to wait before checking Globus transfer status.
+            parallel_https (int): Number of threads to use for downloading via HTTP.
+            verbose (bool): Flag indicating whether to produce more debug messages.
             local_cache_dir (str, optional): The local cache directory. Defaults to None.
-                If not specified, defaults to either environmental variable
-                ('FOUNDRY_LOCAL_CACHE_DIR') or './data/'.
+                If not specified, defaults to either the environmental variable 'FOUNDRY_LOCAL_CACHE_DIR'
+                or './data/'.
         """
         if local_cache_dir:
             self.local_cache_dir = local_cache_dir
@@ -40,44 +49,36 @@ class FoundryCache():
             self.local_cache_dir = os.environ.get("FOUNDRY_LOCAL_CACHE_DIR", './data/')
         self.forge_client = forge_client
         self.transfer_client = transfer_client
+        self.use_globus = use_globus
+        self.interval = interval
+        self.parallel_https = parallel_https
+        self.verbose = verbose
 
     def download_to_cache(self,
                           dataset_name: str,
-                          splits: List[FoundrySplit] = None,
-                          use_globus: bool = False,
-                          interval: int = 10,
-                          parallel_https: int = 4,
-                          verbose: bool = False,
-                          transfer_client=None):
-
+                          splits: List[FoundrySplit] = None):
         """
         Checks if the data is downloaded, and if not, downloads the data from source to local storage.
 
         Args:
             dataset_name (str): Name of the dataset (equivalent to source_id in MDF).
             splits (List[FoundrySplit], optional): List of splits in the dataset. Defaults to None.
-            use_globus (bool, optional): If True, use Globus to download the data; otherwise, try HTTPS. Defaults to False.
-            interval (int, optional): How often to wait before checking Globus transfer status. Defaults to 10.
-            parallel_https (int, optional): Number of files to download in parallel if using HTTPS. Defaults to 4.
-            verbose (bool, optional): Produce more debug messages to screen. Defaults to False.
-            transfer_client (Any, optional): The transfer client object. Defaults to None.
 
         Returns:
             FoundryCache: The FoundryCache object.
         """
         if not self.validate_local_dataset_storage(dataset_name, splits):
-            if use_globus:
-                self.download_via_globus(dataset_name, interval)
+            if self.use_globus:
+                self.download_via_globus(dataset_name)
             else:
-                self.download_via_http(dataset_name, parallel_https, verbose, self.transfer_client)
+                self.download_via_http(dataset_name, self.parallel_https, self.verbose, self.transfer_client)
 
         self.validate_local_dataset_storage(dataset_name, splits)
 
         return self
 
     def download_via_globus(self,
-                            dataset_name: str,
-                            interval: int):
+                            dataset_name: str):
         """
         Downloads selected dataset over Globus.
 
@@ -93,15 +94,12 @@ class FoundryCache():
         self.forge_client.globus_download(
             res,
             dest=self.local_cache_dir,
-            interval=interval,
+            interval=self.interval,
             download_datasets=True,
         )
 
     def download_via_http(self,
-                          dataset_name: str,
-                          parallel_https: int,
-                          verbose: bool,
-                          transfer_client: Any):
+                          dataset_name: str):
         """
         Downloads selected dataset from MDF over HTTP.
 
@@ -119,17 +117,17 @@ class FoundryCache():
         }
 
         # Begin finding files to download
-        task_generator = recursive_ls(transfer_client,
+        task_generator = recursive_ls(self.transfer_client,
                                       https_config['source_ep_id'],
                                       https_config['folder_to_crawl'])
         # import pdb; pdb.set_trace()
-        with ThreadPoolExecutor(parallel_https) as executor:
+        with ThreadPoolExecutor(self.parallel_https) as executor:
             # First submit all files
             futures = [executor.submit(lambda x: download_file(x, self.local_cache_dir, https_config), f)
-                       for f in tqdm(task_generator, disable=not verbose, desc="Finding files")]
+                       for f in tqdm(task_generator, disable=not self.verbose, desc="Finding files")]
 
             # Check that they completed successfully
-            for result in tqdm(as_completed(futures), disable=not verbose, desc="Downloading files"):
+            for result in tqdm(as_completed(futures), disable=not self.verbose, desc="Downloading files"):
                 if result.exception() is not None:
                     for f in futures:
                         f.cancel()
@@ -182,18 +180,13 @@ class FoundryCache():
                      split: str,
                      dataset_name: str,
                      foundry_schema: FoundrySchema,
-                     use_globus: bool,
-                     interval: int,
-                     parallel_https: int,
-                     verbose: bool,
-                     transfer_client: Any,
                      as_hdf5: bool):
         """
         Load in the data associated with the prescribed dataset.
 
         Args:
             dataset_name (str): Name of the dataset (equivalent to source_id in MDF).
-            foundry_schema (FoundrySchema, optional): Schema element as obtained from MDF. Defaults to None.
+            foundry_schema (FoundrySchema, optional): FoundrySchema object. Defaults to None.
             use_globus (bool, optional): If True, use Globus to download the data; otherwise, try HTTPS. Defaults to False.
             interval (int, optional): How often to wait before checking Globus transfer status. Defaults to 10.
             parallel_https (int, optional): Number of files to download in parallel if using HTTPS. Defaults to 4.
@@ -206,12 +199,7 @@ class FoundryCache():
         """
         # Ensure local copy of data is available
         self.download_to_cache(dataset_name,
-                               foundry_schema.splits,
-                               use_globus,
-                               interval,
-                               parallel_https,
-                               verbose,
-                               transfer_client)
+                               foundry_schema.splits)
 
         data = {}
 
@@ -222,13 +210,11 @@ class FoundryCache():
                     data[split.label] = self._load_data(foundry_schema=foundry_schema,
                                                         file=split.path,
                                                         source_id=dataset_name,
-                                                        use_globus=use_globus,
                                                         as_hdf5=as_hdf5)
                 return data
             else:
                 return {"data": self._load_data(foundry_schema=foundry_schema,
                                                 source_id=dataset_name,
-                                                use_globus=use_globus,
                                                 as_hdf5=as_hdf5)}
         except Exception as e:
             raise Exception(
@@ -238,11 +224,6 @@ class FoundryCache():
                       split: str,
                       dataset_name: str,
                       foundry_schema: FoundrySchema,
-                      use_globus: bool,
-                      interval: int,
-                      parallel_https: int,
-                      verbose: bool,
-                      transfer_client: Any,
                       as_hdf5: bool):
         """Convert Foundry Dataset to a PyTorch Dataset
 
@@ -256,11 +237,11 @@ class FoundryCache():
         # Ensure local copy of data is available
         self.download_to_cache(dataset_name,
                                foundry_schema.splits,
-                               use_globus,
-                               interval,
-                               parallel_https,
-                               verbose,
-                               transfer_client)
+                               self.use_globus,
+                               self.interval,
+                               self.parallel_https,
+                               self.verbose,
+                               self.transfer_client)
 
         from foundry.loaders.torch_wrapper import TorchDataset
 
@@ -271,11 +252,6 @@ class FoundryCache():
                            split: str,
                            dataset_name: str,
                            foundry_schema: FoundrySchema,
-                           use_globus: bool,
-                           interval: int,
-                           parallel_https: int,
-                           verbose: bool,
-                           transfer_client: Any,
                            as_hdf5: bool):
         """Convert Foundry Dataset to a Tensorflow Sequence
 
@@ -290,11 +266,11 @@ class FoundryCache():
         # Ensure local copy of data is available
         self.download_to_cache(dataset_name,
                                foundry_schema.splits,
-                               use_globus,
-                               interval,
-                               parallel_https,
-                               verbose,
-                               transfer_client)
+                               self.use_globus,
+                               self.interval,
+                               self.parallel_https,
+                               self.verbose,
+                               self.transfer_client)
 
         from foundry.loaders.tf_wrapper import TensorflowSequence
 
@@ -317,7 +293,7 @@ class FoundryCache():
         if not split:
             split = self.dataset.splits[0].type
 
-        if self.dataset.data_type.value == "hdf5":
+        if self.dataset.data_type == "hdf5":
             inputs = []
             targets = []
             for key in self.dataset.keys:
@@ -333,7 +309,7 @@ class FoundryCache():
 
             return (inputs, targets)
 
-        elif self.dataset.data_type.value == "tabular":
+        elif self.dataset.data_type == "tabular":
             inputs = []
             targets = []
 
@@ -351,7 +327,6 @@ class FoundryCache():
                    foundry_schema: FoundrySchema,
                    file: str = "foundry_dataframe.json",
                    source_id: str = None,
-                   use_globus: bool = True,
                    as_hdf5: bool = False):
         """
         Load the data from the cached file.
@@ -380,31 +355,31 @@ class FoundryCache():
             raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
 
         # Handle Foundry-defined types.
-        if foundry_schema.data_type.value == "tabular":
+        if foundry_schema.data_type == "tabular":
             # TODO: Add hashes and versioning to metadata and checking to the file
             read_fns = [(_read_json, {"lines": False, "path_to_file": path_to_file}),
                         (_read_json, {"lines": True, "path_to_file": path_to_file}),
                         (_read_csv, {"path_to_file": path_to_file}),
                         (_read_excel, {"path_to_file": path_to_file})]
-
+            dataframe = None
             for fn, params in read_fns:
                 try:
-                    foundry_schema.dataframe = fn(**params)
+                    dataframe = fn(**params)
                 except Exception as e:
                     logger.info(f"Unable to read file with {fn.__name__} with params {params}: {e}")
-                if foundry_schema.dataframe is not None:
+                if dataframe is not None:
                     logger.info(f"Succeeded with {fn.__name__} with params {params}")
                     break
-            if foundry_schema.dataframe is None:
+            if dataframe is None:
                 logger.fatal(f"Cannot read {path_to_file} as tabular data, failed to load")
                 raise ValueError(f"Cannot read tabular data from {path_to_file}")
 
             return (
-                foundry_schema.dataframe[self.get_keys(foundry_schema, "input")],
-                foundry_schema.dataframe[self.get_keys(foundry_schema, "target")],
+                dataframe[self.get_keys(foundry_schema, "input")],
+                dataframe[self.get_keys(foundry_schema, "target")],
             )
 
-        elif foundry_schema.data_type.value == "hdf5":
+        elif foundry_schema.data_type == "hdf5":
             f = h5py.File(path_to_file, "r")
             special_types = ["input", "target"]
             tmp_data = {s: {} for s in special_types}

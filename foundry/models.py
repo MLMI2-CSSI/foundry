@@ -1,18 +1,17 @@
-from typing import List, Dict, Optional, Any
-from pydantic import BaseModel, Extra, Field, StrictInt, StrictStr
+import copy
 from enum import Enum
-import pandas as pd
-from json2table import convert
 import json
+from json2table import convert
+import logging
+import pandas as pd
+from pydantic import BaseModel, Extra, ValidationError
+from typing import Optional, Any
 
-# class FoundryMetric(BaseModel):
-#     pass
+from .dc_model import Dc1 as DataciteModel
+from .project_model import Foundry as FoundryModel
 
-# class FoundryChallenge(BaseModel):
-#     id: int = None
-#     metric: FoundryMetric = None
-#     datasets: List[FoundryDataset] = []
-#     description: str = ""
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 
 # Classes for Foundry Data Package Specification
@@ -70,49 +69,93 @@ class FoundryDatasetType(Enum):
     other = "other"
 
 
-class FoundryKeyClass(BaseModel):
-    label: StrictStr = Field(..., description="The label that exists in the data")
-    name: StrictStr = Field(..., description="The name the label maps onto.")
+# overridden by project_model.py
+# class FoundryKeyClass(BaseModel):
+#     label: StrictStr = Field(..., description="The label that exists in the data")
+#     name: StrictStr = Field(..., description="The name the label maps onto.")
+# 
+# 
+# class FoundryKey(BaseModel):
+#     key: List[StrictStr] = Field(..., description="Column or header name for tabular data, key/path for HDF5 data")
+#     type: StrictStr = Field(..., description="Whether input or target")
+#     classes: Optional[List[FoundryKeyClass]]
+#     description: Optional[StrictStr]
+#     filter: Optional[StrictStr]
+#     units: Optional[StrictStr]
+# 
+# 
+# class FoundrySplit(BaseModel):
+#     type: StrictStr = Field(..., description="The kind of partition of the dataset (train, test, validation, etc)")
+#     path: Optional[StrictStr]
+#     label: Optional[StrictStr]
+#
+#
+# replacing with definition from project_model.py
+# class FoundrySchema(BaseModel):
+#    """Foundry Dataset
+#    Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
+#    """
+#    data_type: FoundryDatasetType = Field(..., description="The kind of data in the dataset, e.g. tabular, json, hdf5")
+#    domain: List[StrictStr] = Field(..., description="The domain of applicability. e.g., materials science, chemistry, machine vision")
+#    keys: List[FoundryKey] = Field(..., description="Keys describing how to load the data")
+#    dataframe: Optional[Any]
+#    n_items: Optional[StrictInt]
+#    short_name: Optional[StrictStr]
+#    splits: Optional[List[FoundrySplit]]
+#    task_type: Optional[List[StrictStr]]
+#    schema_url = 'https://raw.githubusercontent.com/materials-data-facility/data-schemas/master/schemas/projects.json'
+# 
+#    class Config:
+#        arbitrary_types_allowed = True
+#        extra = Extra.allow
 
 
-class FoundryKey(BaseModel):
-    key: List[StrictStr] = Field(..., description="Column or header name for tabular data, key/path for HDF5 data")
-    type: StrictStr = Field(..., description="Whether input or target")
-    classes: Optional[List[FoundryKeyClass]]
-    description: Optional[StrictStr]
-    filter: Optional[StrictStr]
-    units: Optional[StrictStr]
+class FoundrySchema(FoundryModel):
+    def __init__(self, project_dict):
+        try:
+            super(FoundrySchema, self).__init__(**project_dict)
+            print("FoundrySchema validation successful.")
+        except ValidationError as e:
+            print("FoundrySchema validation failed!")
+            for error in e.errors():
+                field_name = ".".join([item for item in error['loc'] if isinstance(item, str)])
+                error_description = error['msg']
+                error_message = f"""There is an issue validating the entry for the field '{field_name}':
+                The error message returned is: '{error_description}'.
+                The description for this field is: '{FoundryModel.schema()['properties'][field_name]['description']}'"""
+                print(error_message)
+            raise e
 
 
-class FoundrySplit(BaseModel):
-    type: StrictStr = Field(..., description="The kind of partition of the dataset (train, test, validation, etc)")
-    path: Optional[StrictStr]
-    label: Optional[StrictStr]
+class FoundryDatacite(DataciteModel):
+    def __init__(self, datacite_dict):
+        try:
+            # modify the datacite_entry to match the expected format
+            dc = copy.deepcopy(datacite_dict)
 
-
-class FoundrySchema(BaseModel):
-    """Foundry Dataset
-    Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
-    """
-    data_type: FoundryDatasetType = Field(..., description="The kind of data in the dataset, e.g. tabular, json, hdf5")
-    domain: List[StrictStr] = Field(..., description="The domain of applicability. e.g., materials science, chemistry, machine vision")
-    keys: List[FoundryKey] = Field(..., description="Keys describing how to load the data")
-    dataframe: Optional[Any]
-    n_items: Optional[StrictInt]
-    short_name: Optional[StrictStr]
-    splits: Optional[List[FoundrySplit]]
-    task_type: Optional[List[StrictStr]]
-
-    class Config:
-        arbitrary_types_allowed = True
-        extra = Extra.allow
+            if 'identifier' in dc.keys():
+                if 'identifier' in dc['identifier'].keys():
+                    dc['identifier']['identifier'] = {'__root__': datacite_dict['identifier']['identifier']}
+            super(FoundryDatacite, self).__init__(**dc)
+            print("Datacite validation successful.")
+        except ValidationError as e:
+            print("Datacite validation failed!")
+            for error in e.errors():
+                # field_name = ".".join([item for item in error['loc'] if isinstance(item, str)])
+                field_name = error['loc'][0]
+                error_description = error['msg']
+                error_message = f"""There is an issue validating the entry for the field '{field_name}':
+                The error message returned is: '{error_description}'.
+                The description for this field is: '{FoundryDatacite.schema()['properties'][field_name]['description']}'"""
+                print(error_message)
+            raise e
 
 
 # class FoundryDataset(BaseModel):
 #     """Foundry Dataset
 #     Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
 #     """
-
+# 
 #     keys: List[FoundryKey] = None
 #     splits: Optional[List[FoundrySplit]] = None
 #     data_type: FoundryDatasetType = None
@@ -124,29 +167,9 @@ class FoundrySchema(BaseModel):
 #     task_type: Optional[List[str]] = []
 #     domain: Optional[List[str]] = []
 #     n_items: Optional[int] = 0
-
+# 
 #     class Config:
 #         arbitrary_types_allowed = True
-
-class FoundryDataset(BaseModel):
-    """Foundry Dataset
-    Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
-    """
-
-    keys: List[FoundryKey] = None
-    splits: Optional[List[FoundrySplit]] = None
-    data_type: FoundryDatasetType = None
-    # version: Optional[str] = ""
-    short_name: Optional[str] = ""
-    dataframe: Optional[Any] = None
-    # links: Optional[FoundryLinks]
-    # citations: Optional[List[str]] = []
-    task_type: Optional[List[str]] = []
-    domain: Optional[List[str]] = []
-    n_items: Optional[int] = 0
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class FoundryBase(BaseModel, extra=Extra.allow):
@@ -172,7 +195,7 @@ class FoundryBase(BaseModel, extra=Extra.allow):
         return convert(json.loads(self.json()))
 
 
-class FoundryDataset(BaseModel, extra=Extra.allow):
-    dc: Dict = {}  # pydantic Datacite?
-    mdf: Dict = {}
-    dataset: FoundryDataset = {}
+# class FoundryDataset(BaseModel, extra=Extra.allow):
+#     dc: Dict = {}  # pydantic Datacite?
+#     mdf: Dict = {}
+#     dataset: FoundryDataset = {}

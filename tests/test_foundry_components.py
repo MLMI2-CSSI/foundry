@@ -107,13 +107,13 @@ def test_search(auths, elwood_data):
     dataset = ds.iloc[0].FoundryDataset
 
     # assert ds.iloc[0]['name'] is not None
-    assert dataset.dc["titles"][0]["title"] == expected_title
+    assert dataset.dc.titles[0].title == expected_title
 
     # assert ds.iloc[0]['source_id'] is not None
     assert dataset.dataset_name == test_dataset_name
 
     # assert ds.iloc[0]['year'] is not None
-    assert dataset.dc.get("publicationYear", None) is not None
+    assert dataset.dc.publicationYear is not None
 
 
 def test_search_as_list(auths, elwood_data):
@@ -130,13 +130,13 @@ def test_search_as_list(auths, elwood_data):
     dataset = ds[0]
 
     # assert ds.iloc[0]['name'] is not None
-    assert dataset.dc["titles"][0]["title"] == expected_title
+    assert dataset.dc.titles[0].title == expected_title
 
     # assert ds.iloc[0]['source_id'] is not None
     assert dataset.dataset_name == test_dataset_name
 
     # assert ds.iloc[0]['year'] is not None
-    assert dataset.dc.get("publicationYear", None) is not None
+    assert dataset.dc.publicationYear is not None
 
 
 def test_search_limit(auths, elwood_data):

@@ -9,19 +9,13 @@ from dlhub_sdk import DLHubClient
 from globus_sdk import AuthClient
 
 from .auth import PubAuths
+from .foundry_cache import FoundryCache
+from .foundry_dataset import FoundryDataset
+from .https_upload import upload_to_endpoint
 from .utils import is_doi
 
-from foundry.models import (
-    FoundrySchema,
-    FoundryBase
-)
+from foundry.models import FoundryBase
 
-from foundry.foundry_dataset import FoundryDataset
-
-# from foundry import FOUNDRY_CACHE
-# from foundry.foundry_cache import FoundryCache
-
-from foundry.https_upload import upload_to_endpoint
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -107,6 +101,7 @@ class Foundry(FoundryBase):
                  use_globus: bool = True,
                  verbose: bool = False,
                  interval: int = 10,
+                 parallel_https: int = 4,
                  local_cache_dir: str = None,
                  **data):
         """Initialize a Foundry client
@@ -206,7 +201,22 @@ class Foundry(FoundryBase):
             force_login=False,
         )
 
-    def search(self, query: str = None, limit: int = None, as_list: bool = False) -> [FoundryDataset]:
+        # THESE NEED TO BE SET ON THE CACHE OBJECT NOW INSTEAD OF PASSED TO THE FUCNTION CALLS
+        self.use_globus = use_globus
+        self.interval = interval
+        self.parallel_https = parallel_https
+        self.verbose = verbose
+        local_cache_dir
+
+        self._foundry_cache = FoundryCache(self.forge_client,
+                                           self.transfer_client,
+                                           use_globus,
+                                           interval,
+                                           parallel_https,
+                                           verbose,
+                                           local_cache_dir)
+
+    def search(self, query: str = None, limit: int = None, as_list: bool = False) -> List[FoundryDataset]:
         """Search available Foundry datasets
 
         This method searches for available Foundry datasets based on the provided query string.
@@ -278,19 +288,16 @@ class Foundry(FoundryBase):
             Exception: If the mdf entry is missing a section, cannot generate a foundry dataset object
         """
         try:
-            foundry_schema = FoundrySchema(**metadata['projects']['foundry'])
+            # foundry_schema = FoundrySchema(metadata['projects']['foundry'])
+            foundry_schema = metadata['projects']['foundry']
+            # dc = FoundryDatacite(metadata['dc'])
             dc = metadata['dc']
             name = metadata['mdf']['source_id']
 
             ds = FoundryDataset(**{'dataset_name': name,
-                                   'foundry_schema': foundry_schema,
-                                   'transfer_client': self.auths["transfer"],
                                    'datacite_entry': dc,
-                                   'use_globus': self.use_globus,
-                                   'interval': self.interval,
-                                   'verbose': self.verbose,
-                                   'forge_client': self.forge_client,
-                                   'local_cache_dir': self.local_cache_dir})
+                                   'foundry_schema': foundry_schema,
+                                   'foundry_cache': self._foundry_cache})
 
             return ds
 
@@ -368,15 +375,15 @@ class Foundry(FoundryBase):
         series_list = []
         for result in results:
             series_list.append(pd.Series({'dataset_name': result.dataset_name,
-                                          'title': result.dc['titles'][0]['title'],
-                                          'year': result.dc['publicationYear'],
-                                          'DOI': result.dc['identifier']['identifier'],
+                                          'title': result.dc.titles[0].title,
+                                          'year': result.dc.publicationYear.__root__,
+                                          'DOI': result.dc.identifier.identifier.__root__,
                                           'FoundryDataset': result}))
         df = HiddenColumnDataFrame(series_list, hidden_column='FoundryDataset')
         return df
 
     def publish_dataset(self,
-                        foundry_metadata: Dict[str, Any],
+                        foundry_dataset: FoundryDataset,
                         title: str, authors: List[str],
                         https_data_path: str = None,
                         globus_data_source: str = None,
@@ -424,8 +431,15 @@ class Foundry(FoundryBase):
             of dataset. Contains `source_id`, which can be used to check the
             status of the submission
         """
+        # strip 'None' values from metadata object
+        clean_metadata_json = self.remove_none_keys(foundry_dataset.foundry_schema.json())
+
         # ensure metadata is properly formatted
-        self.validate_metadata(foundry_metadata)
+        self.validate_metadata(clean_metadata_json)
+
+        # strip 'None' values from datacite object
+        clean_dc_json = self.remove_none_keys(foundry_dataset.dc.json())
+        self.validate(clean_dc_json)
 
         # ensure that one of `https_data_path` or `globus_data_source` have been assigned values
         if (https_data_path and globus_data_source) or \
@@ -444,8 +458,7 @@ class Foundry(FoundryBase):
             related_dois=kwargs.get("related_dois", [])
         )
         self.connect_client.add_organization(self.organization)
-        self.connect_client.set_project_block(
-            self.config.metadata_key, foundry_metadata)
+        self.connect_client.set_project_block(self.config.metadata_key)
 
         # upload via HTTPS if specified
         if https_data_path:

@@ -1,12 +1,10 @@
 import logging
 import os
 
-from mdf_forge import Forge
 from pydantic import ValidationError
-from typing import Any
 
 from .foundry_cache import FoundryCache
-from foundry.models import FoundrySchema
+from .models import FoundrySchema, FoundryDatacite
 
 
 logger = logging.getLogger(__name__)
@@ -38,25 +36,17 @@ class FoundryDataset():
 
     def __init__(self,
                  dataset_name: str,
-                 datacite_entry: dict,
-                 transfer_client: Any,
+                 datacite_entry: FoundryDatacite,
                  foundry_schema: FoundrySchema,
-                 use_globus: bool = False,
-                 interval: int = 10,
-                 parallel_https: int = 4,
-                 verbose: bool = False,
-                 forge_client: Forge = None,
-                 local_cache_dir: str = None):
+                 foundry_cache: FoundryCache = None):
 
         self.dataset_name = dataset_name
-        self.dc = datacite_entry
-        self.transfer_client = transfer_client
-        self.foundry_schema = foundry_schema
-        self.use_globus = use_globus
-        self.interval = interval
-        self.parallel_https = parallel_https
-        self.verbose = verbose
-        self._foundry_cache = FoundryCache(forge_client, transfer_client, local_cache_dir)
+        try:
+            self.dc = FoundryDatacite(datacite_entry)
+            self.foundry_schema = FoundrySchema(foundry_schema)
+        except Exception as e:
+            raise Exception('there was a problem creating the dataset: ', e)
+        self._foundry_cache = foundry_cache
 
     def get_as_dict(self, split: str = None, as_hdf5: bool = False):
         """Returns the data from the dataset as a dictionary
@@ -71,11 +61,6 @@ class FoundryDataset():
         return self._foundry_cache.load_as_dict(split,
                                                 self.dataset_name,
                                                 self.foundry_schema,
-                                                self.use_globus,
-                                                self.interval,
-                                                self.parallel_https,
-                                                self.verbose,
-                                                self.transfer_client,
                                                 as_hdf5)
 
     def get_as_torch(self, split: str = None):
@@ -91,12 +76,7 @@ class FoundryDataset():
 
         return self._foundry_cache.load_as_torch(split,
                                                  self.dataset_name,
-                                                 self.foundry_schema,
-                                                 self.use_globus,
-                                                 self.interval,
-                                                 self.parallel_https,
-                                                 self.verbose,
-                                                 self.transfer_client)
+                                                 self.foundry_schema)
 
     def get_as_tensorflow(self, split: str = None):
         """Convert Foundry Dataset to a Tensorflow Sequence
@@ -110,27 +90,22 @@ class FoundryDataset():
         """
         return self._foundry_cache.load_as_tensorflow(split,
                                                       self.dataset_name,
-                                                      self.foundry_schema,
-                                                      self.use_globus,
-                                                      self.interval,
-                                                      self.parallel_https,
-                                                      self.verbose,
-                                                      self.transfer_client)
+                                                      self.foundry_schema)
 
     def get_citation(self) -> str:
-        subjects = [subject['subject'] for subject in self.dc['subjects']]
-        doi_str = f"doi = {{{self.dc['identifier']['identifier']}}}"
-        url_str = f"url = {{https://doi.org/{self.dc['identifier']['identifier']}}}"
-        author_str = f"author = {{{' and '.join([creator['creatorName'] for creator in self.dc['creators']])}}}"
-        title_str = f"title = {{{self.dc['titles'][0]['title']}}}"
+        subjects = [subject.subject for subject in self.dc.subjects]
+        doi_str = f"doi = {{{self.dc.identifier.identifier.__root__}}}"
+        url_str = f"url = {{https://doi.org/{self.dc.identifier.identifier.__root__}}}"
+        author_str = f"author = {{{' and '.join([creator['creatorName'] for creator in self.dc.creators])}}}"
+        title_str = f"title = {{{self.dc.titles[0].title}}}"
         keywords_str = f"keywords = {{{', '.join(subjects)}}}"
-        publisher_str = f"publisher = {{{self.dc['publisher']}}}"
-        year_str = f"year = {{{self.dc['publicationYear']}}}"
+        publisher_str = f"publisher = {{{self.dc.publisher}}}"
+        year_str = f"year = {{{self.dc.publicationYear.__root__}}}"
         bibtex = os.linesep.join([doi_str, url_str,
                                   author_str, title_str,
                                   keywords_str, publisher_str,
                                   year_str])
-        bibtex = f"@misc{{https://doi.org/{self.dc['identifier']['identifier']}{os.linesep}{bibtex}}}"
+        bibtex = f"@misc{{https://doi.org/{self.dc.identifier.identifier.__root__}{os.linesep}{bibtex}}}"
         return bibtex
 
     def validate_metadata(self, metadata):
