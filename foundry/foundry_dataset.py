@@ -16,12 +16,10 @@ class FoundryDataset():
         instantiate data into memory in different formats.
 
         Args:
-            dataset_name (str): name of dataset (equivalent to source_id in MDF)
-            splits List[FoundrySplit]: list of splits in the dataset
-            use_globus (bool): if True, use Globus to download the data else try HTTPS
-            interval (int): How often to wait before checking Globus transfer status
-            parallel_https (int): Number of files to download in parallel if using HTTPS
-            verbose (bool): Produce more debug messages to screen
+            dataset_name (str): Name of the dataset (equivalent to source_id in MDF)
+            datacite_entry (FoundryDatacite): Datacite entry for the dataset
+            foundry_schema (FoundrySchema): Schema for the dataset
+            foundry_cache (FoundryCache): Cache for the dataset
 
         Desired functions:
             - Get as pandas

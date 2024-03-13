@@ -84,7 +84,6 @@ class FoundryCache():
 
         Args:
             dataset_name (str): Name of the dataset (equivalent to source_id in MDF).
-            interval (int): How often to wait before checking Globus transfer status.
         """
         # query for mdf data representation
         res = self.forge_client.search(
@@ -105,9 +104,6 @@ class FoundryCache():
 
         Args:
             dataset_name (str): Name of the dataset (equivalent to source_id in MDF).
-            parallel_https (int): Number of threads to use for downloading.
-            verbose (bool): Produce more debug messages to screen.
-            transfer_client (Any): The transfer client object.
         """
         https_config = {
             "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
@@ -182,20 +178,16 @@ class FoundryCache():
                      foundry_schema: FoundrySchema,
                      as_hdf5: bool):
         """
-        Load in the data associated with the prescribed dataset.
+        Load the data associated with the specified dataset and return it as a labeled dictionary of tuples.
 
         Args:
+            split (str): Split to load the data from.
             dataset_name (str): Name of the dataset (equivalent to source_id in MDF).
             foundry_schema (FoundrySchema, optional): FoundrySchema object. Defaults to None.
-            use_globus (bool, optional): If True, use Globus to download the data; otherwise, try HTTPS. Defaults to False.
-            interval (int, optional): How often to wait before checking Globus transfer status. Defaults to 10.
-            parallel_https (int, optional): Number of files to download in parallel if using HTTPS. Defaults to 4.
-            verbose (bool, optional): Produce more debug messages to screen. Defaults to False.
-            transfer_client (Any, optional): The transfer client object. Defaults to None.
             as_hdf5 (bool, optional): If True and dataset is in HDF5 format, keep data in HDF5 format. Defaults to False.
 
         Returns:
-            dict: A labeled dictionary of tuples.
+            dict: A labeled dictionary of tuples containing the loaded data.
         """
         # Ensure local copy of data is available
         self.download_to_cache(dataset_name,
@@ -336,7 +328,7 @@ class FoundryCache():
             file (str, optional): The name of the file to load. Defaults to "foundry_dataframe.json".
             source_id (str, optional): The source ID of the dataset. Defaults to None.
             use_globus (bool, optional): If True, download using Globus; otherwise, use HTTPS. Defaults to True.
-            as_hdf5 (bool, optional): If True and dataset is in HDF5 format, keep data in HDF5 format. Defaults to False.
+            as_hdf5 (bool, optional): If True, keep data in HDF5 format if the dataset is in HDF5 format. Defaults to False.
 
         Returns:
             tuple: A tuple containing the input and target data.
