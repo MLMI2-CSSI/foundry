@@ -201,7 +201,6 @@ class Foundry(FoundryBase):
             force_login=False,
         )
 
-        # THESE NEED TO BE SET ON THE CACHE OBJECT NOW INSTEAD OF PASSED TO THE FUCNTION CALLS
         self.use_globus = use_globus
         self.interval = interval
         self.parallel_https = parallel_https
@@ -288,9 +287,7 @@ class Foundry(FoundryBase):
             Exception: If the mdf entry is missing a section, cannot generate a foundry dataset object
         """
         try:
-            # foundry_schema = FoundrySchema(metadata['projects']['foundry'])
             foundry_schema = metadata['projects']['foundry']
-            # dc = FoundryDatacite(metadata['dc'])
             dc = metadata['dc']
             name = metadata['mdf']['source_id']
 
@@ -409,21 +406,8 @@ class Foundry(FoundryBase):
                 publish their data.
             update (bool): True if this is an update to a prior data package
                 (default: self.config.metadata_file)
-            publication_year (int): Year of dataset publication. If None, will
-                be set to the current calendar year by MDF Connect Client.
-                (default: $current_year)
             test (bool): If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).
                 Default is False.
-
-        Keyword Args:
-            affiliations (list): List of author affiliations
-            tags (list): List of tags to apply to the data package
-            short_name (string): Shortened/abbreviated name of the data package
-            publisher (string): Data publishing entity (e.g. MDF, Zenodo, etc.)
-            description (str): A description of the dataset.
-            dataset_doi (str): The DOI for this dataset (not an associated paper).
-            related_dois (list): DOIs related to this dataset,
-                    not including the dataset's own DOI (for example, an associated paper's DOI).
 
         Returns
         -------
@@ -431,13 +415,11 @@ class Foundry(FoundryBase):
             of dataset. Contains `source_id`, which can be used to check the
             status of the submission
         """
-        # strip 'None' values from metadata object
+        # strip 'None' values from metadata object and ensure metadata is properly formatted
         clean_metadata_json = self.remove_none_keys(foundry_dataset.foundry_schema.json())
-
-        # ensure metadata is properly formatted
         self.validate_metadata(clean_metadata_json)
 
-        # strip 'None' values from datacite object
+        # strip 'None' values from datacite object and ensure datacite is properly formatted
         clean_dc_json = self.remove_none_keys(foundry_dataset.dc.json())
         self.validate(clean_dc_json)
 
