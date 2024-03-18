@@ -130,6 +130,27 @@ class FoundryDataset():
                 logger.error(error_message)
             raise e
 
+    def add_data(self, https_data_path: str = None, globus_data_source: str = None):
+        """Add data to the dataset. User must provide the location of the data as
+        either a `globus_data_source` or `https_data_path`.
+
+        Arguments:
+                https_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
+                request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
+                transferred to MDF. If None, the user must specify a 'globus_data_source' URL to the location of the
+                data on their own Globus endpoint. User must choose either `globus_data_source` or `https_data_path` to
+                publish their data.
+            globus_data_source (str): Url path for a data folder on a Globus endpoint; url can be obtained through
+                the Globus Web UI or SDK. If None, the user must specify an 'https_data_path' pointing to the location
+                of the data on their local machine. User must choose either `globus_data_source` or `https_data_path` to
+                publish their data.
+
+        """
+        if https_data_path is None:
+            self.globus_data_source = globus_data_source
+        if globus_data_source is None:
+            self.https_data_path = https_data_path
+
     def clear_dataset_cache(self):
         """Deletes the cached data for this specific datset"""
         self._foundry_cache.clear_cache(self.dataset_name)
