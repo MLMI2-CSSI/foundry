@@ -7,8 +7,8 @@ import pandas as pd
 from pydantic import BaseModel, Extra, ValidationError
 from typing import Optional, Any
 
-from .dc_model import Dc1 as DataciteModel
-from .project_model import Foundry as FoundryModel
+from .jsonschema_models.dc_model import Dc1 as DataciteModel
+from .jsonschema_models.project_model import Foundry as FoundryModel
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
 logger = logging.getLogger(__name__)

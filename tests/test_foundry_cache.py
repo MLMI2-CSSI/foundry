@@ -5,7 +5,7 @@ import pytest
 from unittest.mock import MagicMock
 
 from . import test_foundry_dataset
-from foundry.project_model import Split as FoundrySplit, \
+from foundry.jsonschema_models.project_model import Split as FoundrySplit, \
                                   Key as FoundryKey
 from foundry.foundry_cache import FoundryCache
 from foundry.models import FoundrySchema

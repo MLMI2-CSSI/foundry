@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 from typing import List, Any
 
 from .https_download import recursive_ls, download_file
-from foundry.project_model import Split as FoundrySplit
+from foundry.jsonschema_models.project_model import Split as FoundrySplit
 from foundry.models import FoundrySchema
 from foundry.utils import _read_csv, _read_json, _read_excel, is_pandas_pytable
 
