@@ -413,8 +413,8 @@ class Foundry(FoundryBase):
         self.validate(clean_dc_json)
 
         # ensure that one of `https_data_path` or `globus_data_source` have been assigned values
-        if (https_data_path and globus_data_source) or \
-                (https_data_path is None and globus_data_source is None):
+        if (foundry_dataset.https_data_path and foundry_dataset.globus_data_source) or \
+                (foundry_dataset.https_data_path is None and foundry_dataset.globus_data_source is None):
             raise ValueError("Must assign either `https_data_path` or `globus_data_source`")
 
         self.connect_client.create_dc_block(
@@ -432,7 +432,7 @@ class Foundry(FoundryBase):
         self.connect_client.set_project_block(self.config.metadata_key)
 
         # upload via HTTPS if specified
-        if https_data_path:
+        if foundry_dataset.https_data_path:
             # gather auth'd clients necessary for publication to endpoint
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
             scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"  # lets you HTTPS to specific endpoint
@@ -442,7 +442,7 @@ class Foundry(FoundryBase):
                 endpoint_auth_clients={endpoint_id: AuthClient(authorizer=self.auths[scope])}
             )
             # upload (ie publish) data to endpoint
-            globus_data_source = upload_to_endpoint(pub_auths, https_data_path, endpoint_id)
+            globus_data_source = upload_to_endpoint(pub_auths, foundry_dataset.https_data_path, endpoint_id)
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
         # set dataset name using the title if an abbreviated short_name isn't specified
