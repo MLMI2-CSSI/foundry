@@ -382,8 +382,6 @@ class Foundry(FoundryBase):
     def publish_dataset(self,
                         foundry_dataset: FoundryDataset,
                         title: str, authors: List[str],
-                        https_data_path: str = None,
-                        globus_data_source: str = None,
                         update: bool = False,
                         publication_year: int = None,
                         test: bool = False,
@@ -395,15 +393,6 @@ class Foundry(FoundryBase):
             title (string): Title of data package
             authors (list): List of data package author names e.g., Jack Black
                 or Nunez, Victoria
-            https_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
-                request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
-                transferred to MDF. If None, the user must specify a 'globus_data_source' URL to the location of the
-                data on their own Globus endpoint. User must choose either `globus_data_source` or `https_data_path` to
-                publish their data.
-            globus_data_source (str): Url path for a data folder on a Globus endpoint; url can be obtained through
-                the Globus Web UI or SDK. If None, the user must specify an 'https_data_path' pointing to the location
-                of the data on their local machine. User must choose either `globus_data_source` or `https_data_path` to
-                publish their data.
             update (bool): True if this is an update to a prior data package
                 (default: self.config.metadata_file)
             test (bool): If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).
