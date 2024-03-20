@@ -29,6 +29,30 @@ __init__(inputs, targets)
 
 
 
+---
+
+#### <kbd>property</kbd> max_queue_size
+
+
+
+
+
+---
+
+#### <kbd>property</kbd> use_multiprocessing
+
+
+
+
+
+---
+
+#### <kbd>property</kbd> workers
+
+
+
+
+
 
 
 

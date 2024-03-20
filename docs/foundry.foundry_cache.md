@@ -11,17 +11,25 @@
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L20"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L21"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryCache`
 The FoundryCache manages the local storage of FoundryDataset objects 
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L23"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L24"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
 ```python
-__init__(forge_client: Forge, transfer_client: Any, local_cache_dir: str = None)
+__init__(
+    forge_client: Forge,
+    transfer_client: Any,
+    use_globus,
+    interval,
+    parallel_https,
+    verbose,
+    local_cache_dir: str = None
+)
 ```
 
 Initializes a FoundryCache object. 
@@ -32,14 +40,18 @@ Initializes a FoundryCache object.
  
  - <b>`forge_client`</b> (Forge):  The Forge client object. 
  - <b>`transfer_client`</b> (Any):  The transfer client object. 
- - <b>`local_cache_dir`</b> (str, optional):  The local cache directory. Defaults to None.  If not specified, defaults to either environmental variable  ('FOUNDRY_LOCAL_CACHE_DIR') or './data/'. 
+ - <b>`use_globus`</b> (bool):  Flag indicating whether to use Globus for downloading. 
+ - <b>`interval`</b> (int):  How often to wait before checking Globus transfer status. 
+ - <b>`parallel_https`</b> (int):  Number of threads to use for downloading via HTTP. 
+ - <b>`verbose`</b> (bool):  Flag indicating whether to produce more debug messages. 
+ - <b>`local_cache_dir`</b> (str, optional):  The local cache directory. Defaults to None.  If not specified, defaults to either the environmental variable 'FOUNDRY_LOCAL_CACHE_DIR'  or './data/'. 
 
 
 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L461"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L428"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `clear_cache`
 
@@ -57,20 +69,12 @@ Deletes all of the locally stored datasets
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L44"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L57"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `download_to_cache`
 
 ```python
-download_to_cache(
-    dataset_name: str,
-    splits: List[FoundrySplit] = None,
-    use_globus: bool = False,
-    interval: int = 10,
-    parallel_https: int = 4,
-    verbose: bool = False,
-    transfer_client=None
-)
+download_to_cache(dataset_name: str, splits: List[Split] = None)
 ```
 
 Checks if the data is downloaded, and if not, downloads the data from source to local storage. 
@@ -81,11 +85,6 @@ Checks if the data is downloaded, and if not, downloads the data from source to 
  
  - <b>`dataset_name`</b> (str):  Name of the dataset (equivalent to source_id in MDF). 
  - <b>`splits`</b> (List[FoundrySplit], optional):  List of splits in the dataset. Defaults to None. 
- - <b>`use_globus`</b> (bool, optional):  If True, use Globus to download the data; otherwise, try HTTPS. Defaults to False. 
- - <b>`interval`</b> (int, optional):  How often to wait before checking Globus transfer status. Defaults to 10. 
- - <b>`parallel_https`</b> (int, optional):  Number of files to download in parallel if using HTTPS. Defaults to 4. 
- - <b>`verbose`</b> (bool, optional):  Produce more debug messages to screen. Defaults to False. 
- - <b>`transfer_client`</b> (Any, optional):  The transfer client object. Defaults to None. 
 
 
 
@@ -95,12 +94,12 @@ Checks if the data is downloaded, and if not, downloads the data from source to 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L78"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L80"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `download_via_globus`
 
 ```python
-download_via_globus(dataset_name: str, interval: int)
+download_via_globus(dataset_name: str)
 ```
 
 Downloads selected dataset over Globus. 
@@ -110,7 +109,6 @@ Downloads selected dataset over Globus.
 **Args:**
  
  - <b>`dataset_name`</b> (str):  Name of the dataset (equivalent to source_id in MDF). 
- - <b>`interval`</b> (int):  How often to wait before checking Globus transfer status. 
 
 ---
 
@@ -119,12 +117,7 @@ Downloads selected dataset over Globus.
 ### <kbd>method</kbd> `download_via_http`
 
 ```python
-download_via_http(
-    dataset_name: str,
-    parallel_https: int,
-    verbose: bool,
-    transfer_client: Any
-)
+download_via_http(dataset_name: str)
 ```
 
 Downloads selected dataset from MDF over HTTP. 
@@ -134,13 +127,10 @@ Downloads selected dataset from MDF over HTTP.
 **Args:**
  
  - <b>`dataset_name`</b> (str):  Name of the dataset (equivalent to source_id in MDF). 
- - <b>`parallel_https`</b> (int):  Number of threads to use for downloading. 
- - <b>`verbose`</b> (bool):  Produce more debug messages to screen. 
- - <b>`transfer_client`</b> (Any):  The transfer client object. 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L427"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L394"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_keys`
 
@@ -165,7 +155,7 @@ Get keys for a Foundry dataset
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L181"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L175"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `load_as_dict`
 
@@ -174,39 +164,30 @@ load_as_dict(
     split: str,
     dataset_name: str,
     foundry_schema: FoundrySchema,
-    use_globus: bool,
-    interval: int,
-    parallel_https: int,
-    verbose: bool,
-    transfer_client: Any,
     as_hdf5: bool
 )
 ```
 
-Load in the data associated with the prescribed dataset. 
+Load the data associated with the specified dataset and return it as a labeled dictionary of tuples. 
 
 
 
 **Args:**
  
+ - <b>`split`</b> (str):  Split to load the data from. 
  - <b>`dataset_name`</b> (str):  Name of the dataset (equivalent to source_id in MDF). 
- - <b>`foundry_schema`</b> (FoundrySchema, optional):  Schema element as obtained from MDF. Defaults to None. 
- - <b>`use_globus`</b> (bool, optional):  If True, use Globus to download the data; otherwise, try HTTPS. Defaults to False. 
- - <b>`interval`</b> (int, optional):  How often to wait before checking Globus transfer status. Defaults to 10. 
- - <b>`parallel_https`</b> (int, optional):  Number of files to download in parallel if using HTTPS. Defaults to 4. 
- - <b>`verbose`</b> (bool, optional):  Produce more debug messages to screen. Defaults to False. 
- - <b>`transfer_client`</b> (Any, optional):  The transfer client object. Defaults to None. 
+ - <b>`foundry_schema`</b> (FoundrySchema, optional):  FoundrySchema object. Defaults to None. 
  - <b>`as_hdf5`</b> (bool, optional):  If True and dataset is in HDF5 format, keep data in HDF5 format. Defaults to False. 
 
 
 
 **Returns:**
  
- - <b>`dict`</b>:  A labeled dictionary of tuples. 
+ - <b>`dict`</b>:  A labeled dictionary of tuples containing the loaded data. 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L270"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L243"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `load_as_tensorflow`
 
@@ -215,11 +196,6 @@ load_as_tensorflow(
     split: str,
     dataset_name: str,
     foundry_schema: FoundrySchema,
-    use_globus: bool,
-    interval: int,
-    parallel_https: int,
-    verbose: bool,
-    transfer_client: Any,
     as_hdf5: bool
 )
 ```
@@ -237,7 +213,7 @@ Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the speci
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L237"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L215"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `load_as_torch`
 
@@ -246,11 +222,6 @@ load_as_torch(
     split: str,
     dataset_name: str,
     foundry_schema: FoundrySchema,
-    use_globus: bool,
-    interval: int,
-    parallel_https: int,
-    verbose: bool,
-    transfer_client: Any,
     as_hdf5: bool
 )
 ```
@@ -268,15 +239,12 @@ Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L138"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L132"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `validate_local_dataset_storage`
 
 ```python
-validate_local_dataset_storage(
-    dataset_name: str,
-    splits: List[FoundrySplit] = None
-)
+validate_local_dataset_storage(dataset_name: str, splits: List[Split] = None)
 ```
 
 Verifies that the local storage location exists and all expected files are present. 

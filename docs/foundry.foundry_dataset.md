@@ -11,7 +11,7 @@
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L15"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L13"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryDataset`
 Representation of an individual dataset. Provides access to metadata as well as functions to instantiate data into memory in different formats. 
@@ -20,12 +20,10 @@ Representation of an individual dataset. Provides access to metadata as well as 
 
 **Args:**
  
- - <b>`dataset_name`</b> (str):  name of dataset (equivalent to source_id in MDF) 
- - <b>`splits List[FoundrySplit]`</b>:  list of splits in the dataset 
- - <b>`use_globus`</b> (bool):  if True, use Globus to download the data else try HTTPS 
- - <b>`interval`</b> (int):  How often to wait before checking Globus transfer status 
- - <b>`parallel_https`</b> (int):  Number of files to download in parallel if using HTTPS 
- - <b>`verbose`</b> (bool):  Produce more debug messages to screen 
+ - <b>`dataset_name`</b> (str):  Name of the dataset (equivalent to source_id in MDF) 
+ - <b>`datacite_entry`</b> (FoundryDatacite):  Datacite entry for the dataset 
+ - <b>`foundry_schema`</b> (FoundrySchema):  Schema for the dataset 
+ - <b>`foundry_cache`</b> (FoundryCache):  Cache for the dataset 
 
 Desired functions: 
     - Get as pandas 
@@ -37,22 +35,16 @@ Desired functions:
     - Validate against schema 
     - Get citation 
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L39"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L35"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
 ```python
 __init__(
     dataset_name: str,
-    datacite_entry: dict,
-    transfer_client: Any,
+    datacite_entry: FoundryDatacite,
     foundry_schema: FoundrySchema,
-    use_globus: bool = False,
-    interval: int = 10,
-    parallel_https: int = 4,
-    verbose: bool = False,
-    forge_client: Forge = None,
-    local_cache_dir: str = None
+    foundry_cache: FoundryCache = None
 )
 ```
 
@@ -65,7 +57,26 @@ __init__(
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L160"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L133"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `add_data`
+
+```python
+add_data(https_data_path: str = None, globus_data_source: str = None)
+```
+
+Add data to the dataset. User must provide the location of the data as either a `globus_data_source` or `https_data_path`. 
+
+
+
+**Arguments:**
+ 
+ - <b>`https_data_path`</b> (str):  Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is transferred to MDF. If None, the user must specify a 'globus_data_source' URL to the location of the data on their own Globus endpoint. User must choose either `globus_data_source` or `https_data_path` to publish their data. 
+ - <b>`globus_data_source`</b> (str):  Url path for a data folder on a Globus endpoint; url can be obtained through  the Globus Web UI or SDK. If None, the user must specify an 'https_data_path' pointing to the location  of the data on their local machine. User must choose either `globus_data_source` or `https_data_path` to  publish their data. 
+
+---
+
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L154"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `clear_dataset_cache`
 
@@ -77,7 +88,7 @@ Deletes the cached data for this specific datset
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L61"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L49"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_as_dict`
 
@@ -98,7 +109,7 @@ Returns: (dict) Dictionary of all the data from the specified split
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L101"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L79"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_as_tensorflow`
 
@@ -119,7 +130,7 @@ Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the speci
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L81"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L64"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_as_torch`
 
@@ -140,7 +151,7 @@ Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L120"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L93"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_citation`
 
@@ -154,7 +165,7 @@ get_citation() → str
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L136"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L109"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `validate_metadata`
 

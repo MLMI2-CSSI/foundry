@@ -11,7 +11,7 @@
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L30"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L24"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `HiddenColumnDataFrame`
 A subclass of pd.DataFrame that supports hiding a specific column. This is intended to mimic display of search results from an earlier version while providing access to associated FoundryDataset objects for each entry in the dataframe via the `get_dataset_by_[name/doi]()` function. 
@@ -28,7 +28,7 @@ A subclass of pd.DataFrame that supports hiding a specific column. This is inten
 
 Methods: _repr_html_():  Overrides the _repr_html_ method of the parent class to hide the specified column in the HTML representation. get_dataset_by_name(dataset_name):  Returns the FoundryDataset associated with the given dataset name. Can also handle a DOI. get_dataset_by_doi(doi):  Returns the FoundryDataset associated with the given DOI. 
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L59"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L53"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
@@ -726,7 +726,7 @@ array([['parrot', 24.0, 'second'],
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L73"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L67"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_dataset_by_doi`
 
@@ -740,7 +740,7 @@ get_dataset_by_doi(doi)
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L67"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L61"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_dataset_by_name`
 
@@ -755,7 +755,7 @@ get_dataset_by_name(dataset_name)
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L77"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L71"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `Foundry`
 Foundry Client Base Class 
@@ -774,7 +774,7 @@ This class represents a client for interacting with the Foundry service. It prov
  - <b>`index`</b> (str):  The index to use for search and data publication. 
  - <b>`auths`</b> (Any):  The authorizers used for authentication. 
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L102"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L96"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
@@ -787,6 +787,7 @@ __init__(
     use_globus: bool = True,
     verbose: bool = False,
     interval: int = 10,
+    parallel_https: int = 4,
     local_cache_dir: str = None,
     **data
 )
@@ -820,7 +821,7 @@ Initialize a Foundry client
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L501"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L485"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_status`
 
@@ -848,7 +849,7 @@ Check the status of your submission.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L268"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L277"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `dataset_from_metadata`
 
@@ -878,7 +879,7 @@ Converts the result of a forge query to a FoundryDatset object
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L341"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L345"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `filter_datasets_by_query`
 
@@ -903,7 +904,7 @@ Filters the given metadata based on the provided query string.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L300"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L304"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_metadata_by_doi`
 
@@ -929,7 +930,7 @@ Should only return a single result.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L319"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L323"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_metadata_by_query`
 
@@ -954,9 +955,9 @@ Submit query to forge client and return results
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L257"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L266"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-### <kbd>method</kbd> `get_metadata_by_doi`
+### <kbd>method</kbd> `list`
 
 ```python
 list(limit: int = None)
@@ -978,17 +979,15 @@ List available Foundry datasets
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L378"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L382"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `publish_dataset`
 
 ```python
 publish_dataset(
-    foundry_metadata: Dict[str, Any],
+    foundry_dataset: FoundryDataset,
     title: str,
     authors: List[str],
-    https_data_path: str = None,
-    globus_data_source: str = None,
     update: bool = False,
     publication_year: int = None,
     test: bool = False,
@@ -1003,29 +1002,16 @@ Submit a dataset for publication; can choose to submit via HTTPS using `https_da
  - <b>`foundry_metadata`</b> (dict):  Dict of metadata describing data package 
  - <b>`title`</b> (string):  Title of data package 
  - <b>`authors`</b> (list):  List of data package author names e.g., Jack Black  or Nunez, Victoria 
- - <b>`https_data_path`</b> (str):  Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT  request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is  transferred to MDF. If None, the user must specify a 'globus_data_source' URL to the location of the  data on their own Globus endpoint. User must choose either `globus_data_source` or `https_data_path` to  publish their data. 
- - <b>`globus_data_source`</b> (str):  Url path for a data folder on a Globus endpoint; url can be obtained through  the Globus Web UI or SDK. If None, the user must specify an 'https_data_path' pointing to the location  of the data on their local machine. User must choose either `globus_data_source` or `https_data_path` to  publish their data. 
  - <b>`update`</b> (bool):  True if this is an update to a prior data package 
  - <b>`(default`</b>:  self.config.metadata_file) 
- - <b>`publication_year`</b> (int):  Year of dataset publication. If None, will  be set to the current calendar year by MDF Connect Client. 
- - <b>`(default`</b>:  $current_year) 
  - <b>`test`</b> (bool):  If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).  Default is False. 
-
-Keyword Args: 
- - <b>`affiliations`</b> (list):  List of author affiliations 
- - <b>`tags`</b> (list):  List of tags to apply to the data package 
- - <b>`short_name`</b> (string):  Shortened/abbreviated name of the data package 
- - <b>`publisher`</b> (string):  Data publishing entity (e.g. MDF, Zenodo, etc.) 
- - <b>`description`</b> (str):  A description of the dataset. 
- - <b>`dataset_doi`</b> (str):  The DOI for this dataset (not an associated paper). 
- - <b>`related_dois`</b> (list):  DOIs related to this dataset,  not including the dataset's own DOI (for example, an associated paper's DOI). 
 
 Returns 
 ------- (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset. Contains `source_id`, which can be used to check the status of the submission 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L475"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L459"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `publish_model`
 
@@ -1067,7 +1053,7 @@ Simplified publishing method for servables
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L209"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L218"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `search`
 
@@ -1076,7 +1062,7 @@ search(
     query: str = None,
     limit: int = None,
     as_list: bool = False
-) → [<class 'FoundryDataset'>]
+) → List[FoundryDataset]
 ```
 
 Search available Foundry datasets 
@@ -1114,7 +1100,7 @@ This method searches for available Foundry datasets based on the provided query 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L358"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L362"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `search_results_to_dataframe`
 
