@@ -1,25 +1,39 @@
+import json
 from pathlib import Path
+import pandas as pd
 import pytest
 from unittest.mock import MagicMock
 
-from foundry.models import FoundrySplit, FoundrySchema, FoundryKey
+from . import test_foundry_dataset
+from foundry.jsonschema_models.project_model import Split as FoundrySplit, \
+                                  Key as FoundryKey
 from foundry.foundry_cache import FoundryCache
-import pandas as pd
+from foundry.models import FoundrySchema
 
 
 @pytest.fixture
 def mock_foundry_cache():
     cache_dir = str(Path(__file__).parent) + '/test_data'
-    cache = FoundryCache(forge_client=MagicMock(), transfer_client=MagicMock(), local_cache_dir=cache_dir)
-    # cache.validate_local_dataset_storage = MagicMock(return_value=True)  # Mock the validation method
+    cache = FoundryCache(forge_client=MagicMock(), 
+                         transfer_client=MagicMock(), 
+                         local_cache_dir=cache_dir,
+                         use_globus=False,
+                         interval=10,
+                         parallel_https=4,
+                         verbose=False)
     return cache
 
 
 @pytest.fixture
 def mock_nonexistent_foundry_cache():
     cache_dir = str(Path(__file__).parent) + '/cheeseballs'
-    cache = FoundryCache(forge_client=MagicMock(), transfer_client=MagicMock(), local_cache_dir=cache_dir)
-    # cache.validate_local_dataset_storage = MagicMock(return_value=True)  # Mock the validation method
+    cache = FoundryCache(forge_client=MagicMock(), 
+                         transfer_client=MagicMock(), 
+                         local_cache_dir=cache_dir,
+                         use_globus=False,
+                         interval=10,
+                         parallel_https=4,
+                         verbose=False)
     return cache
 
 
@@ -57,112 +71,26 @@ def test_validate_local_dataset_storage_not_present(mock_nonexistent_foundry_cac
 
 
 @pytest.fixture
+def mock_tabular_foundry_source_id():
+    source_id = "elwood_md_v1.2"
+    yield source_id
+
+
+@pytest.fixture
 def mock_tabular_foundry_schema():
-    # foundry_key_1 = FoundryKey(key=["column1", "column2"], type='input')
-    # foundry_key_2 = FoundryKey(key=["column2", "column4"], type='output')
-    foundry_key_1 = FoundryKey(
-        key=['SMILES'],
-        type='input',
-        classes=None,
-        description='Canonical SMILES string of molecule',
-        filter=None,
-        units='arb'
-    )
-    foundry_key_2 = FoundryKey(
-        key=['E_coh (MPa)'],
-        type='target',
-        classes=None,
-        description='Simulated cohesive energy (in MPa)',
-        filter=None,
-        units='MPa'
-    )
-    foundry_key_3 = FoundryKey(
-        key=['T_g (K)'],
-        type='target',
-        classes=None,
-        description='Simulated glass transition temperature (in Kelvin)',
-        filter=None,
-        units='Kelvin'
-    )
-    foundry_key_4 = FoundryKey(
-        key=['R_gyr (A^2)'],
-        type='target',
-        classes=None,
-        description='Simulated squared radius of gyration (in Angstroms^2)',
-        filter=None,
-        units='Angstrom^2'
-    )
-    foundry_key_5 = FoundryKey(
-        key=['Densities (kg/m^3)'],
-        type='target',
-        classes=None,
-        description='Simulated density (in kg/m^3)',
-        filter=None,
-        units='kg/m^3'
-    )
-    foundry_schema = FoundrySchema(
-        name="test_schema",
-        version="1.0",
-        data_type='tabular',
-        source_id="elwood_md_v1.2",
-        domain=["domain"],
-        keys=[foundry_key_1, foundry_key_2, foundry_key_3, foundry_key_4, foundry_key_5]
-    )
+    foundry_schema = json.loads('{"short_name": "elwood_properties", "data_type": "tabular", "task_type": ["unsupervised", "generative", "supervised"], "domain": ["materials science", "chemistry", "simulation"], "n_items": 410.0, "splits": [{"type": "train", "path": "MD_properties.csv", "label": "train"}], "keys": [{"key": ["SMILES"], "type": "input", "filter": null, "description": "Canonical SMILES string of molecule", "units": "arb", "classes": null}, {"key": ["E_coh (MPa)"], "type": "target", "filter": null, "description": "Simulated cohesive energy (in MPa)", "units": "MPa", "classes": null}, {"key": ["T_g (K)"], "type": "target", "filter": null, "description": "Simulated glass transition temperature (in Kelvin)", "units": "Kelvin", "classes": null}, {"key": ["R_gyr (A^2)"], "type": "target", "filter": null, "description": "Simulated squared radius of gyration (in Angstroms^2)", "units": "Angstrom^2", "classes": null}, {"key": ["Densities (kg/m^3)"], "type": "target", "filter": null, "description": "Simulated density (in kg/m^3)", "units": "kg/m^3", "classes": null}]}')
     yield foundry_schema
 
 
 @pytest.fixture
+def mock_hdf5_foundry_source_id():
+    source_id = "test_dataset"
+    yield source_id
+
+
+@pytest.fixture
 def mock_hdf5_foundry_schema():
-    # foundry_key_1 = FoundryKey(key=["column1", "column2"], type='input')
-    # foundry_key_2 = FoundryKey(key=["column2", "column4"], type='output')
-    foundry_key_1 = FoundryKey(
-        key=['SMILES'],
-        type='input',
-        classes=None,
-        description='Canonical SMILES string of molecule',
-        filter=None,
-        units='arb'
-    )
-    foundry_key_2 = FoundryKey(
-        key=['E_coh (MPa)'],
-        type='target',
-        classes=None,
-        description='Simulated cohesive energy (in MPa)',
-        filter=None,
-        units='MPa'
-    )
-    foundry_key_3 = FoundryKey(
-        key=['T_g (K)'],
-        type='target',
-        classes=None,
-        description='Simulated glass transition temperature (in Kelvin)',
-        filter=None,
-        units='Kelvin'
-    )
-    foundry_key_4 = FoundryKey(
-        key=['R_gyr (A^2)'],
-        type='target',
-        classes=None,
-        description='Simulated squared radius of gyration (in Angstroms^2)',
-        filter=None,
-        units='Angstrom^2'
-    )
-    foundry_key_5 = FoundryKey(
-        key=['Densities (kg/m^3)'],
-        type='target',
-        classes=None,
-        description='Simulated density (in kg/m^3)',
-        filter=None,
-        units='kg/m^3'
-    )
-    foundry_schema = FoundrySchema(
-        name="test_schema",
-        version="1.0",
-        data_type='hdf5',
-        source_id="test_dataset",
-        domain=["domain"],
-        keys=[foundry_key_1, foundry_key_2, foundry_key_3, foundry_key_4, foundry_key_5]
-    )
+    foundry_schema = json.loads('{"short_name": "elwood_properties", "data_type": "hdf5", "task_type": ["unsupervised", "generative", "supervised"], "domain": ["materials science", "chemistry", "simulation"], "n_items": 410.0, "splits": [{"type": "train", "path": "MD_properties.csv", "label": "train"}], "keys": [{"key": ["SMILES"], "type": "input", "filter": null, "description": "Canonical SMILES string of molecule", "units": "arb", "classes": null}, {"key": ["E_coh (MPa)"], "type": "target", "filter": null, "description": "Simulated cohesive energy (in MPa)", "units": "MPa", "classes": null}, {"key": ["T_g (K)"], "type": "target", "filter": null, "description": "Simulated glass transition temperature (in Kelvin)", "units": "Kelvin", "classes": null}, {"key": ["R_gyr (A^2)"], "type": "target", "filter": null, "description": "Simulated squared radius of gyration (in Angstroms^2)", "units": "Angstrom^2", "classes": null}, {"key": ["Densities (kg/m^3)"], "type": "target", "filter": null, "description": "Simulated density (in kg/m^3)", "units": "kg/m^3", "classes": null}]}')
     yield foundry_schema
 
 
@@ -191,31 +119,57 @@ def mock_read_functions():
     #             yield
 
 
-def test_load_data_with_globus(mock_foundry_cache, mock_tabular_foundry_schema, mock_read_functions):
+def test_load_data_with_globus(mock_foundry_cache,
+                               mock_tabular_foundry_source_id,
+                               mock_tabular_foundry_schema):
     cache = mock_foundry_cache
-    foundry_schema = mock_tabular_foundry_schema
-    cache._load_data(foundry_schema, file="MD_properties.csv", source_id=foundry_schema.source_id, use_globus=True, as_hdf5=False)
+    source_id = mock_tabular_foundry_source_id
+    foundry_schema = FoundrySchema(mock_tabular_foundry_schema)
+    cache._load_data(foundry_schema,
+                     file="MD_properties.csv",
+                     source_id=source_id,
+                     as_hdf5=False)
     # Add assertions here
 
 
-def test_load_data_with_hdf5(mock_foundry_cache, mock_hdf5_foundry_schema, mock_read_functions):
+def test_load_data_with_hdf5(mock_foundry_cache,
+                             mock_hdf5_foundry_schema,
+                             mock_read_functions,
+                             mock_hdf5_foundry_source_id):
     cache = mock_foundry_cache
-    foundry_schema = mock_hdf5_foundry_schema
-    cache._load_data(foundry_schema, file="elwood.hdf5", source_id=foundry_schema.source_id, use_globus=False, as_hdf5=True)
+    source_id = mock_hdf5_foundry_source_id
+    foundry_schema = FoundrySchema(mock_hdf5_foundry_schema)
+    cache._load_data(foundry_schema,
+                     file="elwood.hdf5",
+                     source_id=source_id,
+                     as_hdf5=True)
     # Add assertions here
 
 
-def test_load_data_with_globus_2(mock_foundry_cache, mock_tabular_foundry_schema, mock_read_functions):
+def test_load_data_with_globus_2(mock_foundry_cache,
+                                 mock_tabular_foundry_schema,
+                                 mock_read_functions,
+                                 mock_tabular_foundry_source_id):
     cache = mock_foundry_cache
-    foundry_schema = mock_tabular_foundry_schema
-    cache._load_data(foundry_schema, file="MD_properties.csv", source_id=foundry_schema.source_id, use_globus=True, as_hdf5=False)
+    source_id = mock_tabular_foundry_source_id
+    foundry_schema = FoundrySchema(mock_tabular_foundry_schema)
+    cache._load_data(foundry_schema,
+                     file="MD_properties.csv",
+                     source_id=source_id,
+                     as_hdf5=False)
     # Add assertions here
 
 
-def test_load_data_with_source_id(mock_foundry_cache, mock_tabular_foundry_schema, mock_read_functions):
+def test_load_data_with_source_id(mock_foundry_cache,
+                                  mock_tabular_foundry_schema,
+                                  mock_read_functions,
+                                  mock_hdf5_foundry_source_id):
     cache = mock_foundry_cache
-    foundry_schema = mock_tabular_foundry_schema
+    foundry_schema = FoundrySchema(mock_tabular_foundry_schema)
     with pytest.raises(Exception) as exc_info:
-        cache._load_data(foundry_schema, file="MD_properties.csv", source_id="12345", use_globus=False, as_hdf5=False)
+        cache._load_data(foundry_schema, 
+                         file="MD_properties.csv", 
+                         source_id="12345", 
+                         as_hdf5=False)
     err = exc_info.value
     assert isinstance(err, FileNotFoundError)

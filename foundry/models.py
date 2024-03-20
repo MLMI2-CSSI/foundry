@@ -1,18 +1,17 @@
-from typing import List, Dict, Optional, Any
-from pydantic import BaseModel, Extra, Field, StrictInt, StrictStr
+import copy
 from enum import Enum
-import pandas as pd
-from json2table import convert
 import json
+from json2table import convert
+import logging
+import pandas as pd
+from pydantic import BaseModel, Extra, ValidationError
+from typing import Optional, Any
 
-# class FoundryMetric(BaseModel):
-#     pass
+from .jsonschema_models.dc_model import Dc1 as DataciteModel
+from .jsonschema_models.project_model import Foundry as FoundryModel
 
-# class FoundryChallenge(BaseModel):
-#     id: int = None
-#     metric: FoundryMetric = None
-#     datasets: List[FoundryDataset] = []
-#     description: str = ""
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
+logger = logging.getLogger(__name__)
 
 
 # Classes for Foundry Data Package Specification
@@ -56,9 +55,6 @@ class FoundrySpecification(BaseModel):
         return buf
 
 
-# END Classes for Foundry Data Package Specification
-
-
 class FoundryDatasetType(Enum):
     """Foundry Dataset Types
     Enumeration of the possible Foundry dataset types
@@ -70,93 +66,83 @@ class FoundryDatasetType(Enum):
     other = "other"
 
 
-class FoundryKeyClass(BaseModel):
-    label: StrictStr = Field(..., description="The label that exists in the data")
-    name: StrictStr = Field(..., description="The name the label maps onto.")
-
-
-class FoundryKey(BaseModel):
-    key: List[StrictStr] = Field(..., description="Column or header name for tabular data, key/path for HDF5 data")
-    type: StrictStr = Field(..., description="Whether input or target")
-    classes: Optional[List[FoundryKeyClass]]
-    description: Optional[StrictStr]
-    filter: Optional[StrictStr]
-    units: Optional[StrictStr]
-
-
-class FoundrySplit(BaseModel):
-    type: StrictStr = Field(..., description="The kind of partition of the dataset (train, test, validation, etc)")
-    path: Optional[StrictStr]
-    label: Optional[StrictStr]
-
-
-class FoundrySchema(BaseModel):
-    """Foundry Dataset
-    Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
+class FoundrySchema(FoundryModel):
     """
-    data_type: FoundryDatasetType = Field(..., description="The kind of data in the dataset, e.g. tabular, json, hdf5")
-    domain: List[StrictStr] = Field(..., description="The domain of applicability. e.g., materials science, chemistry, machine vision")
-    keys: List[FoundryKey] = Field(..., description="Keys describing how to load the data")
-    dataframe: Optional[Any]
-    n_items: Optional[StrictInt]
-    short_name: Optional[StrictStr]
-    splits: Optional[List[FoundrySplit]]
-    task_type: Optional[List[StrictStr]]
+    A model for the Foundry schema based on the FoundryModel (project_model.py) class. The FoundryModel
+    class is an auto-generated pydantic version of the json schema; this class extends
+    the FoundryModel class to include additional functionality necessary for Foundry.
 
-    class Config:
-        arbitrary_types_allowed = True
-        extra = Extra.allow
+    Args:
+        project_dict (dict): A dictionary containing the project data.
 
-
-# class FoundryDataset(BaseModel):
-#     """Foundry Dataset
-#     Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
-#     """
-
-#     keys: List[FoundryKey] = None
-#     splits: Optional[List[FoundrySplit]] = None
-#     data_type: FoundryDatasetType = None
-#     # version: Optional[str] = ""
-#     short_name: Optional[str] = ""
-#     dataframe: Optional[Any] = None
-#     # links: Optional[FoundryLinks]
-#     # citations: Optional[List[str]] = []
-#     task_type: Optional[List[str]] = []
-#     domain: Optional[List[str]] = []
-#     n_items: Optional[int] = 0
-
-#     class Config:
-#         arbitrary_types_allowed = True
-
-class FoundryDataset(BaseModel):
-    """Foundry Dataset
-    Schema for Foundry Datasets. This includes specifications of inputs, outputs, type, version, and more
+    Raises:
+        ValidationError: If there is an issue validating the project data.
     """
 
-    keys: List[FoundryKey] = None
-    splits: Optional[List[FoundrySplit]] = None
-    data_type: FoundryDatasetType = None
-    # version: Optional[str] = ""
-    short_name: Optional[str] = ""
-    dataframe: Optional[Any] = None
-    # links: Optional[FoundryLinks]
-    # citations: Optional[List[str]] = []
-    task_type: Optional[List[str]] = []
-    domain: Optional[List[str]] = []
-    n_items: Optional[int] = 0
+    def __init__(self, project_dict):
+        try:
+            super(FoundrySchema, self).__init__(**project_dict)
+            print("FoundrySchema validation successful.")
+        except ValidationError as e:
+            print("FoundrySchema validation failed!")
+            for error in e.errors():
+                field_name = ".".join([item for item in error['loc'] if isinstance(item, str)])
+                error_description = error['msg']
+                error_message = f"""There is an issue validating the entry for the field '{field_name}':
+                The error message returned is: '{error_description}'.
+                The description for this field is: '{FoundryModel.schema()['properties'][field_name]['description']}'"""
+                print(error_message)
+            raise e
 
-    class Config:
-        arbitrary_types_allowed = True
+
+class FoundryDatacite(DataciteModel):
+    """
+    A model for the Datacite schema based on the Datacite (dc_model.py) class. The FoundryModel
+    class is an auto-generated pydantic version of the json schema; this class extends
+    the DataciteModel class to include additional functionality necessary for Foundry.
+
+    Args:
+        datacite_dict (dict): A dictionary containing the datacite data.
+
+    Raises:
+        ValidationError: If there is an issue validating the datacite data.
+    """
+    def __init__(self, datacite_dict):
+        try:
+            # modify the datacite_entry to match the expected format
+            dc = copy.deepcopy(datacite_dict)
+
+            if 'identifier' in dc.keys():
+                if 'identifier' in dc['identifier'].keys():
+                    dc['identifier']['identifier'] = {'__root__': datacite_dict['identifier']['identifier']}
+            super(FoundryDatacite, self).__init__(**dc)
+            print("Datacite validation successful.")
+        except ValidationError as e:
+            print("Datacite validation failed!")
+            for error in e.errors():
+                # field_name = ".".join([item for item in error['loc'] if isinstance(item, str)])
+                field_name = error['loc'][0]
+                error_description = error['msg']
+                error_message = f"""There is an issue validating the entry for the field '{field_name}':
+                The error message returned is: '{error_description}'.
+                The description for this field is: '{FoundryDatacite.schema()['properties'][field_name]['description']}'"""
+                print(error_message)
+            raise e
 
 
 class FoundryBase(BaseModel, extra=Extra.allow):
-    """Configuration information for Foundry instance
+    """
+    Configuration information for Foundry instance
 
     Args:
-        dataframe_file (str): Filename to read dataframe contents from
-        metadata_file (str): Filename to read metadata contents from defaults to reading for MDF Discover
-        destination_endpoint (str): Globus endpoint ID to transfer data to (defaults to local GCP installation)
-        local_cache_dir (str): Path to local Foundry package cache
+        dataframe_file (str, optional): Filename to read dataframe contents from (default is "foundry_dataframe.json")
+        data_file (str, optional): Filename to read data contents from (default is "foundry.hdf5")
+        metadata_file (str, optional): Filename to read metadata contents from (default is "foundry_metadata.json")
+        destination_endpoint (str, optional): Globus endpoint ID to transfer data to (default is None)
+        local (bool, optional): Flag indicating whether to use local cache (default is False)
+        local_cache_dir (str, optional): Path to local Foundry package cache (default is "./data")
+        metadata_key (str, optional): Key for metadata (default is "foundry")
+        organization (str, optional): Organization name (default is "foundry")
     """
 
     dataframe_file: Optional[str] = "foundry_dataframe.json"
@@ -170,9 +156,3 @@ class FoundryBase(BaseModel, extra=Extra.allow):
 
     def _repr_html_(self):
         return convert(json.loads(self.json()))
-
-
-class FoundryDataset(BaseModel, extra=Extra.allow):
-    dc: Dict = {}  # pydantic Datacite?
-    mdf: Dict = {}
-    dataset: FoundryDataset = {}

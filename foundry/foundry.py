@@ -9,19 +9,13 @@ from dlhub_sdk import DLHubClient
 from globus_sdk import AuthClient
 
 from .auth import PubAuths
+from .foundry_cache import FoundryCache
+from .foundry_dataset import FoundryDataset
+from .https_upload import upload_to_endpoint
 from .utils import is_doi
 
-from foundry.models import (
-    FoundrySchema,
-    FoundryBase
-)
+from foundry.models import FoundryBase
 
-from foundry.foundry_dataset import FoundryDataset
-
-# from foundry import FOUNDRY_CACHE
-# from foundry.foundry_cache import FoundryCache
-
-from foundry.https_upload import upload_to_endpoint
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -107,6 +101,7 @@ class Foundry(FoundryBase):
                  use_globus: bool = True,
                  verbose: bool = False,
                  interval: int = 10,
+                 parallel_https: int = 4,
                  local_cache_dir: str = None,
                  **data):
         """Initialize a Foundry client
@@ -206,7 +201,21 @@ class Foundry(FoundryBase):
             force_login=False,
         )
 
-    def search(self, query: str = None, limit: int = None, as_list: bool = False) -> [FoundryDataset]:
+        self.use_globus = use_globus
+        self.interval = interval
+        self.parallel_https = parallel_https
+        self.verbose = verbose
+        local_cache_dir
+
+        self._foundry_cache = FoundryCache(self.forge_client,
+                                           self.transfer_client,
+                                           use_globus,
+                                           interval,
+                                           parallel_https,
+                                           verbose,
+                                           local_cache_dir)
+
+    def search(self, query: str = None, limit: int = None, as_list: bool = False) -> List[FoundryDataset]:
         """Search available Foundry datasets
 
         This method searches for available Foundry datasets based on the provided query string.
@@ -278,19 +287,14 @@ class Foundry(FoundryBase):
             Exception: If the mdf entry is missing a section, cannot generate a foundry dataset object
         """
         try:
-            foundry_schema = FoundrySchema(**metadata['projects']['foundry'])
+            foundry_schema = metadata['projects']['foundry']
             dc = metadata['dc']
             name = metadata['mdf']['source_id']
 
             ds = FoundryDataset(**{'dataset_name': name,
-                                   'foundry_schema': foundry_schema,
-                                   'transfer_client': self.auths["transfer"],
                                    'datacite_entry': dc,
-                                   'use_globus': self.use_globus,
-                                   'interval': self.interval,
-                                   'verbose': self.verbose,
-                                   'forge_client': self.forge_client,
-                                   'local_cache_dir': self.local_cache_dir})
+                                   'foundry_schema': foundry_schema,
+                                   'foundry_cache': self._foundry_cache})
 
             return ds
 
@@ -368,18 +372,16 @@ class Foundry(FoundryBase):
         series_list = []
         for result in results:
             series_list.append(pd.Series({'dataset_name': result.dataset_name,
-                                          'title': result.dc['titles'][0]['title'],
-                                          'year': result.dc['publicationYear'],
-                                          'DOI': result.dc['identifier']['identifier'],
+                                          'title': result.dc.titles[0].title,
+                                          'year': result.dc.publicationYear.__root__,
+                                          'DOI': result.dc.identifier.identifier.__root__,
                                           'FoundryDataset': result}))
         df = HiddenColumnDataFrame(series_list, hidden_column='FoundryDataset')
         return df
 
     def publish_dataset(self,
-                        foundry_metadata: Dict[str, Any],
+                        foundry_dataset: FoundryDataset,
                         title: str, authors: List[str],
-                        https_data_path: str = None,
-                        globus_data_source: str = None,
                         update: bool = False,
                         publication_year: int = None,
                         test: bool = False,
@@ -391,32 +393,10 @@ class Foundry(FoundryBase):
             title (string): Title of data package
             authors (list): List of data package author names e.g., Jack Black
                 or Nunez, Victoria
-            https_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
-                request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
-                transferred to MDF. If None, the user must specify a 'globus_data_source' URL to the location of the
-                data on their own Globus endpoint. User must choose either `globus_data_source` or `https_data_path` to
-                publish their data.
-            globus_data_source (str): Url path for a data folder on a Globus endpoint; url can be obtained through
-                the Globus Web UI or SDK. If None, the user must specify an 'https_data_path' pointing to the location
-                of the data on their local machine. User must choose either `globus_data_source` or `https_data_path` to
-                publish their data.
             update (bool): True if this is an update to a prior data package
                 (default: self.config.metadata_file)
-            publication_year (int): Year of dataset publication. If None, will
-                be set to the current calendar year by MDF Connect Client.
-                (default: $current_year)
             test (bool): If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).
                 Default is False.
-
-        Keyword Args:
-            affiliations (list): List of author affiliations
-            tags (list): List of tags to apply to the data package
-            short_name (string): Shortened/abbreviated name of the data package
-            publisher (string): Data publishing entity (e.g. MDF, Zenodo, etc.)
-            description (str): A description of the dataset.
-            dataset_doi (str): The DOI for this dataset (not an associated paper).
-            related_dois (list): DOIs related to this dataset,
-                    not including the dataset's own DOI (for example, an associated paper's DOI).
 
         Returns
         -------
@@ -424,12 +404,17 @@ class Foundry(FoundryBase):
             of dataset. Contains `source_id`, which can be used to check the
             status of the submission
         """
-        # ensure metadata is properly formatted
-        self.validate_metadata(foundry_metadata)
+        # strip 'None' values from metadata object and ensure metadata is properly formatted
+        clean_metadata_json = self.remove_none_keys(foundry_dataset.foundry_schema.json())
+        self.validate_metadata(clean_metadata_json)
+
+        # strip 'None' values from datacite object and ensure datacite is properly formatted
+        clean_dc_json = self.remove_none_keys(foundry_dataset.dc.json())
+        self.validate(clean_dc_json)
 
         # ensure that one of `https_data_path` or `globus_data_source` have been assigned values
-        if (https_data_path and globus_data_source) or \
-                (https_data_path is None and globus_data_source is None):
+        if (foundry_dataset.https_data_path and foundry_dataset.globus_data_source) or \
+                (foundry_dataset.https_data_path is None and foundry_dataset.globus_data_source is None):
             raise ValueError("Must assign either `https_data_path` or `globus_data_source`")
 
         self.connect_client.create_dc_block(
@@ -444,11 +429,10 @@ class Foundry(FoundryBase):
             related_dois=kwargs.get("related_dois", [])
         )
         self.connect_client.add_organization(self.organization)
-        self.connect_client.set_project_block(
-            self.config.metadata_key, foundry_metadata)
+        self.connect_client.set_project_block(self.config.metadata_key)
 
         # upload via HTTPS if specified
-        if https_data_path:
+        if foundry_dataset.https_data_path:
             # gather auth'd clients necessary for publication to endpoint
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
             scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"  # lets you HTTPS to specific endpoint
@@ -458,7 +442,7 @@ class Foundry(FoundryBase):
                 endpoint_auth_clients={endpoint_id: AuthClient(authorizer=self.auths[scope])}
             )
             # upload (ie publish) data to endpoint
-            globus_data_source = upload_to_endpoint(pub_auths, https_data_path, endpoint_id)
+            globus_data_source = upload_to_endpoint(pub_auths, foundry_dataset.https_data_path, endpoint_id)
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
         # set dataset name using the title if an abbreviated short_name isn't specified

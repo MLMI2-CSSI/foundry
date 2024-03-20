@@ -1,12 +1,10 @@
 import logging
 import os
 
-from mdf_forge import Forge
 from pydantic import ValidationError
-from typing import Any
 
 from .foundry_cache import FoundryCache
-from foundry.models import FoundrySchema
+from .models import FoundrySchema, FoundryDatacite
 
 
 logger = logging.getLogger(__name__)
@@ -18,12 +16,10 @@ class FoundryDataset():
         instantiate data into memory in different formats.
 
         Args:
-            dataset_name (str): name of dataset (equivalent to source_id in MDF)
-            splits List[FoundrySplit]: list of splits in the dataset
-            use_globus (bool): if True, use Globus to download the data else try HTTPS
-            interval (int): How often to wait before checking Globus transfer status
-            parallel_https (int): Number of files to download in parallel if using HTTPS
-            verbose (bool): Produce more debug messages to screen
+            dataset_name (str): Name of the dataset (equivalent to source_id in MDF)
+            datacite_entry (FoundryDatacite): Datacite entry for the dataset
+            foundry_schema (FoundrySchema): Schema for the dataset
+            foundry_cache (FoundryCache): Cache for the dataset
 
         Desired functions:
             - Get as pandas
@@ -38,25 +34,17 @@ class FoundryDataset():
 
     def __init__(self,
                  dataset_name: str,
-                 datacite_entry: dict,
-                 transfer_client: Any,
+                 datacite_entry: FoundryDatacite,
                  foundry_schema: FoundrySchema,
-                 use_globus: bool = False,
-                 interval: int = 10,
-                 parallel_https: int = 4,
-                 verbose: bool = False,
-                 forge_client: Forge = None,
-                 local_cache_dir: str = None):
+                 foundry_cache: FoundryCache = None):
 
         self.dataset_name = dataset_name
-        self.dc = datacite_entry
-        self.transfer_client = transfer_client
-        self.foundry_schema = foundry_schema
-        self.use_globus = use_globus
-        self.interval = interval
-        self.parallel_https = parallel_https
-        self.verbose = verbose
-        self._foundry_cache = FoundryCache(forge_client, transfer_client, local_cache_dir)
+        try:
+            self.dc = FoundryDatacite(datacite_entry)
+            self.foundry_schema = FoundrySchema(foundry_schema)
+        except Exception as e:
+            raise Exception('there was a problem creating the dataset: ', e)
+        self._foundry_cache = foundry_cache
 
     def get_as_dict(self, split: str = None, as_hdf5: bool = False):
         """Returns the data from the dataset as a dictionary
@@ -71,11 +59,6 @@ class FoundryDataset():
         return self._foundry_cache.load_as_dict(split,
                                                 self.dataset_name,
                                                 self.foundry_schema,
-                                                self.use_globus,
-                                                self.interval,
-                                                self.parallel_https,
-                                                self.verbose,
-                                                self.transfer_client,
                                                 as_hdf5)
 
     def get_as_torch(self, split: str = None):
@@ -91,12 +74,7 @@ class FoundryDataset():
 
         return self._foundry_cache.load_as_torch(split,
                                                  self.dataset_name,
-                                                 self.foundry_schema,
-                                                 self.use_globus,
-                                                 self.interval,
-                                                 self.parallel_https,
-                                                 self.verbose,
-                                                 self.transfer_client)
+                                                 self.foundry_schema)
 
     def get_as_tensorflow(self, split: str = None):
         """Convert Foundry Dataset to a Tensorflow Sequence
@@ -110,27 +88,22 @@ class FoundryDataset():
         """
         return self._foundry_cache.load_as_tensorflow(split,
                                                       self.dataset_name,
-                                                      self.foundry_schema,
-                                                      self.use_globus,
-                                                      self.interval,
-                                                      self.parallel_https,
-                                                      self.verbose,
-                                                      self.transfer_client)
+                                                      self.foundry_schema)
 
     def get_citation(self) -> str:
-        subjects = [subject['subject'] for subject in self.dc['subjects']]
-        doi_str = f"doi = {{{self.dc['identifier']['identifier']}}}"
-        url_str = f"url = {{https://doi.org/{self.dc['identifier']['identifier']}}}"
-        author_str = f"author = {{{' and '.join([creator['creatorName'] for creator in self.dc['creators']])}}}"
-        title_str = f"title = {{{self.dc['titles'][0]['title']}}}"
+        subjects = [subject.subject for subject in self.dc.subjects]
+        doi_str = f"doi = {{{self.dc.identifier.identifier.__root__}}}"
+        url_str = f"url = {{https://doi.org/{self.dc.identifier.identifier.__root__}}}"
+        author_str = f"author = {{{' and '.join([creator['creatorName'] for creator in self.dc.creators])}}}"
+        title_str = f"title = {{{self.dc.titles[0].title}}}"
         keywords_str = f"keywords = {{{', '.join(subjects)}}}"
-        publisher_str = f"publisher = {{{self.dc['publisher']}}}"
-        year_str = f"year = {{{self.dc['publicationYear']}}}"
+        publisher_str = f"publisher = {{{self.dc.publisher}}}"
+        year_str = f"year = {{{self.dc.publicationYear.__root__}}}"
         bibtex = os.linesep.join([doi_str, url_str,
                                   author_str, title_str,
                                   keywords_str, publisher_str,
                                   year_str])
-        bibtex = f"@misc{{https://doi.org/{self.dc['identifier']['identifier']}{os.linesep}{bibtex}}}"
+        bibtex = f"@misc{{https://doi.org/{self.dc.identifier.identifier.__root__}{os.linesep}{bibtex}}}"
         return bibtex
 
     def validate_metadata(self, metadata):
@@ -156,6 +129,27 @@ class FoundryDataset():
                 The error message returned is: '{error_description}'."""
                 logger.error(error_message)
             raise e
+
+    def add_data(self, https_data_path: str = None, globus_data_source: str = None):
+        """Add data to the dataset. User must provide the location of the data as
+        either a `globus_data_source` or `https_data_path`.
+
+        Arguments:
+                https_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
+                request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
+                transferred to MDF. If None, the user must specify a 'globus_data_source' URL to the location of the
+                data on their own Globus endpoint. User must choose either `globus_data_source` or `https_data_path` to
+                publish their data.
+            globus_data_source (str): Url path for a data folder on a Globus endpoint; url can be obtained through
+                the Globus Web UI or SDK. If None, the user must specify an 'https_data_path' pointing to the location
+                of the data on their local machine. User must choose either `globus_data_source` or `https_data_path` to
+                publish their data.
+
+        """
+        if https_data_path is None:
+            self.globus_data_source = globus_data_source
+        if globus_data_source is None:
+            self.https_data_path = https_data_path
 
     def clear_dataset_cache(self):
         """Deletes the cached data for this specific datset"""

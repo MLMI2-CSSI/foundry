@@ -246,13 +246,13 @@ def test_search():
     dataset = ds.iloc[0].FoundryDataset
 
     # assert ds.iloc[0]['name'] is not None
-    assert dataset.dc["titles"][0]["title"] is not None
+    assert dataset.dc.titles[0].title is not None
 
     # assert ds.iloc[0]['source_id'] is not None
     assert dataset.dataset_name is not None
 
     # assert ds.iloc[0]['year'] is not None
-    assert dataset.dc.get("publicationYear", None) is not None
+    assert dataset.dc.publicationYear is not None
 
 
 def test_dataset_get_citation():
@@ -272,13 +272,13 @@ def test_search_as_list():
     dataset = ds[0]
 
     # assert ds[0]['name'] is not None
-    assert dataset.dc["titles"][0]["title"] is not None
+    assert dataset.dc.titles[0].title is not None
 
     # assert ds[0]['source_id'] is not None
     assert dataset.dataset_name is not None
 
     # assert ds[0]['year'] is not None
-    assert dataset.dc.get("publicationYear", None) is not None
+    assert dataset.dc.publicationYear is not None
 
 
 def test_search_limit():
@@ -291,19 +291,19 @@ def test_search_limit():
     dataset = ds.iloc[0].FoundryDataset
 
     # assert ds.iloc[0]['name'] is not None
-    assert dataset.dc["titles"][0]["title"] is not None
+    assert dataset.dc.titles[0].title is not None
 
     # assert ds.iloc[0]['source_id'] is not None
     assert dataset.dataset_name is not None
 
     # assert ds.iloc[0]['year'] is not None
-    assert dataset.dc.get("publicationYear", None) is not None
+    assert dataset.dc.publicationYear is not None
 
 
 def test_metadata_pull():
     f = foundry.Foundry(download=False, authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
-    assert dataset.dc["titles"][0]["title"] == expected_title
+    assert dataset.dc.titles[0].title == expected_title
 
 
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")

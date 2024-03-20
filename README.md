@@ -70,6 +70,12 @@ for i in range(n_images):
 # Contributing
 Foundry is an Open Source project and we encourage contributions from the community. To contribute, please fork from the `main` branch and open a Pull Request on the `main` branch. A member of our team will review your PR shortly.
 
+## Developer notes
+In order to enforce consistency with external schemas for the metadata and datacite structures ([contained in the MDF data schema repository](https://github.com/materials-data-facility/data-schemas)) the `dc_model.py` and `project_model.py` pydantic data models (found in the `foundry/jsonschema_models` folder) were generated using the [datamodel-code-generator](https://github.com/koxudaxi/datamodel-code-generator/) tool. In order to ensure compliance with the flake8 linting, the `--use-annoted` flag was passed to ensure regex patterns in `dc_model.py` were specified using pydantic's `Annotated` type vs the soon to be deprecated `constr` type. The command used to run the datamodel-code-generator looks like:
+```
+datamodel-codegen --input dc.json --output dc_model.py --use-annotated
+```
+
 # Primary Support
 This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure".
 

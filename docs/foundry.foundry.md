@@ -956,7 +956,7 @@ Submit query to forge client and return results
 
 <a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L257"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
-### <kbd>method</kbd> `list`
+### <kbd>method</kbd> `get_metadata_by_doi`
 
 ```python
 list(limit: int = None)
