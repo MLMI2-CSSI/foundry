@@ -28,13 +28,21 @@ If you want to contribute, start working through the Foundry codebase, navigate 
     of the contribution must be compared against the cost of maintaining the
 
     feature.
-* Tests should follow [Pythonic testing best practices](https://www.w3resource.com/python-interview/what-are-the-common-testing-best-practices-in-python.php) and utilize the [pytest framework](https://realpython.com/pytest-python-testing/)&#x20;
+*   Tests should follow [testing best practices](https://www..org/community/contribute/tests)
+
+    guide.
 
 ## Pull Request Process
 
 1.  Ensure any install or build dependencies are removed before the end of the layer when doing a
 
     build.
-2. Update the README.md with details of changes to the interface, this includes new environment variables, exposed ports, useful file locations and container parameters.
-3. Increase the version numbers in any examples files and the README.md to the new version that this Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
-4. You may merge the Pull Request in once you have the sign-off of two other developers, or if you do not have permission to do that, you may request the second reviewer to merge it for you.
+2.  Update the README.md with details of changes to the interface, this includes new environment
+
+    variables, exposed ports, useful file locations and container parameters.
+3.  Increase the version numbers in any examples files and the README.md to the new version that this
+
+    Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
+4.  You may merge the Pull Request in once you have the sign-off of two other developers, or if you
+
+    do not have permission to do that, you may request the second reviewer to merge it for you.
