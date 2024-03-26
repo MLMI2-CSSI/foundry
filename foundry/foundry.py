@@ -156,10 +156,11 @@ class Foundry(FoundryBase):
             res = res.match_dois(name).search()
 
         else:
-            res = self.forge_client.match_field(
-                "mdf.organizations", self.config.organization
-            ).match_resource_types("dataset")
-            res = res.match_field("mdf.source_id", name).search()
+            res = self.forge_client.match_field("mdf.organizations", self.config.organization)
+            res = res.match_field("mdf.organization", self.config.organization, required=False)
+            res = res.match_resource_types("dataset")
+            res = res.match_field("mdf.source_id", name)
+            res = res.search()
 
         # unpack res, handle if empty
         if len(res) == 0:
@@ -208,6 +209,7 @@ class Foundry(FoundryBase):
         res = (
             self.forge_client.match_field(
                 "mdf.organizations", self.config.organization)
+            .match_field("mdf.organization", self.config.organization, required=False)
             .match_resource_types("dataset")
             .search(q, limit=limit)
         )
@@ -429,11 +431,11 @@ class Foundry(FoundryBase):
         self.connect_client.set_source_name(kwargs.get("short_name", title))
 
         # do not submit to MDF if this is just a test
-        if not test:
-            # Globus Transfer the data from the data source to the MDF endpoint
-            res = self.connect_client.submit_dataset(update=update)
-        else:
-            res = None
+        # Globus Transfer the data from the data source to the MDF endpoint
+        if test:
+            self.connect_client.set_test(test)
+        res = self.connect_client.submit_dataset(update=update)
+
         return res
 
     def check_status(self, source_id, short=False, raw=False):
@@ -525,10 +527,15 @@ class Foundry(FoundryBase):
                 download_datasets=True,
             )
         else:
+            if isinstance(self.mdf['version'], int):
+                folder_to_crawl = f"/foundry/{self.mdf['source_id']}/"
+            else:
+                folder_to_crawl = f"/foundry/{self.mdf['source_id']}/{self.mdf['version']}"
+
             https_config = {
                 "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
                 "base_url": "https://data.materialsdatafacility.org",
-                "folder_to_crawl": f"/foundry/{self.mdf['source_id']}/",
+                "folder_to_crawl": folder_to_crawl,
                 "source_id": self.mdf["source_id"]
             }
 
