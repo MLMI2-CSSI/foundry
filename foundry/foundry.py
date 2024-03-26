@@ -210,7 +210,7 @@ class Foundry(FoundryBase):
         res = (
             self.forge_client.match_field(
                 "mdf.organizations", self.config.organization)
-            .match_field("mdf.organization", self.config.organization, required=False)  
+            .match_field("mdf.organization", self.config.organization, required=False)
             .match_resource_types("dataset")
             .search(q, limit=limit)
         )
