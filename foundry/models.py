@@ -146,7 +146,7 @@ class FoundryConfig(BaseModel):
     local: Optional[bool] = False
     local_cache_dir: Optional[str] = "./data"
     metadata_key: Optional[str] = "foundry"
-    organization: Optional[str] = "foundry"
+    organization: Optional[str] = "Foundry"
 
     def _repr_html_(self):
         return convert(json.loads(self.json()))
