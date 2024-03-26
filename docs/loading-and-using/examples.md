@@ -25,7 +25,7 @@ If you are running your script on cloud resources (e.g. Google Colab, Binder), s
 
 ### Listing Datasets
 
-To show all available Foundry datasets, you can use the Foundry [`list()` method](../advanced-usage/methods.md#.list) as follows. The method returns a pandas DataFrame with details on the available datasets.
+To show all available Foundry datasets, you can use the Foundry [`list()` method](../classes-and-methods/foundry.foundry.md) as follows. The method returns a pandas DataFrame with details on the available datasets.
 
 ```python
 f.list()
@@ -44,7 +44,7 @@ f = Foundry(index="mdf")
 f.load("10.18126/e73h-3w6n", globus=True)
 ```
 
-The [`load()` method](../advanced-usage/methods.md#.load) will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup (set `download` to `True` and `globus` to `False`) or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine (set `download` to `False` and `globus` to `True`).&#x20;
+The [`load()` method](broken-reference) will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup (set `download` to `True` and `globus` to `False`) or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine (set `download` to `False` and `globus` to `True`).&#x20;
 
 {% hint style="success" %}
 All datasets are accessible via HTTPS and Globus by authenticated or anonymous download. Using the load function, simply set `globus=True` to use Globus and `globus=False` to use HTTPS
@@ -56,7 +56,7 @@ The image below is what `f` looks like when printed in a notebook. This table co
 
 ![](<../.gitbook/assets/image (4).png>)
 
-Once the data are accessible locally, access the data with the [`load_data()` method](../advanced-usage/methods.md#.load\_data). Load data allows you to load data from a specific [split](../publishing/describing-datasets.md#splits) that is defined for the dataset, here we use `train`.&#x20;
+Once the data are accessible locally, access the data with the [`load_data()` method](broken-reference). Load data allows you to load data from a specific [split](../publishing/describing-datasets.md#splits) that is defined for the dataset, here we use `train`.&#x20;
 
 ```python
 res = f.load_data()

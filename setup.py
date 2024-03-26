@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 packages = (setuptools.find_packages(),)
 setuptools.setup(
     name="foundry_ml",
-    version="0.7.5",
+    version="0.7.6",
     author="""Aristana Scourtas, KJ Schmidt, Isaac Darling, Aadit Ambadkar, Braeden Cullen,
             Imogen Foster, Ribhav Bose, Zoa Katok, Ethan Truelove, Ian Foster, Ben Blaiszik""",
     author_email="blaiszik@uchicago.edu",
@@ -21,7 +21,8 @@ setuptools.setup(
         "pydantic<2.0.0",
         "mdf_connect_client>=0.5.0",
         "h5py>=2.10.0",
-        "json2table"
+        "json2table",
+        "openpyxl"
     ],
     python_requires=">=3.7",
     classifiers=[
