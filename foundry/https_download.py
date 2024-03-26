@@ -81,7 +81,7 @@ def download_file(item, https_config, base_directory="data/", timeout=1800):
 
     # if parent directories don't exist, create them
     if not os.path.exists(parent_path):
-        os.makedirs(parent_path)
+        os.makedirs(parent_path, exist_ok=True)
 
     try:
         with requests.get(url, stream=True, timeout=timeout) as response:
