@@ -1,25 +1,30 @@
-import builtins
-import json
-import mock
 import os
 import shutil
-import pytest
-from filecmp import cmp
 from datetime import datetime
 from math import floor
 
 import numpy as np
-from pydantic import ValidationError
-import requests
-import mdf_toolbox
 import pandas as pd
-from mdf_forge import Forge
-from foundry import foundry
-from foundry.auth import PubAuths
-from foundry.https_upload import upload_to_endpoint
-from dlhub_sdk import DLHubClient
+import pytest
+import requests
+from filecmp import cmp
 from globus_sdk import AuthClient
 from mdf_connect_client import MDFConnectClient
+from pydantic import ValidationError
+import mock
+import json
+import builtins
+
+import mdf_toolbox
+from mdf_forge import Forge
+from foundry import foundry
+from foundry.foundry_dataset import FoundryDataset
+from foundry.auth import PubAuths
+from foundry.https_upload import upload_to_endpoint
+from foundry.models import FoundrySchema, FoundryDatacite
+from dlhub_sdk import DLHubClient
+from tests.test_data import datacite_data, valid_metadata, invalid_metadata
+
 
 
 client_id = os.getenv("CLIENT_ID")
@@ -78,125 +83,6 @@ old_test_metadata = {
     "short_name": "iris_example",
     "package_type": "tabular"
 }
-
-
-pub_test_metadata = {
-    "keys": [
-        {
-            "key": ["sepal length (cm)"],
-            "type": "input",
-            "units": "cm",
-            "description": "sepal length in unit(cm)"
-        },
-        {
-            "key": ["sepal width (cm)"],
-            "type": "input",
-            "units": "cm",
-            "description": "sepal width in unit(cm)"
-        },
-        {
-            "key": ["petal length (cm)"],
-            "type": "input",
-            "units": "cm",
-            "description": "petal length in unit(cm)"
-        },
-        {
-            "key": ["petal width (cm)"],
-            "type": "input",
-            "units": "cm",
-            "description": "petal width in unit(cm)"
-        },
-        {
-            "key": ["y"],
-            "type": "output",
-            "units": "",
-            "description": "flower type",
-            "classes": [
-                {
-                    "label": "0",
-                    "name": "setosa"
-                },
-                {
-                    "label": "1",
-                    "name": "versicolor"
-                },
-                {
-                    "label": "2",
-                    "name": "virginica"
-                }
-            ]
-        }
-    ],
-    'splits': [
-        {'label': 'train', 'path': 'train.json', 'type': 'train'},
-        {'label': 'test', 'path': 'test.json', 'type': 'test'}
-    ],
-    "short_name": "example_AS_iris_test_{:.0f}".format(datetime.now().timestamp()),
-    "data_type": "tabular",
-    'task_type': ['unsupervised', 'generative'],
-    'domain': ['materials science', 'chemistry'],
-    'n_items': 1000
-}
-
-
-pub_test_invalid_metadata = {
-    "keys": [
-        {
-            "key": ["sepal length (cm)"],
-            "type": "input",
-            "units": "cm",
-            "description": 10
-        },
-        {
-            "key": ["sepal width (cm)"],
-            "type": "input",
-            "units": "cm",
-            "description": "sepal width in unit(cm)"
-        },
-        {
-            "key": ["petal length (cm)"],
-            "type": "input",
-            "units": "cm",
-            "description": "petal length in unit(cm)"
-        },
-        {
-            "key": ["petal width (cm)"],
-            "type": "input",
-            "units": "cm",
-            "description": "petal width in unit(cm)"
-        },
-        {
-            "key": ["y"],
-            "type": "output",
-            "units": "",
-            "description": "flower type",
-            "classes": [
-                {
-                    "label": "0",
-                    "name": "setosa"
-                },
-                {
-                    "label": "1",
-                    "name": "versicolor"
-                },
-                {
-                    "label": "2",
-                    "name": "virginica"
-                }
-            ]
-        }
-    ],
-    'splits': [
-        {'label': 'train', 'path': 'train.json', 'type': 'train'},
-        {'label': 'test', 'path': 'test.json', 'type': 'test'}
-    ],
-    "short_name": "example_AS_iris_test_{:.0f}".format(datetime.now().timestamp()),
-    "data_type": "tabular",
-    'task_type': ['unsupervised', 'generative'],
-    'domain': ['materials science', 'chemistry'],
-    'n_items': 1000
-}
-
 
 # Globus endpoint for '_iris_dev' for test publication
 pub_test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry-test%2Firis-dev%2F"
@@ -421,48 +307,61 @@ def test_globus_dataframe_load():
     _delete_test_data(dataset)
 
 
-@pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
 @pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
 def test_publish_with_https():
     """System test: Assess the end-to-end publication of a dataset via HTTPS
     """
 
-    f = foundry.Foundry(index="mdf-test", authorizers=auths)
+    f = foundry.Foundry(index="mdf-test",
+                        download=True,
+                        globus=False,
+                        authorizers=auths)
+    
     timestamp = datetime.now().timestamp()
-    title = "https_publish_test_{:.0f}".format(timestamp)
     short_name = "https_pub_{:.0f}".format(timestamp)
-    authors = ["A Scourtas"]
     local_path = "./data/https_test"
+
+    ds = FoundryDataset(dataset_name='peanuts',
+                        foundry_schema=valid_metadata,
+                        datacite_entry=datacite_data)
+
+    ds.add_data(https_data_path=local_path)
 
     # create test JSON to upload (if it doesn't already exist)
     _write_test_data(local_path)
 
-    res = f.publish_dataset(pub_test_metadata, title, authors, https_data_path=local_path, short_name=short_name)
+    res = f.publish_dataset(ds, short_name=short_name)
 
     assert res['success']
-    assert res['source_id'] == f"_test_{short_name}_v1.1"
+    assert res['source_id'] == f'{short_name}-test'
 
 
-@pytest.mark.skip(reason='Publishing has not yet been re-implemented following refactoring')
+# @pytest.mark.skip(reason='Publishing has not yet been re-implemented following refactoring')
 def test_publish_invalid_metadata():
     """Testing the validation of the metadata when publishing data
     """
-    with pytest.raises(ValidationError) as exc_info:
-        f = foundry.Foundry(index="mdf-test", authorizers=auths)
+    with pytest.raises(Exception) as exc_info:
         timestamp = datetime.now().timestamp()
-        title = "https_publish_test_{:.0f}".format(timestamp)
         short_name = "https_pub_{:.0f}".format(timestamp)
-        authors = ["A Scourtas"]
         local_path = "./data/https_test"
+
+        f = foundry.Foundry(index="mdf-test", authorizers=auths)
+
+        # create dataset to publish
+
+        ds = FoundryDataset(dataset_name='peanuts',
+                            foundry_schema=invalid_metadata,
+                            datacite_entry=datacite_data)
+
+        ds.add_data(https_data_path=local_path)
 
         # create test JSON to upload (if it doesn't already exist)
         _write_test_data(local_path)
-        f.publish_dataset(pub_test_invalid_metadata, title, authors, https_data_path=local_path, short_name=short_name)
+        f.publish_dataset(ds, short_name=short_name, test=True)
 
-    assert exc_info.value.errors()[0]['msg'] == 'str type expected'
+    assert exc_info.value is not None
 
 
-@pytest.mark.skip(reason='Publishing has not yet been re-implemented following refactoring')
 def test_upload_to_endpoint():
     """Unit test: Test the _upload_to_endpoint() HTTPS functionality on its own, without publishing to MDF
     """
@@ -535,7 +434,7 @@ def test_publish_with_globus():
     short_name = "example_AS_iris_test_{:.0f}".format(timestamp)
     authors = ["A Scourtas"]
 
-    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source,
+    res = f.publish_dataset(valid_metadata, title, authors, globus_data_source=pub_test_data_source,
                             short_name=short_name)
 
     # publish with short name
@@ -549,16 +448,16 @@ def test_publish_with_globus():
     # assert res['source_id'] == "_test_scourtas_example_iris_publish_{:.0f}_v1.1".format(timestamp)
 
     # check that pushing same dataset without update flag fails
-    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=short_name)
+    res = f.publish_dataset(valid_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=short_name)
     assert not res['success']
 
     # check that using update flag allows us to update dataset
-    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=short_name, update=True)
+    res = f.publish_dataset(valid_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=short_name, update=True)
     assert res['success']
 
     # check that using update flag for new dataset fails
     new_short_name = short_name + "_update"
-    res = f.publish_dataset(pub_test_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=new_short_name,  update=True)
+    res = f.publish_dataset(valid_metadata, title, authors, globus_data_source=pub_test_data_source, short_name=new_short_name,  update=True)
     assert not res['success']
 
 

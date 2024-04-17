@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -135,7 +136,7 @@ class FoundryDataset():
         either a `globus_data_source` or `https_data_path`.
 
         Arguments:
-                https_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
+                https_data_path (str): Local path to the dataset used to publish to Foundry via HTTPS. Creates an HTTPS PUT
                 request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
                 transferred to MDF. If None, the user must specify a 'globus_data_source' URL to the location of the
                 data on their own Globus endpoint. User must choose either `globus_data_source` or `https_data_path` to
@@ -146,11 +147,39 @@ class FoundryDataset():
                 publish their data.
 
         """
+        if https_data_path is None and globus_data_source is None:
+            raise ValueError("User must provide either a path to the data on their local machine or a URL to the data "
+                             "on their Globus endpoint.")
         if https_data_path is None:
-            self.globus_data_source = globus_data_source
+            self._globus_data_source = globus_data_source
+            if hasattr(self, '_https_data_path'):
+                delattr(self, '_https_data_path')
         if globus_data_source is None:
-            self.https_data_path = https_data_path
+            if os.path.isdir(https_data_path) or os.path.isfile(https_data_path):
+                self._https_data_path = https_data_path
+                if hasattr(self, '_globus_data_source'):
+                    delattr(self, '_globus_data_source')
+            else:
+                raise ValueError("The path provided does not exist or is not a file or directory.")
 
     def clear_dataset_cache(self):
         """Deletes the cached data for this specific datset"""
         self._foundry_cache.clear_cache(self.dataset_name)
+
+    def clean_dc_dict(self):
+        """Clean the Datacite dictionary of None values"""
+        return self.delete_none(json.loads(self.dc.json()))
+
+    def delete_none(self, _dict):
+        """Delete None values recursively from all of the dictionaries"""
+        for key, value in list(_dict.items()):
+            if isinstance(value, dict):
+                self.delete_none(value)
+            elif value is None:
+                del _dict[key]
+            elif isinstance(value, list):
+                for v_i in value:
+                    if isinstance(v_i, dict):
+                        self.delete_none(v_i)
+
+        return _dict

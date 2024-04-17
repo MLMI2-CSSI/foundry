@@ -107,15 +107,14 @@ class FoundryDatacite(DataciteModel):
     Raises:
         ValidationError: If there is an issue validating the datacite data.
     """
-    def __init__(self, datacite_dict):
+    def __init__(self, datacite_dict, extra=Extra.allow):
         try:
             # modify the datacite_entry to match the expected format
-            dc = copy.deepcopy(datacite_dict)
-
-            if 'identifier' in dc.keys():
-                if 'identifier' in dc['identifier'].keys():
-                    dc['identifier']['identifier'] = {'__root__': datacite_dict['identifier']['identifier']}
-            super(FoundryDatacite, self).__init__(**dc)
+            dc_dict = copy.deepcopy(datacite_dict)
+            if 'identifier' in dc_dict.keys():
+                if 'identifier' in dc_dict['identifier'].keys():
+                    dc_dict['identifier']['identifier'] = {'__root__': datacite_dict['identifier']['identifier']}
+            super(FoundryDatacite, self).__init__(**dc_dict)
             print("Datacite validation successful.")
         except ValidationError as e:
             print("Datacite validation failed!")
@@ -152,7 +151,7 @@ class FoundryBase(BaseModel, extra=Extra.allow):
     local: Optional[bool] = False
     local_cache_dir = "./data"
     metadata_key: Optional[str] = "foundry"
-    organization: Optional[str] = "foundry"
+    organization: Optional[str] = "Foundry"
 
     def _repr_html_(self):
         return convert(json.loads(self.json()))
