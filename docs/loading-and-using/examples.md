@@ -40,13 +40,13 @@ The Foundry client can be used to search for datasets using a `source_id` or a d
 ```python
 from foundry import Foundry
 
-f = Foundry(index="mdf")
+f = Foundry()
 
 dataset_doi = '10.18126/e73h-3w6n'
 datasets = f.search(dataset_doi)
 ```
 
-The search method will return a list of results. If searching by DOI, you can expect that it will be the first result and select it by specifying the first index.
+The search method will return a list of `FoundryDataset` objects. If searching by DOI, you can expect that it will be the first result and select that `FoundryDataset` object by specifying the first index.
 
 ```
 dataset = datasets[0]
@@ -54,21 +54,24 @@ dataset = datasets[0]
 
 ### Loading Datasets
 
-To load the dataset, you can use the `get_as_dict()` method appended to the dataset object. From the example above, this looks like:
+To load the dataset, you can use the `get_as_dict()` method appended to the `FoundryDataset` object. From the example above, this looks like:
 
 ```
 atom_dataset.get_as_dict()
 ```
 
-This will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup (set `download` to `True` and `globus` to `False`) or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine (set `download` to `False` and `globus` to `True`).&#x20;
+This will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached.&#x20;
 
 {% hint style="success" %}
-All datasets are accessible via HTTPS and Globus by authenticated or anonymous download. Using the load function, simply set `globus=True` to use Globus and `globus=False` to use HTTPS
+All datasets are accessible via HTTPS and Globus by authenticated download. HTTPS is the default. Read about the [FoundryDataset object](../classes-and-methods/foundry.foundry\_dataset.md) to use Globus.
 {% endhint %}
 
+To learn more about the dataset, you can access the metadata.&#x20;
 
+<pre><code><strong>f.get_metadata_by_doi('10.18126/e73h-3w6n')
+</strong></code></pre>
 
-The image below is what `dataset` looks like when printed in a notebook. This table contains the dataset's [metadata](../publishing/describing-datasets.md#descriptive-metadata).
+The image below is what `get_metadata_by_doi()` looks like when printed in a notebook. This table contains the dataset's [metadata](../publishing/describing-datasets.md#descriptive-metadata).
 
 ![](<../.gitbook/assets/image (4).png>)
 
@@ -100,14 +103,6 @@ for i in range(n_images):
 Foundry works with common cloud computing providers (e.g., the NSF sponsored Jetstream and Google Colab). On these resources, simply add the following arguments to use a cloud-compatible authentication flow.
 
 ```python
-f = Foundry(index="mdf", no_browser=True, no_local_server=True)
-```
-
-When downloading data, add the following argument to download via HTTPS.
-
-```python
-datasets = f.search("10.18126/e73h-3w6n")
-dataset = datasets[0]
-data = dataset.get_as_dict(download=True, globus=False)
+f = Foundry(no_browser=True, no_local_server=True)
 ```
 
