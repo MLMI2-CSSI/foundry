@@ -52,12 +52,25 @@ The search method will return a list of `FoundryDataset` objects. If searching b
 dataset = datasets[0]
 ```
 
+### Finding Datasets
+
+Instead of using `search`, you can use the `get_dataset_by_name()` or `get_dataset_by_doi()` methods. Both methods return a FoundryDataset associated with the given name or DOI.
+
+```
+from foundry import Foundry
+
+f = Foundry()
+
+dataset_doi = '10.18126/e73h-3w6n'
+dataset = f.get_dataset_by_doi(dataset_doi)
+```
+
 ### Loading Datasets
 
 To load the dataset, you can use the `get_as_dict()` method appended to the `FoundryDataset` object. From the example above, this looks like:
 
 ```
-atom_dataset.get_as_dict()
+dataset.get_as_dict()
 ```
 
 This will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached.&#x20;
