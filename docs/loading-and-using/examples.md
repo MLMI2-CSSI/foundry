@@ -33,18 +33,34 @@ f.list()
 
 ![The returned Dataframe from f.list()](<../.gitbook/assets/Screen Shot 2022-01-27 at 1.29.23 PM.png>)
 
-### Loading Datasets
+### Searching Datasets
 
-The Foundry client can be used to access datasets using a `source_id` or a digital object identifier (DOI) e.g. here `"foundry_wei_atom_locating_benchmark"` or `"10.18126/e73h-3w6n"`_._ You can retrieve the `source_id`from the [`list()` method](examples.md#listing-datasets).
+The Foundry client can be used to search for datasets using a `source_id` or a digital object identifier (DOI) e.g. here `"foundry_wei_atom_locating_benchmark"` or `"10.18126/e73h-3w6n"`_._ You can retrieve the `source_id`from the [`list()` method](examples.md#listing-datasets).
 
 ```python
 from foundry import Foundry
 
 f = Foundry(index="mdf")
-f.load("10.18126/e73h-3w6n", globus=True)
+
+dataset_doi = '10.18126/e73h-3w6n'
+datasets = f.search(dataset_doi)
 ```
 
-The [`load()` method](broken-reference) will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup (set `download` to `True` and `globus` to `False`) or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine (set `download` to `False` and `globus` to `True`).&#x20;
+The search method will return a list of results. If searching by DOI, you can expect that it will be the first result and select it by specifying the first index.
+
+```
+dataset = datasets[0]
+```
+
+### Loading Datasets
+
+To load the dataset, you can use the `get_as_dict()` method appended to the dataset object. From the example above, this looks like:
+
+```
+atom_dataset.get_as_dict()
+```
+
+This will remotely load the metadata (e.g., data location, data keys, etc.) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup (set `download` to `True` and `globus` to `False`) or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine (set `download` to `False` and `globus` to `True`).&#x20;
 
 {% hint style="success" %}
 All datasets are accessible via HTTPS and Globus by authenticated or anonymous download. Using the load function, simply set `globus=True` to use Globus and `globus=False` to use HTTPS
@@ -52,16 +68,15 @@ All datasets are accessible via HTTPS and Globus by authenticated or anonymous d
 
 
 
-The image below is what `f` looks like when printed in a notebook. This table contains the dataset's [metadata](../publishing/describing-datasets.md#descriptive-metadata).
+The image below is what `dataset` looks like when printed in a notebook. This table contains the dataset's [metadata](../publishing/describing-datasets.md#descriptive-metadata).
 
 ![](<../.gitbook/assets/image (4).png>)
 
-Once the data are accessible locally, access the data with the [`load_data()` method](broken-reference). Load data allows you to load data from a specific [split](../publishing/describing-datasets.md#splits) that is defined for the dataset, here we use `train`.&#x20;
+This is an example of accessing data in a specified [split](../publishing/describing-datasets.md#splits) that is defined for the dataset, here we use `train`.&#x20;
 
 ```python
-res = f.load_data()
-imgs = res['train']['input']['imgs']
-coords = res['train']['input']['coords']
+imgs = dataset['train']['input']['imgs']
+coords = dataset['train']['input']['coords']
 
 
 # Show some images with coordinate overlays
@@ -90,12 +105,9 @@ f = Foundry(index="mdf", no_browser=True, no_local_server=True)
 
 When downloading data, add the following argument to download via HTTPS.
 
-{% hint style="info" %}
-This method may be slow for large datasets and datasets with many files
-{% endhint %}
-
 ```python
-f.load("10.18126/e73h-3w6n", download=True, globus=False)
-data = f.load_data()
+datasets = f.search("10.18126/e73h-3w6n")
+dataset = datasets[0]
+data = dataset.get_as_dict(download=True, globus=False)
 ```
 
