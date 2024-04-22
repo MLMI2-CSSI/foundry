@@ -10,7 +10,6 @@ import requests
 from filecmp import cmp
 from globus_sdk import AuthClient
 from mdf_connect_client import MDFConnectClient
-from pydantic import ValidationError
 import mock
 import json
 import builtins
@@ -21,7 +20,6 @@ from foundry import foundry
 from foundry.foundry_dataset import FoundryDataset
 from foundry.auth import PubAuths
 from foundry.https_upload import upload_to_endpoint
-from foundry.models import FoundrySchema, FoundryDatacite
 from dlhub_sdk import DLHubClient
 from tests.test_data import datacite_data, valid_metadata, invalid_metadata
 
@@ -318,19 +316,19 @@ def test_publish_with_https():
                         authorizers=auths)
     
     timestamp = datetime.now().timestamp()
-    short_name = "https_pub_{:.0f}".format(timestamp)
+    short_name = "https_peanuts_pub_{:.0f}".format(timestamp)
     local_path = "./data/https_test"
 
-    ds = FoundryDataset(dataset_name='peanuts',
+    ds = FoundryDataset(dataset_name=short_name,
                         foundry_schema=valid_metadata,
                         datacite_entry=datacite_data)
 
-    ds.add_data(https_data_path=local_path)
+    ds.add_data(local_data_path=local_path)
 
     # create test JSON to upload (if it doesn't already exist)
     _write_test_data(local_path)
 
-    res = f.publish_dataset(ds, short_name=short_name)
+    res = f.publish_dataset(ds)
 
     assert res['success']
     assert res['source_id'] == f'{short_name}-test'
@@ -353,7 +351,7 @@ def test_publish_invalid_metadata():
                             foundry_schema=invalid_metadata,
                             datacite_entry=datacite_data)
 
-        ds.add_data(https_data_path=local_path)
+        ds.add_data(local_data_path=local_path)
 
         # create test JSON to upload (if it doesn't already exist)
         _write_test_data(local_path)

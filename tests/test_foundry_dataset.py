@@ -30,7 +30,7 @@ def test_add_non_existent_data_to_dataset():
                                 datacite_entry=datacite_data)
 
     with pytest.raises(ValueError) as exc_info:
-        ds.add_data(https_data_path='./test_data/iris.csv')
+        ds.add_data(local_data_path='./test_data/iris.csv')
         print(f'ERROR: {exc_info.value}')
         assert "local path" in str(exc_info.value)
 
@@ -40,8 +40,8 @@ def test_add_data_folder_to_dataset():
                                 foundry_schema=valid_metadata,
                                 datacite_entry=datacite_data)
     dir_path = str(Path(__file__).parent) + '/test_data/test_dataset'
-    ds.add_data(https_data_path=dir_path)
-    assert hasattr(ds, '_https_data_path')
+    ds.add_data(local_data_path=dir_path)
+    assert hasattr(ds, '_local_data_path')
 
 
 def test_add_data_file_to_dataset():
@@ -49,5 +49,5 @@ def test_add_data_file_to_dataset():
                                 foundry_schema=valid_metadata,
                                 datacite_entry=datacite_data)
     file_path = str(Path(__file__).parent) + '/test_data/test_dataset/elwood.hdf5'
-    ds.add_data(https_data_path=file_path)
-    assert hasattr(ds, '_https_data_path')
+    ds.add_data(local_data_path=file_path)
+    assert hasattr(ds, '_local_data_path')

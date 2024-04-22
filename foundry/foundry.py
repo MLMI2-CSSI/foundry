@@ -382,38 +382,31 @@ class Foundry(FoundryBase):
     def publish_dataset(self,
                         foundry_dataset: FoundryDataset,
                         update: bool = False,
-                        short_name: str = None,
                         test: bool = False):
-        """Submit a dataset for publication; can choose to submit via HTTPS using `https_data_path` or via Globus
+        """Submit a dataset for publication; can choose to submit via HTTPS using `local_data_path` or via Globus
             Transfer using the `globus_data_source` argument. Only one upload method may be specified.
         Args:
-            foundry_metadata (dict): Dict of metadata describing data package
-            update (bool): True if this is an update to a prior data package
-            short_name (str): Abbreviated name for dataset. If not specified, the title from the datacite entry
-                will be used.
+            foundry_dataset (FoundryDataset): The dataset to be published.
+            update (bool): True if this is an update to a prior data package.
             test (bool): If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).
                 Default is False.
 
-        Returns
-        -------
-        (dict) MDF Connect Response: Response from MDF Connect to allow tracking
+        Returns:
+            dict: MDF Connect Response. Response from MDF Connect to allow tracking
             of dataset. Contains `source_id`, which can be used to check the
-            status of the submission
+            status of the submission.
         """
-        # set dataset name using the title if an abbreviated short_name isn't specified
-        if short_name is None:
-            short_name = foundry_dataset.dc.titles[0].title
 
-        # ensure that one of `https_data_path` or `globus_data_source` have been assigned values
-        if (not hasattr(foundry_dataset, '_https_data_path') and not hasattr(foundry_dataset, '_globus_data_source')):
+        # ensure that one of `local_data_path` or `globus_data_source` have been assigned values
+        if (not hasattr(foundry_dataset, '_local_data_path') and not hasattr(foundry_dataset, '_globus_data_source')):
             raise ValueError("Must add data to your FoundryDataset object (use the FoundryDataset.add_data() method) before publishing")
-        if (hasattr(foundry_dataset, '_https_data_path') and hasattr(foundry_dataset, '_globus_data_source')):
-            raise ValueError("Dataset cannot contain both `https_data_path` and `globus_data_source` attributes. "
+        if (hasattr(foundry_dataset, '_local_data_path') and hasattr(foundry_dataset, '_globus_data_source')):
+            raise ValueError("Dataset cannot contain both `local_data_path` and `globus_data_source` attributes. "
                              "Choose one by adding via the FoundryDataset.add() method.")
-        if (hasattr(foundry_dataset, '_https_data_path') and
-            foundry_dataset._https_data_path is None) or \
+        if (hasattr(foundry_dataset, '_local_data_path') and
+            foundry_dataset._local_data_path is None) or \
            (hasattr(foundry_dataset, '_globus_data_source') and foundry_dataset._globus_data_source is None):
-            raise ValueError("Must assign a value to `https_data_path` OR `globus_data_source` in your FoundryDataset object - "
+            raise ValueError("Must assign a value to `local_data_path` OR `globus_data_source` in your FoundryDataset object - "
                              "use the FoundryDataset.add_data() method (cannot be None)")
 
         self.connect_client.dc = foundry_dataset.clean_dc_dict()
@@ -421,7 +414,7 @@ class Foundry(FoundryBase):
         self.connect_client.set_project_block("foundry", foundry_dataset)
 
         # upload via HTTPS if specified
-        if foundry_dataset._https_data_path:
+        if foundry_dataset._local_data_path:
             # gather auth'd clients necessary for publication to endpoint
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
             scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"  # lets you HTTPS to specific endpoint
@@ -431,13 +424,13 @@ class Foundry(FoundryBase):
                 endpoint_auth_clients={endpoint_id: AuthClient(authorizer=self.auths[scope])}
             )
             # upload (ie publish) data to endpoint
-            globus_data_source = upload_to_endpoint(pub_auths, foundry_dataset._https_data_path, endpoint_id)
+            globus_data_source = upload_to_endpoint(pub_auths, foundry_dataset._local_data_path, endpoint_id)
         else:
             # set Globus data source URL with MDF
             globus_data_source = foundry_dataset._globus_data_source
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
-        self.connect_client.set_source_name(short_name)
+        self.connect_client.set_source_name(foundry_dataset.dataset_name)
 
         # do not submit to MDF if this is just a test
         if not test:
