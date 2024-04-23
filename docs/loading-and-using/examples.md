@@ -12,7 +12,7 @@ We have [example notebooks](https://github.com/MLMI2-CSSI/foundry/tree/main/exam
 
 ### Creating a Foundry Client
 
-The Foundry client provides access to all of the methods described here for listing, loading, and publishing datasets and models. The code below will create a Foundry client&#x20;
+The Foundry client provides access to all of the methods described here for listing, loading, and publishing datasets and models. The code below will create a Foundry client. If you'd like to use https instead of Globus when downloading data, specify that here with `Globus=False`.
 
 ```python
 from foundry import Foundry
@@ -78,6 +78,8 @@ This will remotely load the metadata (e.g., data location, data keys, etc.) and 
 {% hint style="success" %}
 All datasets are accessible via HTTPS and Globus by authenticated download. HTTPS is the default. Read about the [FoundryDataset object](../classes-and-methods/foundry.foundry\_dataset.md) to use Globus.
 {% endhint %}
+
+### Viewing Metadata
 
 To learn more about the dataset, you can access the metadata.&#x20;
 
