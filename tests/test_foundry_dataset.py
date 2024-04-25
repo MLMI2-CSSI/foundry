@@ -1,99 +1,53 @@
-from datetime import datetime
+from pathlib import Path
 import pytest
 
 from foundry import foundry
-
-
-metadata_json = {"keys": [
-                    {
-                        "key": ["sepal length (cm)"],
-                        "type": "input",
-                        "units": "cm",
-                        "description": "sepal length in Charlie Brown's zig-zag style"
-                    },
-                    {
-                        "key": ["sepal width (cm)"],
-                        "type": "input",
-                        "units": "cm",
-                        "description": "sepal width in Snoopy's flying ace mode"
-                    },
-                    {
-                        "key": ["petal length (cm)"],
-                        "type": "input",
-                        "units": "cm",
-                        "description": "petal length in Linus's security blanket units"
-                    },
-                    {
-                        "key": ["petal width (cm)"],
-                        "type": "input",
-                        "units": "cm",
-                        "description": "petal width in Lucy's psychiatric advice scale"
-                    },
-                    {
-                        "key": ["y"],
-                        "type": "output",
-                        "units": "",
-                        "description": "flower type",
-                        "classes": [
-                            {
-                                "label": "0",
-                                "name": "setosa"
-                            },
-                            {
-                                "label": "1",
-                                "name": "versicolor"
-                            },
-                            {
-                                "label": "2",
-                                "name": "virginica"
-                            }
-                        ]
-                    }
-                ],
-                "splits": [
-                    {"label": "train", "path": "train_snoopy.json", "type": "train"},
-                    {"label": "test", "path": "test_woodstock.json", "type": "test"}
-                ],
-                "short_name": "peanuts_iris_{:.0f}".format(datetime.now().timestamp()),
-                "data_type": "tabular",
-                "task_type": ["unsupervised", "generative"],
-                "domain": ["comics", "nostalgia"],
-                "n_items": 1000
-            }
-
-datacite_json = {'identifier': {'identifier': '10.xx/xx', 'identifierType': 'DOI'},
-                 'rightsList': [{'rights': 'CC-BY 4.0'}],
-                 'creators': [{'creatorName': 'Brown, C',
-                               'familyName': 'Brown',
-                               'givenName': 'C'},
-                              {'creatorName': 'Van Pelt, L',
-                               'familyName': 'Van Pelt',
-                               'givenName': 'L'}],
-                 'subjects': [{'subject': 'blockheads'},
-                              {'subject': 'foundry'},
-                              {'subject': 'test_data'}],
-                 'publicationYear': 2024,
-                 'publisher': 'Materials Data Facility',
-                 'dates': [{'date': '2024-08-03', 'dateType': 'Accepted'}],
-                 'titles': [{'title': "You're a Good man, Charlie Brown"}],
-                 'resourceType': {'resourceTypeGeneral': 'Dataset',
-                                  'resourceType': 'Dataset'}}
+from tests.test_data import datacite_data, valid_metadata
 
 
 def test_dataset_instantiation():
     ds = foundry.FoundryDataset(dataset_name='peanuts',
-                                foundry_schema=metadata_json,
-                                datacite_entry=datacite_json)
+                                foundry_schema=valid_metadata,
+                                datacite_entry=datacite_data)
 
     assert ds.foundry_schema is not None
 
 
 def test_dataset_instantiation_broken_dc():
-    broken_datacite = datacite_json.copy()
+    broken_datacite = datacite_data.copy()
     broken_datacite.pop('creators')
     with pytest.raises(Exception) as exc_info:
         foundry.FoundryDataset(dataset_name='peanuts',
-                               foundry_schema=metadata_json,
+                               foundry_schema=valid_metadata,
                                datacite_entry=broken_datacite)
         print(f'ERROR: {exc_info.value}')
         assert "field required" in str(exc_info.value)
+
+
+def test_add_non_existent_data_to_dataset():
+    ds = foundry.FoundryDataset(dataset_name='peanuts',
+                                foundry_schema=valid_metadata,
+                                datacite_entry=datacite_data)
+
+    with pytest.raises(ValueError) as exc_info:
+        ds.add_data(local_data_path='./test_data/iris.csv')
+        print(f'ERROR: {exc_info.value}')
+        assert "local path" in str(exc_info.value)
+
+
+def test_add_data_folder_to_dataset():
+    ds = foundry.FoundryDataset(dataset_name='peanuts',
+                                foundry_schema=valid_metadata,
+                                datacite_entry=datacite_data)
+    dir_path = str(Path(__file__).parent) + '/test_data/test_dataset'
+    ds.add_data(local_data_path=dir_path)
+    assert hasattr(ds, '_local_data_path')
+
+
+def test_add_data_file_to_dataset():
+    ds = foundry.FoundryDataset(dataset_name='peanuts',
+                                foundry_schema=valid_metadata,
+                                datacite_entry=datacite_data)
+    file_path = str(Path(__file__).parent) + '/test_data/test_dataset/elwood.hdf5'
+    ds.add_data(local_data_path=file_path)
+    assert hasattr(ds, '_local_data_path')

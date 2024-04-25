@@ -381,58 +381,40 @@ class Foundry(FoundryBase):
 
     def publish_dataset(self,
                         foundry_dataset: FoundryDataset,
-                        title: str, authors: List[str],
                         update: bool = False,
-                        publication_year: int = None,
-                        test: bool = False,
-                        **kwargs: Dict[str, Any],) -> Dict[str, Any]:
-        """Submit a dataset for publication; can choose to submit via HTTPS using `https_data_path` or via Globus
+                        test: bool = False):
+        """Submit a dataset for publication; can choose to submit via HTTPS using `local_data_path` or via Globus
             Transfer using the `globus_data_source` argument. Only one upload method may be specified.
         Args:
-            foundry_metadata (dict): Dict of metadata describing data package
-            title (string): Title of data package
-            authors (list): List of data package author names e.g., Jack Black
-                or Nunez, Victoria
-            update (bool): True if this is an update to a prior data package
-                (default: self.config.metadata_file)
+            foundry_dataset (FoundryDataset): The dataset to be published.
+            update (bool): True if this is an update to a prior data package.
             test (bool): If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).
                 Default is False.
 
-        Returns
-        -------
-        (dict) MDF Connect Response: Response from MDF Connect to allow tracking
+        Returns:
+            dict: MDF Connect Response. Response from MDF Connect to allow tracking
             of dataset. Contains `source_id`, which can be used to check the
-            status of the submission
+            status of the submission.
         """
-        # strip 'None' values from metadata object and ensure metadata is properly formatted
-        clean_metadata_json = self.remove_none_keys(foundry_dataset.foundry_schema.json())
-        self.validate_metadata(clean_metadata_json)
 
-        # strip 'None' values from datacite object and ensure datacite is properly formatted
-        clean_dc_json = self.remove_none_keys(foundry_dataset.dc.json())
-        self.validate(clean_dc_json)
+        # ensure that one of `local_data_path` or `globus_data_source` have been assigned values
+        if (not hasattr(foundry_dataset, '_local_data_path') and not hasattr(foundry_dataset, '_globus_data_source')):
+            raise ValueError("Must add data to your FoundryDataset object (use the FoundryDataset.add_data() method) before publishing")
+        if (hasattr(foundry_dataset, '_local_data_path') and hasattr(foundry_dataset, '_globus_data_source')):
+            raise ValueError("Dataset cannot contain both `local_data_path` and `globus_data_source` attributes. "
+                             "Choose one by adding via the FoundryDataset.add() method.")
+        if (hasattr(foundry_dataset, '_local_data_path') and
+            foundry_dataset._local_data_path is None) or \
+           (hasattr(foundry_dataset, '_globus_data_source') and foundry_dataset._globus_data_source is None):
+            raise ValueError("Must assign a value to `local_data_path` OR `globus_data_source` in your FoundryDataset object - "
+                             "use the FoundryDataset.add_data() method (cannot be None)")
 
-        # ensure that one of `https_data_path` or `globus_data_source` have been assigned values
-        if (foundry_dataset.https_data_path and foundry_dataset.globus_data_source) or \
-                (foundry_dataset.https_data_path is None and foundry_dataset.globus_data_source is None):
-            raise ValueError("Must assign either `https_data_path` or `globus_data_source`")
-
-        self.connect_client.create_dc_block(
-            title=title,
-            authors=authors,
-            affiliations=kwargs.get("affiliations", []),
-            subjects=kwargs.get("tags", ["machine learning", "foundry"]),
-            publisher=kwargs.get("publisher", ""),
-            publication_year=publication_year,
-            description=kwargs.get("description", ""),
-            dataset_doi=kwargs.get("dataset_doi", ""),
-            related_dois=kwargs.get("related_dois", [])
-        )
-        self.connect_client.add_organization(self.organization)
-        self.connect_client.set_project_block(self.config.metadata_key)
+        self.connect_client.dc = foundry_dataset.clean_dc_dict()
+        self.connect_client.set_organization(self.organization)
+        self.connect_client.set_project_block("foundry", foundry_dataset)
 
         # upload via HTTPS if specified
-        if foundry_dataset.https_data_path:
+        if foundry_dataset._local_data_path:
             # gather auth'd clients necessary for publication to endpoint
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
             scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"  # lets you HTTPS to specific endpoint
@@ -442,11 +424,13 @@ class Foundry(FoundryBase):
                 endpoint_auth_clients={endpoint_id: AuthClient(authorizer=self.auths[scope])}
             )
             # upload (ie publish) data to endpoint
-            globus_data_source = upload_to_endpoint(pub_auths, foundry_dataset.https_data_path, endpoint_id)
+            globus_data_source = upload_to_endpoint(pub_auths, foundry_dataset._local_data_path, endpoint_id)
+        else:
+            # set Globus data source URL with MDF
+            globus_data_source = foundry_dataset._globus_data_source
         # set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
-        # set dataset name using the title if an abbreviated short_name isn't specified
-        self.connect_client.set_source_name(kwargs.get("short_name", title))
+        self.connect_client.set_source_name(foundry_dataset.dataset_name)
 
         # do not submit to MDF if this is just a test
         if not test:
@@ -455,32 +439,6 @@ class Foundry(FoundryBase):
         else:
             res = None
         return res
-
-    def publish_model(self, title, creators, short_name, servable_type, serv_options, affiliations=None, paper_doi=None):
-        """Simplified publishing method for servables
-
-        Args:
-            title (string): title for the servable
-            creators (string | list): either the creator's name (FamilyName, GivenName) or a list of the creators' names
-            short_name (string): shorthand name for the servable
-            servable_type (string): the type of the servable, must be a member of ("static_method",
-                                                                                   "class_method",
-                                                                                   "keras",
-                                                                                   "pytorch",
-                                                                                   "tensorflow",
-                                                                                   "sklearn")
-            serv_options (dict): the servable_type specific arguments that are necessary for publishing. arguments can be found at
-                                 https://dlhub-sdk.readthedocs.io/en/latest/source/dlhub_sdk.models.servables.html under the appropriate
-                                 ``create_model`` signature. use the argument names as keys and their values as the values.
-            affiliations (list): list of affiliations for each author
-            paper_doi (str): DOI of a paper that describes the servable
-        Returns:
-            (string): task id of this submission, can be used to check for success
-        Raises:
-            ValueError: If the given servable_type is not in the list of acceptable types
-            Exception: If the serv_options are incomplete or the request to publish results in an error
-        """
-        return self.dlhub_client.easy_publish(title, creators, short_name, servable_type, serv_options, affiliations, paper_doi)
 
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
@@ -502,11 +460,3 @@ class Foundry(FoundryBase):
             If ``raw`` is ``True``, *dict*: The full status result.
         """
         return self.connect_client.check_status(source_id, short, raw)
-
-    # def check_model_status(self, res):
-    #     """Check status of model or function publication to DLHub
-    #
-    #     TODO: currently broken on DLHub side of things
-    #     """
-    #     # return self.dlhub_client.get_task_status(res)
-    #     pass

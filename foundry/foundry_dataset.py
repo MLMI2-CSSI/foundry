@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -130,27 +131,55 @@ class FoundryDataset():
                 logger.error(error_message)
             raise e
 
-    def add_data(self, https_data_path: str = None, globus_data_source: str = None):
+    def add_data(self, local_data_path: str = None, globus_data_source: str = None):
         """Add data to the dataset. User must provide the location of the data as
-        either a `globus_data_source` or `https_data_path`.
+        either a `globus_data_source` or `local_data_path`.
 
         Arguments:
-                https_data_path (str): Path to the local dataset to publish to Foundry via HTTPS. Creates an HTTPS PUT
+                local_data_path (str): Local path to the dataset used to publish to Foundry via HTTPS. Creates an HTTPS PUT
                 request to upload the data specified to a Globus endpoint (default is NCSA endpoint) before it is
                 transferred to MDF. If None, the user must specify a 'globus_data_source' URL to the location of the
-                data on their own Globus endpoint. User must choose either `globus_data_source` or `https_data_path` to
+                data on their own Globus endpoint. User must choose either `globus_data_source` or `local_data_path` to
                 publish their data.
             globus_data_source (str): Url path for a data folder on a Globus endpoint; url can be obtained through
-                the Globus Web UI or SDK. If None, the user must specify an 'https_data_path' pointing to the location
-                of the data on their local machine. User must choose either `globus_data_source` or `https_data_path` to
+                the Globus Web UI or SDK. If None, the user must specify an 'local_data_path' pointing to the location
+                of the data on their local machine. User must choose either `globus_data_source` or `local_data_path` to
                 publish their data.
 
         """
-        if https_data_path is None:
-            self.globus_data_source = globus_data_source
+        if local_data_path is None and globus_data_source is None:
+            raise ValueError("User must provide either a path to the data on their local machine or a URL to the data "
+                             "on their Globus endpoint.")
+        if local_data_path is None:
+            self._globus_data_source = globus_data_source
+            if hasattr(self, '_local_data_path'):
+                delattr(self, '_local_data_path')
         if globus_data_source is None:
-            self.https_data_path = https_data_path
+            if os.path.isdir(local_data_path) or os.path.isfile(local_data_path):
+                self._local_data_path = local_data_path
+                if hasattr(self, '_globus_data_source'):
+                    delattr(self, '_globus_data_source')
+            else:
+                raise ValueError("The path provided does not exist or is not a file or directory.")
 
     def clear_dataset_cache(self):
         """Deletes the cached data for this specific datset"""
         self._foundry_cache.clear_cache(self.dataset_name)
+
+    def clean_dc_dict(self):
+        """Clean the Datacite dictionary of None values"""
+        return self.delete_none(json.loads(self.dc.json()))
+
+    def delete_none(self, _dict):
+        """Delete None values recursively from all of the dictionaries"""
+        for key, value in list(_dict.items()):
+            if isinstance(value, dict):
+                self.delete_none(value)
+            elif value is None:
+                del _dict[key]
+            elif isinstance(value, list):
+                for v_i in value:
+                    if isinstance(v_i, dict):
+                        self.delete_none(v_i)
+
+        return _dict
