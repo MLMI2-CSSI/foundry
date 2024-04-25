@@ -821,7 +821,7 @@ Initialize a Foundry client
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L485"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L443"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_status`
 
@@ -986,70 +986,24 @@ List available Foundry datasets
 ```python
 publish_dataset(
     foundry_dataset: FoundryDataset,
-    title: str,
-    authors: List[str],
     update: bool = False,
-    publication_year: int = None,
-    test: bool = False,
-    **kwargs: Dict[str, Any]
-) → Dict[str, Any]
-```
-
-Submit a dataset for publication; can choose to submit via HTTPS using `https_data_path` or via Globus  Transfer using the `globus_data_source` argument. Only one upload method may be specified. 
-
-**Args:**
- 
- - <b>`foundry_metadata`</b> (dict):  Dict of metadata describing data package 
- - <b>`title`</b> (string):  Title of data package 
- - <b>`authors`</b> (list):  List of data package author names e.g., Jack Black  or Nunez, Victoria 
- - <b>`update`</b> (bool):  True if this is an update to a prior data package 
- - <b>`(default`</b>:  self.config.metadata_file) 
- - <b>`test`</b> (bool):  If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).  Default is False. 
-
-Returns 
-------- (dict) MDF Connect Response: Response from MDF Connect to allow tracking of dataset. Contains `source_id`, which can be used to check the status of the submission 
-
----
-
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L459"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>method</kbd> `publish_model`
-
-```python
-publish_model(
-    title,
-    creators,
-    short_name,
-    servable_type,
-    serv_options,
-    affiliations=None,
-    paper_doi=None
+    test: bool = False
 )
 ```
 
-Simplified publishing method for servables 
-
-
+Submit a dataset for publication; can choose to submit via HTTPS using `local_data_path` or via Globus  Transfer using the `globus_data_source` argument. Only one upload method may be specified. 
 
 **Args:**
  
- - <b>`title`</b> (string):  title for the servable 
- - <b>`creators`</b> (string | list):  either the creator's name (FamilyName, GivenName) or a list of the creators' names 
- - <b>`short_name`</b> (string):  shorthand name for the servable 
- - <b>`servable_type`</b> (string):  the type of the servable, must be a member of ("static_method",  "class_method",  "keras",  "pytorch",  "tensorflow",  "sklearn") 
- - <b>`serv_options`</b> (dict):  the servable_type specific arguments that are necessary for publishing. arguments can be found at 
- - <b>`https`</b>: //dlhub-sdk.readthedocs.io/en/latest/source/dlhub_sdk.models.servables.html under the appropriate ``create_model`` signature. use the argument names as keys and their values as the values. 
- - <b>`affiliations`</b> (list):  list of affiliations for each author 
- - <b>`paper_doi`</b> (str):  DOI of a paper that describes the servable 
+ - <b>`foundry_dataset`</b> (FoundryDataset):  The dataset to be published. 
+ - <b>`update`</b> (bool):  True if this is an update to a prior data package. 
+ - <b>`test`</b> (bool):  If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).  Default is False. 
+
+
 
 **Returns:**
  
- - <b>`(string)`</b>:  task id of this submission, can be used to check for success 
-
-**Raises:**
- 
- - <b>`ValueError`</b>:  If the given servable_type is not in the list of acceptable types 
- - <b>`Exception`</b>:  If the serv_options are incomplete or the request to publish results in an error 
+ - <b>`dict`</b>:  MDF Connect Response. Response from MDF Connect to allow tracking of dataset. Contains `source_id`, which can be used to check the status of the submission. 
 
 ---
 

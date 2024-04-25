@@ -143,7 +143,7 @@ A model for the Datacite schema based on the Datacite (dc_model.py) class. The F
 ### <kbd>method</kbd> `__init__`
 
 ```python
-__init__(datacite_dict)
+__init__(datacite_dict, extra=<Extra.allow: 'allow'>)
 ```
 
 
@@ -156,7 +156,7 @@ __init__(datacite_dict)
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L133"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L132"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryBase`
 Configuration information for Foundry instance 
