@@ -19,7 +19,7 @@ Foundry-ML simplifies the discovery and usage of ML-ready datasets in materials 
 * Load ML-ready data with just a few lines of code
 * Work with datasets in local or cloud environments. 
 * Publish your own datasets with Foundry to promote community usage
-* (in progress) Run published ML models without hassle
+* Run published ML models without hassle (via connections with [Garden](https://www.thegardens.ai))
 
 Learn more and see our available datasets on [Foundry-ML.org](https://foundry-ml.org/)
 
@@ -28,7 +28,7 @@ Learn more and see our available datasets on [Foundry-ML.org](https://foundry-ml
 # Documentation
 Information on how to install and use Foundry is available in our documentation [here](https://ai-materials-and-chemistry.gitbook.io/foundry/v/docs/).
 
-DLHub documentation for model publication and running information can be found [here](https://dlhub-sdk.readthedocs.io/en/latest/servable-publication.html).
+Garden documentation for model publication and running information can be found [here](https://garden-ai.readthedocs.io/en/latest/user_guide/introduction/).
 
 # Quick Start
 Install Foundry-ML via command line with:
