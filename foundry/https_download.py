@@ -52,30 +52,56 @@ def _get_files(tc, ep, queue, max_depth):
                 yield item
 
 
-# TODO (wardlt): Avoid passing dictionaries, as documenting their content is tedious
-def download_file(item, data_directory, https_config):
+def download_file(item, base_directory, https_config, timeout=1800):
     """Download a file to disk
 
     Args:
         item: Dictionary defining the path to the file
+        base_directory: Base directory for storing downloaded files
         https_config: Configuration defining the URL of the server and the name of the dataset
+        timeout: Timeout for the download request in seconds (default: 1800)
     """
-    url = f"{https_config['base_url']}{item['path']}{item['name']}"
+    base_url = https_config['base_url'].rstrip('/')
+    path = item.get('path', '').strip('/')
+
+    # Extracting the name and subdirectory from the item
+    name = item.get('name', '')
+    subdirectory = name.split('/')[0] if '/' in name else ''
+
+    # Avoid duplication of subdirectory in path
+    if subdirectory and path.endswith(subdirectory):
+        full_path = f"{path}/{name.split('/', 1)[-1]}".strip('/')
+    else:
+        full_path = '/'.join([path, name]).strip('/')
+
+    url = f"{base_url}/{full_path}"
 
     # build destination path for data file
-    destination = os.path.join(data_directory, https_config['source_id'], item['name'])
-
+    destination = os.path.join(base_directory, https_config['source_id'], item['name'])
     parent_path = os.path.split(destination)[0]
 
     # if parent directories don't exist, create them
     if not os.path.exists(parent_path):
-        os.makedirs(parent_path)
+        os.makedirs(parent_path, exist_ok=True)
 
-    response = requests.get(url)
+    try:
+        with requests.get(url, stream=True, timeout=timeout) as response:
+            response.raise_for_status()
 
-    # write file to local destination
-    with open(destination, "wb") as f:
-        f.write(response.content)
+            downloaded_size = 0
+            print(f"\rStarting Download of: {url}")
 
-    # TODO (wardlt): Should we just return the key?
+            with open(destination, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded_size += len(chunk)
+                        # Calculate and print the download progress
+                        print(f"\rDownloading... {downloaded_size/(1 << 20):,.2f} MB", end="")
+                    return destination
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading file: {e}")
+    except IOError as e:
+        print(f"Error writing file to disk: {e}")
+
     return {destination + " status": True}
