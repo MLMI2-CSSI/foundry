@@ -112,13 +112,12 @@ class FoundryCache():
 
         # Begin finding files to download
         task_generator = recursive_ls(self.transfer_client,
-                                    https_config['source_ep_id'],
-                                    https_config['folder_to_crawl'])
-    
+                                      https_config['source_ep_id'],
+                                      https_config['folder_to_crawl'])
         with ThreadPoolExecutor(self.parallel_https) as executor:
             # First submit all files
             futures = [executor.submit(download_file, f, self.local_cache_dir, https_config)
-                    for f in tqdm(task_generator, disable=not self.verbose, desc="Finding files")]
+                       for f in tqdm(task_generator, disable=not self.verbose, desc="Finding files")]
             # Check that they completed successfully
             for result in tqdm(as_completed(futures), disable=not self.verbose, desc="Downloading files"):
                 if result.exception() is not None:

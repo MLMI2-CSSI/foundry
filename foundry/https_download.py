@@ -52,7 +52,6 @@ def _get_files(tc, ep, queue, max_depth):
                 yield item
 
 
-
 def download_file(item, base_directory, https_config, timeout=1800):
     """Download a file to disk
 
@@ -98,8 +97,8 @@ def download_file(item, base_directory, https_config, timeout=1800):
                         f.write(chunk)
                         downloaded_size += len(chunk)
                         # Calculate and print the download progress
-                        print(f"\rDownloading... {downloaded_size/(1<<20):,.2f} MB", end="")
-            return destination
+                        print(f"\rDownloading... {downloaded_size/(1 << 20):,.2f} MB", end="")
+                    return destination
     except requests.exceptions.RequestException as e:
         print(f"Error downloading file: {e}")
     except IOError as e:
