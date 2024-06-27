@@ -82,7 +82,6 @@ class FoundrySchema(FoundryModel):
     def __init__(self, project_dict):
         try:
             super(FoundrySchema, self).__init__(**project_dict)
-            print("FoundrySchema validation successful.")
         except ValidationError as e:
             print("FoundrySchema validation failed!")
             for error in e.errors():
@@ -115,7 +114,6 @@ class FoundryDatacite(DataciteModel):
                 if 'identifier' in dc_dict['identifier'].keys():
                     dc_dict['identifier']['identifier'] = {'__root__': datacite_dict['identifier']['identifier']}
             super(FoundryDatacite, self).__init__(**dc_dict)
-            print("Datacite validation successful.")
         except ValidationError as e:
             print("Datacite validation failed!")
             for error in e.errors():

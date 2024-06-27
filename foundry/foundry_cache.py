@@ -71,7 +71,7 @@ class FoundryCache():
             if self.use_globus:
                 self.download_via_globus(dataset_name)
             else:
-                self.download_via_http(dataset_name, self.parallel_https, self.verbose, self.transfer_client)
+                self.download_via_http(dataset_name)
 
         self.validate_local_dataset_storage(dataset_name, splits)
 
@@ -97,13 +97,11 @@ class FoundryCache():
             download_datasets=True,
         )
 
-    def download_via_http(self,
-                          dataset_name: str):
+    def download_via_http(self, dataset_name: str):
         """
         Downloads selected dataset from MDF over HTTP.
-
         Args:
-            dataset_name (str): Name of the dataset (equivalent to source_id in MDF).
+        dataset_name (str): Name of the dataset (equivalent to source_id in MDF).
         """
         https_config = {
             "source_ep_id": "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec",
@@ -114,14 +112,13 @@ class FoundryCache():
 
         # Begin finding files to download
         task_generator = recursive_ls(self.transfer_client,
-                                      https_config['source_ep_id'],
-                                      https_config['folder_to_crawl'])
-        # import pdb; pdb.set_trace()
+                                    https_config['source_ep_id'],
+                                    https_config['folder_to_crawl'])
+    
         with ThreadPoolExecutor(self.parallel_https) as executor:
             # First submit all files
-            futures = [executor.submit(lambda x: download_file(x, self.local_cache_dir, https_config), f)
-                       for f in tqdm(task_generator, disable=not self.verbose, desc="Finding files")]
-
+            futures = [executor.submit(download_file, f, self.local_cache_dir, https_config)
+                    for f in tqdm(task_generator, disable=not self.verbose, desc="Finding files")]
             # Check that they completed successfully
             for result in tqdm(as_completed(futures), disable=not self.verbose, desc="Downloading files"):
                 if result.exception() is not None:
