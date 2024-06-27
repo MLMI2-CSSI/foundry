@@ -51,7 +51,7 @@ Initializes a FoundryCache object.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L428"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L424"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `clear_cache`
 
@@ -122,15 +122,12 @@ download_via_http(dataset_name: str)
 
 Downloads selected dataset from MDF over HTTP. 
 
-
-
 **Args:**
- 
- - <b>`dataset_name`</b> (str):  Name of the dataset (equivalent to source_id in MDF). 
+ dataset_name (str): Name of the dataset (equivalent to source_id in MDF). 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L394"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L390"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_keys`
 
@@ -155,7 +152,7 @@ Get keys for a Foundry dataset
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L175"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L171"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `load_as_dict`
 
@@ -187,7 +184,7 @@ Load the data associated with the specified dataset and return it as a labeled d
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L243"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L239"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `load_as_tensorflow`
 
@@ -213,7 +210,7 @@ Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the speci
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L215"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L211"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `load_as_torch`
 
@@ -239,7 +236,7 @@ Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L132"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_cache.py#L128"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `validate_local_dataset_storage`
 

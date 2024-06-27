@@ -39,6 +39,17 @@ __init__(inputs, targets)
 
 ---
 
+#### <kbd>property</kbd> num_batches
+
+Number of batches in the PyDataset. 
+
+
+
+**Returns:**
+  The number of batches in the PyDataset or `None` to indicate that  the dataset is infinite. 
+
+---
+
 #### <kbd>property</kbd> use_multiprocessing
 
 

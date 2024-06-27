@@ -37,12 +37,12 @@ Find all files in a Globus directory recursively
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/https_download.py#L56"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/https_download.py#L55"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `download_file`
 
 ```python
-download_file(item, data_directory, https_config)
+download_file(item, base_directory, https_config, timeout=1800)
 ```
 
 Download a file to disk 
@@ -52,7 +52,9 @@ Download a file to disk
 **Args:**
  
  - <b>`item`</b>:  Dictionary defining the path to the file 
+ - <b>`base_directory`</b>:  Base directory for storing downloaded files 
  - <b>`https_config`</b>:  Configuration defining the URL of the server and the name of the dataset 
+ - <b>`timeout`</b>:  Timeout for the download request in seconds (default: 1800) 
 
 
 
