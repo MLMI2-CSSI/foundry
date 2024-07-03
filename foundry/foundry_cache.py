@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import h5py
@@ -8,7 +9,7 @@ import numpy as np
 import pandas as pd
 import shutil
 from tqdm.auto import tqdm
-from typing import List, Any
+from typing import List, Any, Tuple
 
 from .https_download import recursive_ls, download_file
 from foundry.jsonschema_models.project_model import Split as FoundrySplit
@@ -112,13 +113,13 @@ class FoundryCache():
 
         # Begin finding files to download
         task_generator = recursive_ls(self.transfer_client,
-                                    https_config['source_ep_id'],
-                                    https_config['folder_to_crawl'])
-    
+                                      https_config['source_ep_id'],
+                                      https_config['folder_to_crawl'])
+
         with ThreadPoolExecutor(self.parallel_https) as executor:
             # First submit all files
             futures = [executor.submit(download_file, f, self.local_cache_dir, https_config)
-                    for f in tqdm(task_generator, disable=not self.verbose, desc="Finding files")]
+                       for f in tqdm(task_generator, disable=not self.verbose, desc="Finding files")]
             # Check that they completed successfully
             for result in tqdm(as_completed(futures), disable=not self.verbose, desc="Downloading files"):
                 if result.exception() is not None:
@@ -316,26 +317,30 @@ class FoundryCache():
                    foundry_schema: FoundrySchema,
                    file: str = "foundry_dataframe.json",
                    source_id: str = None,
-                   as_hdf5: bool = False):
+                   as_hdf5: bool = False) -> Tuple[Any, Any]:
         """
         Load the data from the cached file.
-
         Args:
-            foundry_schema (FoundrySchema): The FoundrySchema object.
-            file (str, optional): The name of the file to load. Defaults to "foundry_dataframe.json".
-            source_id (str, optional): The source ID of the dataset. Defaults to None.
-            use_globus (bool, optional): If True, download using Globus; otherwise, use HTTPS. Defaults to True.
-            as_hdf5 (bool, optional): If True, keep data in HDF5 format if the dataset is in HDF5 format. Defaults to False.
-
+        foundry_schema (FoundrySchema): The FoundrySchema object.
+        file (str, optional): The name of the file to load. Defaults to "foundry_dataframe.json".
+        source_id (str, optional): The source ID of the dataset. Defaults to None.
+        as_hdf5 (bool, optional): If True, keep data in HDF5 format if the dataset is in HDF5 format. Defaults to False.
         Returns:
-            tuple: A tuple containing the input and target data.
+        tuple: A tuple containing the input and target data.
         """
         # Build the path to access the cached data
         path = os.path.join(self.local_cache_dir, source_id)
-
         if path is None:
             raise ValueError(f"Path to data file is invalid; check that dataset source_id is valid: "
                              f"{source_id or self.mdf['source_id']}")
+
+        # Check for version folders
+        version_folders = [d for d in os.listdir(path) if re.match(r'\d+\.\d+', d)]
+        if version_folders:
+            # Sort version folders and get the latest one
+            latest_version = sorted(version_folders, key=lambda x: [int(n) for n in x.split('.')], reverse=True)[0]
+            path = os.path.join(path, latest_version)
+            print(f"Loading from version folder: {latest_version}")
 
         path_to_file = os.path.join(path, file)
 
@@ -362,12 +367,10 @@ class FoundryCache():
             if dataframe is None:
                 logger.fatal(f"Cannot read {path_to_file} as tabular data, failed to load")
                 raise ValueError(f"Cannot read tabular data from {path_to_file}")
-
             return (
                 dataframe[self.get_keys(foundry_schema, "input")],
                 dataframe[self.get_keys(foundry_schema, "target")],
             )
-
         elif foundry_schema.data_type == "hdf5":
             f = h5py.File(path_to_file, "r")
             special_types = ["input", "target"]
