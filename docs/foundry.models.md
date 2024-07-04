@@ -121,7 +121,7 @@ __init__(project_dict)
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L98"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L97"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryDatacite`
 A model for the Datacite schema based on the Datacite (dc_model.py) class. The FoundryModel class is an auto-generated pydantic version of the json schema; this class extends the DataciteModel class to include additional functionality necessary for Foundry. 
@@ -138,7 +138,7 @@ A model for the Datacite schema based on the Datacite (dc_model.py) class. The F
  
  - <b>`ValidationError`</b>:  If there is an issue validating the datacite data. 
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L110"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L109"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
@@ -156,7 +156,7 @@ __init__(datacite_dict, extra=<Extra.allow: 'allow'>)
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L132"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L130"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryBase`
 Configuration information for Foundry instance 
