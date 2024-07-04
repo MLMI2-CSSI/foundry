@@ -115,7 +115,7 @@ class FoundryCache():
         task_generator = recursive_ls(self.transfer_client,
                                       https_config['source_ep_id'],
                                       https_config['folder_to_crawl'])
-        
+
         with ThreadPoolExecutor(self.parallel_https) as executor:
             # First submit all files
             futures = [executor.submit(download_file, f, self.local_cache_dir, https_config)
