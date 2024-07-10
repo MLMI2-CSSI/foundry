@@ -424,26 +424,26 @@ class FoundryCache():
             for k in keys:
                 key_list = key_list + k
             return key_list
-
-    def clear_cache(self,
-                    dataset_name: str = None):
-        """Deletes all of the locally stored datasets
-
-        Arguments:
-            dataset_name (str): Optional name of a specific dataset. If omitted,
-                                all datsets will be erased
+        
+    def load_split(self, dataset_name: str, split: str, format: str = 'dict', foundry_schema: FoundrySchema = None):
         """
-        if dataset_name:
-            answer = input(f"This will delete the data for {dataset_name} - are you sure you want to continue? (y/n)")
-            if answer.lower() in ["y", "yes"]:
-                path = os.path.join(self.local_cache_dir, dataset_name)
-            else:
-                return
+        Load a specific split of a dataset.
+
+        Args:
+            dataset_name (str): Name of the dataset.
+            split (str): Name of the split to load.
+            format (str): Format to return the data in ('dict', 'torch', or 'tensorflow').
+
+        Returns:
+            The loaded split data in the specified format.
+        """
+        
+        if format == 'dict':
+            return self.load_as_dict(split, dataset_name, foundry_schema, as_hdf5=False)[split]
+        elif format == 'torch':
+            return self.load_as_torch(split, dataset_name, foundry_schema, as_hdf5=False)
+        elif format == 'tensorflow':
+            return self.load_as_tensorflow(split, dataset_name, foundry_schema, as_hdf5=False)
         else:
-            answer = input(f"This will delete ALL of the data in {self.local_cache_dir} - are you sure you want to continue? (y/n)")
-            if answer.lower() in ["y", "yes"]:
-                path = self.local_cache_dir
-            else:
-                return
-        if os.path.isdir(path):
-            shutil.rmtree(path)
+            raise ValueError(f"Unsupported format: {format}")
+

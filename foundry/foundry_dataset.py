@@ -1,8 +1,10 @@
 import json
 import logging
 import os
+import html
 
-from pydantic import ValidationError
+from pydantic import ValidationError, BaseModel, Field
+from typing import Optional, Dict, Any, List
 
 from .foundry_cache import FoundryCache
 from .models import FoundrySchema, FoundryDatacite
@@ -37,7 +39,7 @@ class FoundryDataset():
                  dataset_name: str,
                  datacite_entry: FoundryDatacite,
                  foundry_schema: FoundrySchema,
-                 foundry_cache: FoundryCache = None):
+                 cache: FoundryCache = None):
 
         self.dataset_name = dataset_name
         try:
@@ -45,9 +47,9 @@ class FoundryDataset():
             self.foundry_schema = FoundrySchema(foundry_schema)
         except Exception as e:
             raise Exception('there was a problem creating the dataset: ', e)
-        self._foundry_cache = foundry_cache
+        self.cache = cache
 
-    def get_as_dict(self, split: str = None, as_hdf5: bool = False):
+    def load(self, split: str = None, as_hdf5: bool = False):
         """Returns the data from the dataset as a dictionary
 
         Arguments:
@@ -57,11 +59,47 @@ class FoundryDataset():
         Returns: (dict) Dictionary of all the data from the specified split
 
         """
-        return self._foundry_cache.load_as_dict(split,
+        return self.cache.load_as_dict(split,
                                                 self.dataset_name,
                                                 self.foundry_schema,
                                                 as_hdf5)
 
+    def _repr_html_(self):
+            html_string = f"""
+            <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px;">
+                <h3 style="color: #333;">{html.escape(self.dataset_name)}</h3>
+                <p><strong>Title:</strong> {html.escape(self.dc.titles[0].title)}</p>
+                <p><strong>DOI:</strong> {self.dc.identifier.identifier.__root__}</p>
+                <p><strong>Publication Year:</strong> {self.dc.publicationYear.__root__}</p>
+                <p><strong>Publisher:</strong> {html.escape(self.dc.publisher)}</p>
+                <p><strong>Resource Type:</strong> {self.dc.resourceType.resourceType}</p>
+                <p><strong>Authors:</strong></p>
+                <ul>
+                    {self._format_creators()}
+                </ul>
+                <p><strong>Tags:</strong> {self._format_subjects()}</p>
+                <details>
+                    <summary><strong>Description</strong></summary>
+                    <p>{html.escape(self.dc.descriptions[0].description if self.dc.descriptions else 'No description available.')}</p>
+                </details>
+            </div>
+            """
+            return html_string
+
+    def _format_creators(self):
+        creators_list = []
+        for creator in self.dc.creators:
+            affiliations = creator.get('affiliations', [])
+            if affiliations:
+                affiliations_str = ', '.join(html.escape(aff) for aff in affiliations)
+                creators_list.append(f"{html.escape(creator['creatorName'])} ({affiliations_str})")
+            else:
+                creators_list.append(f"{html.escape(creator['creatorName'])}")
+        return '; '.join(creators_list)
+    
+    def _format_subjects(self):
+            return ', '.join([html.escape(subject.subject) for subject in self.dc.subjects]) if self.dc.subjects else 'No subjects available'
+    
     def get_as_torch(self, split: str = None):
         """Returns the data from the dataset as a TorchDataset
 
@@ -73,7 +111,7 @@ class FoundryDataset():
 
         """
 
-        return self._foundry_cache.load_as_torch(split,
+        return self.cache.load_as_torch(split,
                                                  self.dataset_name,
                                                  self.foundry_schema)
 
@@ -87,7 +125,7 @@ class FoundryDataset():
         Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the specified split
 
         """
-        return self._foundry_cache.load_as_tensorflow(split,
+        return self.cache.load_as_tensorflow(split,
                                                       self.dataset_name,
                                                       self.foundry_schema)
 
@@ -164,7 +202,7 @@ class FoundryDataset():
 
     def clear_dataset_cache(self):
         """Deletes the cached data for this specific datset"""
-        self._foundry_cache.clear_cache(self.dataset_name)
+        self.cache.clear_cache(self.dataset_name)
 
     def clean_dc_dict(self):
         """Clean the Datacite dictionary of None values"""

@@ -1,21 +1,16 @@
-import mdf_toolbox
-import pandas as pd
-from typing import Any, Dict, List
 import logging
+from typing import List, Tuple, Optional, Dict, Any
+import pandas as pd
 
-from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
-from dlhub_sdk import DLHubClient
+from mdf_connect_client import MDFConnectClient
 from globus_sdk import AuthClient
+import mdf_toolbox
 
-from .auth import PubAuths
-from .foundry_cache import FoundryCache
 from .foundry_dataset import FoundryDataset
-from .https_upload import upload_to_endpoint
+from .foundry_cache import FoundryCache
+from .exceptions import DatasetNotFoundError
 from .utils import is_doi
-
-from foundry.models import FoundryBase
-
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -68,14 +63,13 @@ class HiddenColumnDataFrame(pd.DataFrame):
         return self[self.DOI == doi]['FoundryDataset'].iloc[0]
 
 
-class Foundry(FoundryBase):
+# class Foundry(FoundryBase):
     """Foundry Client Base Class
 
     This class represents a client for interacting with the Foundry service. It provides methods for searching and
     accessing datasets, as well as publishing new datasets.
 
     Attributes:
-        dlhub_client (Any): The DLHub client.
         forge_client (Any): The Forge client.
         connect_client (Any): The MDF Connect client.
         transfer_client (Any): The Globus transfer client.
@@ -85,26 +79,8 @@ class Foundry(FoundryBase):
 
     """
 
-    dlhub_client: Any
-    forge_client: Any
-    connect_client: Any
-    transfer_client: Any
-    auth_client: Any
-    index = ""
-    auths: Any
-
-    def __init__(self,
-                 no_browser: bool = False,
-                 no_local_server: bool = False,
-                 index: str = "mdf",
-                 authorizers: dict = None,
-                 use_globus: bool = True,
-                 verbose: bool = False,
-                 interval: int = 10,
-                 parallel_https: int = 4,
-                 local_cache_dir: str = None,
-                 **data):
-        """Initialize a Foundry client
+class Foundry:
+    """Initialize a Foundry client
 
         Args:
             no_browser (bool): Whether to open the browser for the Globus Auth URL.
@@ -121,15 +97,29 @@ class Foundry(FoundryBase):
 
         Returns:
             An initialized and authenticated Foundry client.
-        """
-        super().__init__(**data)
-        self.index = index
-        self.auths = None
+    """
+    def __init__(self,
+                 index = "mdf",
+                 organization = "foundry",
+                 cache_dir: str = "./data", 
+                 use_globus: bool = False,
+                 verbose: bool = False,
+                 authorizers: dict = None,
+                 no_browser: bool = False,
+                 no_local_server: bool = False,
+                 interval: int = 10,
+                 parallel_https: int = 4):
+        
+        forge_client: Any
+        connect_client: Any
+        transfer_client: Any
+        auth_client: Any
+        index = ""
+        auths: Any
+
+        self.cache_dir = cache_dir
         self.use_globus = use_globus
         self.verbose = verbose
-        self.interval = interval
-        if local_cache_dir:
-            self.local_cache_dir = local_cache_dir
 
         if authorizers:
             self.auths = authorizers
@@ -188,32 +178,27 @@ class Foundry(FoundryBase):
             authorizer=self.auths["mdf_connect"], test=test
         )
 
-        self.dlhub_client = DLHubClient(
-            dlh_authorizer=self.auths["dlhub"],
-            search_authorizer=self.auths["search_authorizer"],
-            fx_authorizer=self.auths[
-                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
-            ],
-            openid_authorizer=self.auths['openid'],
-            sl_authorizer=self.auths[
-                "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all"
-            ],
-            force_login=False,
-        )
-
-        self.use_globus = use_globus
         self.interval = interval
         self.parallel_https = parallel_https
-        self.verbose = verbose
-        local_cache_dir
 
-        self._foundry_cache = FoundryCache(self.forge_client,
-                                           self.transfer_client,
-                                           use_globus,
-                                           interval,
-                                           parallel_https,
-                                           verbose,
-                                           local_cache_dir)
+        self.cache = FoundryCache(self.forge_client,
+                                  self.transfer_client,
+                                  use_globus,
+                                  interval=self.interval,
+                                  parallel_https=self.parallel_https,
+                                  verbose=verbose,
+                                  local_cache_dir=cache_dir)        
+
+    def get_dataset(self, identifier: str) -> FoundryDataset:
+        if is_doi(identifier):
+            metadata = self.get_metadata_by_doi(identifier)
+        else:
+            metadata = self.get_metadata_by_query(identifier, limit=1)[0]
+        
+        if not metadata:
+            raise DatasetNotFoundError(f"Dataset not found: {identifier}")
+        
+        return self.dataset_from_metadata(metadata)
 
     def search(self, query: str = None, limit: int = None, as_list: bool = False) -> List[FoundryDataset]:
         """Search available Foundry datasets
@@ -294,7 +279,7 @@ class Foundry(FoundryBase):
             ds = FoundryDataset(**{'dataset_name': name,
                                    'datacite_entry': dc,
                                    'foundry_schema': foundry_schema,
-                                   'foundry_cache': self._foundry_cache})
+                                   'cache': self.cache})
 
             return ds
 

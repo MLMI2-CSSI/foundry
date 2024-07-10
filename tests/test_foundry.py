@@ -88,7 +88,7 @@ pub_test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6
 
 # Quick function to delete any downloaded test data
 def _delete_test_data(dataset):
-    path = os.path.join(dataset._foundry_cache.local_cache_dir, test_dataset)
+    path = os.path.join(dataset.cache.local_cache_dir, test_dataset)
     if os.path.isdir(path):
         shutil.rmtree(path)
 
@@ -99,15 +99,12 @@ def test_foundry_init():
     assert isinstance(f.connect_client, MDFConnectClient)
 
     if not is_gha:
-        assert isinstance(f.dlhub_client, DLHubClient)
 
-        f2 = foundry.Foundry(download=False, authorizers=auths, no_browser=False, no_local_server=True)
-        assert isinstance(f2.dlhub_client, DLHubClient)
+        f2 = foundry.Foundry(authorizers=auths, no_browser=False, no_local_server=True)
         assert isinstance(f2.forge_client, Forge)
         assert isinstance(f2.connect_client, MDFConnectClient)
 
-        f3 = foundry.Foundry(download=False, authorizers=auths, no_browser=True, no_local_server=False)
-        assert isinstance(f3.dlhub_client, DLHubClient)
+        f3 = foundry.Foundry(authorizers=auths, no_browser=True, no_local_server=False)
         assert isinstance(f3.forge_client, Forge)
         assert isinstance(f3.connect_client, MDFConnectClient)
 
@@ -185,16 +182,16 @@ def test_search_limit():
 
 
 def test_metadata_pull():
-    f = foundry.Foundry(download=False, authorizers=auths)
+    f = foundry.Foundry(authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
     assert dataset.dc.titles[0].title == expected_title
 
 
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_download_globus():
-    f = foundry.Foundry(globus=False, authorizers=auths)
+    f = foundry.Foundry(use_globus=False, authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
-    res = dataset.get_as_dict()
+    res = dataset.load()
     X, y = res['train']
 
     assert len(X) > 1
@@ -206,9 +203,9 @@ def test_download_globus():
 
 @pytest.mark.skip("Skipping until we can get HTTPS working on new PR")
 def test_download_https():
-    f = foundry.Foundry(globus=False, authorizers=auths)
+    f = foundry.Foundry(use_globus=False, authorizers=auths)
     dataset = f.search(test_dataset).iloc[0].FoundryDataset
-    res = dataset.get_as_dict()
+    res = dataset.load()
     X, y = res['train']
 
     assert len(X) > 1
@@ -218,19 +215,9 @@ def test_download_https():
     _delete_test_data(dataset)
 
 
-def test_delete_cache():
-    f = foundry.Foundry(globus=True, authorizers=auths)
-    dataset = f.search(test_dataset).iloc[0].FoundryDataset
-
-    with mock.patch.object(builtins, 'input', lambda _: 'y'):
-        dataset.clear_dataset_cache()
-
-    assert os.path.exists(os.path.join(dataset._foundry_cache.local_cache_dir, dataset.dataset_name)) is False
-
-
 @pytest.mark.skip(reason='Saving for #401')
 def test_dataframe_load_split():
-    f = foundry.Foundry(test_dataset, download=True, globus=False, authorizers=auths)
+    f = foundry.Foundry(test_dataset, use_globus=False, authorizers=auths)
 
     dataset = f.load_data(splits=['train'])
     X, y = dataset['train']
@@ -244,7 +231,7 @@ def test_dataframe_load_split():
 
 @pytest.mark.skip(reason='Saving for #401')
 def test_dataframe_load_split_wrong_split_name():
-    f = foundry.Foundry(download=True, globus=False, authorizers=auths)
+    f = foundry.Foundry(use_globus=False, authorizers=auths)
 
     with pytest.raises(Exception) as exc_info:
         dataset = f.load_data(splits=['chewbacca'])
@@ -257,7 +244,7 @@ def test_dataframe_load_split_wrong_split_name():
 
 @pytest.mark.skip(reason='No clear examples of datasets without splits - likely to be protected against soon.')
 def test_dataframe_load_split_but_no_splits():
-    f = foundry.Foundry(test_dataset, download=True, globus=False, authorizers=auths)
+    f = foundry.Foundry(test_dataset, use_globus=False, authorizers=auths)
 
     with pytest.raises(ValueError):
         dataset = f.load_data(splits=['train'])
@@ -265,7 +252,7 @@ def test_dataframe_load_split_but_no_splits():
 
 
 def test_dataframe_search_by_doi():
-    f = foundry.Foundry(globus=False, authorizers=auths)
+    f = foundry.Foundry(use_globus=False, authorizers=auths)
 
     result = f.search(test_doi)
 
@@ -277,10 +264,10 @@ def test_dataframe_search_by_doi():
 
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_dataframe_download_by_doi():
-    f = foundry.Foundry(globus=True, authorizers=auths, no_browser=True)
+    f = foundry.Foundry(use_globus=True, authorizers=auths, no_browser=True)
     datasets = f.search(test_doi)
     dataset = datasets.iloc[0].FoundryDataset
-    dataset_dict = dataset.get_as_dict()
+    dataset_dict = dataset.load()
     X, y = dataset_dict['train']
 
     assert len(X) > 1
@@ -293,7 +280,7 @@ def test_dataframe_download_by_doi():
 @pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_globus_dataframe_load():
-    f = foundry.Foundry(test_dataset, download=True, authorizers=auths, no_browser=True, no_local_server=True)
+    f = foundry.Foundry(test_dataset, authorizers=auths, no_browser=True, no_local_server=True)
 
     dataset = f.load_data()
     X, y = dataset['train']
@@ -311,8 +298,7 @@ def test_publish_with_https():
     """
 
     f = foundry.Foundry(index="mdf-test",
-                        download=True,
-                        globus=False,
+                        use_globus=False,
                         authorizers=auths)
     
     timestamp = datetime.now().timestamp()
@@ -467,7 +453,7 @@ def test_check_status():
 
 @pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
 def test_to_pytorch():
-    f = foundry.Foundry(test_dataset, download=True, globus=False, authorizers=auths, no_browser=True, no_local_server=True)
+    f = foundry.Foundry(test_dataset, use_globus=False, authorizers=auths, no_browser=True, no_local_server=True)
 
     raw = f.load_data()
 
@@ -481,7 +467,7 @@ def test_to_pytorch():
 
 @pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
 def test_to_tensorflow():
-    f = foundry.Foundry(test_dataset, download=True, globus=False, authorizers=auths, no_browser=True, no_local_server=True)
+    f = foundry.Foundry(test_dataset, use_globus=False, authorizers=auths, no_browser=True, no_local_server=True)
 
     raw = f.load_data()
 

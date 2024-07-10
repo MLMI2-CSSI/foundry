@@ -2,7 +2,6 @@ from pathlib import Path
 import pytest
 import os
 
-from dlhub_sdk import DLHubClient
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 import mdf_toolbox
@@ -23,7 +22,6 @@ def auths():
         "search",
         "petrel",
         "transfer",
-        "dlhub",
         "openid",
         "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
         "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
@@ -74,9 +72,9 @@ def test_loading_as_dict(auths, elwood_data, testing_data_dir):
     # test loading the dataset from a local (static) copy
     test_dataset_name, test_doi, expected_title = elwood_data
 
-    f = foundry.Foundry(authorizers=auths, local_cache_dir=testing_data_dir)
+    f = foundry.Foundry(authorizers=auths, cache_dir=testing_data_dir)
     search_results = f.search(test_dataset_name, as_list=True)
-    elwood_data = search_results[0].get_as_dict()
+    elwood_data = search_results[0].load()
     X, y = elwood_data['train']
 
     assert len(X) > 1
@@ -91,7 +89,6 @@ def test_foundry_init(auths, elwood_data):
     f = foundry.Foundry(authorizers=auths)
     assert isinstance(f.forge_client, Forge)
     assert isinstance(f.connect_client, MDFConnectClient)
-    assert isinstance(f.dlhub_client, DLHubClient)
 
 
 def test_search(auths, elwood_data):
