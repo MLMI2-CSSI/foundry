@@ -170,6 +170,20 @@ class FoundryCache():
             logger.debug('Dataset is not present')
             return False
 
+    def _repr_html_(self):
+        return f"""
+        <div>
+            <h3>FoundryCache</h3>
+            <ul>
+                <li>Local Cache Directory: {self.local_cache_dir}</li>
+                <li>Use Globus: {self.use_globus}</li>
+                <li>Interval: {self.interval}</li>
+                <li>Parallel HTTPS: {self.parallel_https}</li>
+                <li>Verbose: {self.verbose}</li>
+            </ul>
+        </div>
+        """
+
     def load_as_dict(self,
                      split: str,
                      dataset_name: str,

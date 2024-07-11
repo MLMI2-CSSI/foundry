@@ -5,7 +5,6 @@ import logging
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
-from dlhub_sdk import DLHubClient
 from globus_sdk import AuthClient
 
 from .auth import PubAuths
@@ -75,7 +74,6 @@ class Foundry(FoundryBase):
     accessing datasets, as well as publishing new datasets.
 
     Attributes:
-        dlhub_client (Any): The DLHub client.
         forge_client (Any): The Forge client.
         connect_client (Any): The MDF Connect client.
         transfer_client (Any): The Globus transfer client.
@@ -85,7 +83,6 @@ class Foundry(FoundryBase):
 
     """
 
-    dlhub_client: Any
     forge_client: Any
     connect_client: Any
     transfer_client: Any
@@ -140,7 +137,6 @@ class Foundry(FoundryBase):
                     "search",
                     "petrel",
                     "transfer",
-                    "dlhub",
                     "openid",
                     "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
                     "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
@@ -186,19 +182,6 @@ class Foundry(FoundryBase):
 
         self.connect_client = MDFConnectClient(
             authorizer=self.auths["mdf_connect"], test=test
-        )
-
-        self.dlhub_client = DLHubClient(
-            dlh_authorizer=self.auths["dlhub"],
-            search_authorizer=self.auths["search_authorizer"],
-            fx_authorizer=self.auths[
-                "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all"
-            ],
-            openid_authorizer=self.auths['openid'],
-            sl_authorizer=self.auths[
-                "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all"
-            ],
-            force_login=False,
         )
 
         self.use_globus = use_globus

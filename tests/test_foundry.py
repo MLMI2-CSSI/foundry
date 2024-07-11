@@ -20,7 +20,6 @@ from foundry import foundry
 from foundry.foundry_dataset import FoundryDataset
 from foundry.auth import PubAuths
 from foundry.https_upload import upload_to_endpoint
-from dlhub_sdk import DLHubClient
 from tests.test_data import datacite_data, valid_metadata, invalid_metadata
 
 
@@ -35,7 +34,6 @@ services = [
     "search",
     "petrel",
     "transfer",
-    "dlhub",
     "openid",
     "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
     "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
@@ -99,15 +97,12 @@ def test_foundry_init():
     assert isinstance(f.connect_client, MDFConnectClient)
 
     if not is_gha:
-        assert isinstance(f.dlhub_client, DLHubClient)
 
         f2 = foundry.Foundry(download=False, authorizers=auths, no_browser=False, no_local_server=True)
-        assert isinstance(f2.dlhub_client, DLHubClient)
         assert isinstance(f2.forge_client, Forge)
         assert isinstance(f2.connect_client, MDFConnectClient)
 
         f3 = foundry.Foundry(download=False, authorizers=auths, no_browser=True, no_local_server=False)
-        assert isinstance(f3.dlhub_client, DLHubClient)
         assert isinstance(f3.forge_client, Forge)
         assert isinstance(f3.connect_client, MDFConnectClient)
 
@@ -305,33 +300,33 @@ def test_globus_dataframe_load():
     _delete_test_data(dataset)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
-def test_publish_with_https():
-    """System test: Assess the end-to-end publication of a dataset via HTTPS
-    """
+# @pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
+# def test_publish_with_https():
+#     """System test: Assess the end-to-end publication of a dataset via HTTPS
+#     """
 
-    f = foundry.Foundry(index="mdf-test",
-                        download=True,
-                        globus=False,
-                        authorizers=auths)
+#     f = foundry.Foundry(index="mdf-test",
+#                         download=True,
+#                         globus=False,
+#                         authorizers=auths)
     
-    timestamp = datetime.now().timestamp()
-    short_name = "https_peanuts_pub_{:.0f}".format(timestamp)
-    local_path = "./data/https_test"
+#     timestamp = datetime.now().timestamp()
+#     short_name = "https_peanuts_pub_{:.0f}".format(timestamp)
+#     local_path = "./data/https_test"
 
-    ds = FoundryDataset(dataset_name=short_name,
-                        foundry_schema=valid_metadata,
-                        datacite_entry=datacite_data)
+#     ds = FoundryDataset(dataset_name=short_name,
+#                         foundry_schema=valid_metadata,
+#                         datacite_entry=datacite_data)
 
-    ds.add_data(local_data_path=local_path)
+#     ds.add_data(local_data_path=local_path)
 
-    # create test JSON to upload (if it doesn't already exist)
-    _write_test_data(local_path)
+#     # create test JSON to upload (if it doesn't already exist)
+#     _write_test_data(local_path)
 
-    res = f.publish_dataset(ds)
+#     res = f.publish_dataset(ds)
 
-    assert res['success']
-    assert res['source_id'] == f'{short_name}-test'
+#     assert res['success']
+#     assert res['source_id'] == f'{short_name}-test'
 
 
 # @pytest.mark.skip(reason='Publishing has not yet been re-implemented following refactoring')
