@@ -1,6 +1,8 @@
 import json
 import logging
 import os
+import html
+from json2table import convert
 
 from pydantic import ValidationError
 
@@ -61,6 +63,7 @@ class FoundryDataset():
                                                 self.dataset_name,
                                                 self.foundry_schema,
                                                 as_hdf5)
+    load = get_as_dict
 
     def get_as_torch(self, split: str = None):
         """Returns the data from the dataset as a TorchDataset
@@ -90,6 +93,43 @@ class FoundryDataset():
         return self._foundry_cache.load_as_tensorflow(split,
                                                       self.dataset_name,
                                                       self.foundry_schema)
+
+    def _repr_html_(self) -> str:
+        """Format the Foundry object for notebook rendering as HTML output
+
+        Args:
+            self (Foundry)
+
+        Returns:
+            buf (str): buffer containing the HTML to render
+        """
+        if not self.dc:
+            buf = str(self)
+        else:
+            title = self.dc.titles[0].title
+            authors = [creator['creatorName']
+                       for creator in self.dc.creators]
+            authors = '; '.join(authors)
+            DOI = "DOI: " + self.dc.identifier.identifier.__root__
+
+            buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
+
+            buf = f'{buf}<h3>Dataset</h3>{convert(json.loads(self.foundry_schema.json()))}'
+        return buf
+
+    def _format_creators(self):
+        creators_list = []
+        for creator in self.dc.creators:
+            affiliations = creator.get('affiliations', [])
+            if affiliations:
+                affiliations_str = ', '.join(html.escape(aff) for aff in affiliations)
+                creators_list.append(f"{html.escape(creator['creatorName'])} ({affiliations_str})")
+            else:
+                creators_list.append(f"{html.escape(creator['creatorName'])}")
+        return '; '.join(creators_list)
+
+    def _format_subjects(self):
+        return ', '.join([html.escape(subject.subject) for subject in self.dc.subjects]) if self.dc.subjects else 'No subjects available'
 
     def get_citation(self) -> str:
         subjects = [subject.subject for subject in self.dc.subjects]

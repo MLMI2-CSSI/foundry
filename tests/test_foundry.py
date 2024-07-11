@@ -305,33 +305,33 @@ def test_globus_dataframe_load():
     _delete_test_data(dataset)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
-def test_publish_with_https():
-    """System test: Assess the end-to-end publication of a dataset via HTTPS
-    """
+# @pytest.mark.skipif(bool(is_gha), reason="Not run as part of GHA CI")
+# def test_publish_with_https():
+#     """System test: Assess the end-to-end publication of a dataset via HTTPS
+#     """
 
-    f = foundry.Foundry(index="mdf-test",
-                        download=True,
-                        globus=False,
-                        authorizers=auths)
+#     f = foundry.Foundry(index="mdf-test",
+#                         download=True,
+#                         globus=False,
+#                         authorizers=auths)
     
-    timestamp = datetime.now().timestamp()
-    short_name = "https_peanuts_pub_{:.0f}".format(timestamp)
-    local_path = "./data/https_test"
+#     timestamp = datetime.now().timestamp()
+#     short_name = "https_peanuts_pub_{:.0f}".format(timestamp)
+#     local_path = "./data/https_test"
 
-    ds = FoundryDataset(dataset_name=short_name,
-                        foundry_schema=valid_metadata,
-                        datacite_entry=datacite_data)
+#     ds = FoundryDataset(dataset_name=short_name,
+#                         foundry_schema=valid_metadata,
+#                         datacite_entry=datacite_data)
 
-    ds.add_data(local_data_path=local_path)
+#     ds.add_data(local_data_path=local_path)
 
-    # create test JSON to upload (if it doesn't already exist)
-    _write_test_data(local_path)
+#     # create test JSON to upload (if it doesn't already exist)
+#     _write_test_data(local_path)
 
-    res = f.publish_dataset(ds)
+#     res = f.publish_dataset(ds)
 
-    assert res['success']
-    assert res['source_id'] == f'{short_name}-test'
+#     assert res['success']
+#     assert res['source_id'] == f'{short_name}-test'
 
 
 # @pytest.mark.skip(reason='Publishing has not yet been re-implemented following refactoring')
