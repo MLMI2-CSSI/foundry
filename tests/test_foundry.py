@@ -20,7 +20,6 @@ from foundry import foundry
 from foundry.foundry_dataset import FoundryDataset
 from foundry.auth import PubAuths
 from foundry.https_upload import upload_to_endpoint
-from dlhub_sdk import DLHubClient
 from tests.test_data import datacite_data, valid_metadata, invalid_metadata
 
 
@@ -35,7 +34,6 @@ services = [
     "search",
     "petrel",
     "transfer",
-    "dlhub",
     "openid",
     "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
     "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
@@ -99,15 +97,12 @@ def test_foundry_init():
     assert isinstance(f.connect_client, MDFConnectClient)
 
     if not is_gha:
-        assert isinstance(f.dlhub_client, DLHubClient)
 
         f2 = foundry.Foundry(download=False, authorizers=auths, no_browser=False, no_local_server=True)
-        assert isinstance(f2.dlhub_client, DLHubClient)
         assert isinstance(f2.forge_client, Forge)
         assert isinstance(f2.connect_client, MDFConnectClient)
 
         f3 = foundry.Foundry(download=False, authorizers=auths, no_browser=True, no_local_server=False)
-        assert isinstance(f3.dlhub_client, DLHubClient)
         assert isinstance(f3.forge_client, Forge)
         assert isinstance(f3.connect_client, MDFConnectClient)
 

@@ -2,7 +2,6 @@ from pathlib import Path
 import pytest
 import os
 
-from dlhub_sdk import DLHubClient
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
 import mdf_toolbox
@@ -23,7 +22,6 @@ def auths():
         "search",
         "petrel",
         "transfer",
-        "dlhub",
         "openid",
         "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
         "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
@@ -91,8 +89,6 @@ def test_foundry_init(auths, elwood_data):
     f = foundry.Foundry(authorizers=auths)
     assert isinstance(f.forge_client, Forge)
     assert isinstance(f.connect_client, MDFConnectClient)
-    assert isinstance(f.dlhub_client, DLHubClient)
-
 
 def test_search(auths, elwood_data):
     test_dataset_name, test_doi, expected_title = elwood_data
