@@ -1,7 +1,8 @@
 import mdf_toolbox
 import pandas as pd
-from typing import Any, Dict, List
+from typing import Any, Dict, List, ClassVar, Optional
 import logging
+from pydantic import Field, ConfigDict
 
 from mdf_connect_client import MDFConnectClient
 from mdf_forge import Forge
@@ -14,7 +15,6 @@ from .https_upload import upload_to_endpoint
 from .utils import is_doi
 
 from foundry.models import FoundryBase
-
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -80,15 +80,28 @@ class Foundry(FoundryBase):
         auth_client (Any): The authentication client.
         index (str): The index to use for search and data publication.
         auths (Any): The authorizers used for authentication.
-
     """
 
-    forge_client: Any
-    connect_client: Any
-    transfer_client: Any
-    auth_client: Any
-    index = ""
-    auths: Any
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    forge_client: Any = Field(default=None)
+    connect_client: Any = Field(default=None)
+    transfer_client: Any = Field(default=None)
+    auth_client: Any = Field(default=None)
+    index: str = Field(default="")
+    auths: Any = Field(default=None)
+
+    use_globus: bool = Field(default=True)
+    verbose: bool = Field(default=False)
+    interval: int = Field(default=10)
+    parallel_https: int = Field(default=4)
+    local_cache_dir: Optional[str] = Field(default=None)
+
+    foundry_cache: FoundryCache = Field(default=None, exclude=True)
+
+    DOI: ClassVar[str] = 'mdf.landing_page'
+    title: ClassVar[str] = 'dc.titles.title'
+    organization: ClassVar[str] = "Foundry"
 
     def __init__(self,
                  no_browser: bool = False,
@@ -101,30 +114,13 @@ class Foundry(FoundryBase):
                  parallel_https: int = 4,
                  local_cache_dir: str = None,
                  **data):
-        """Initialize a Foundry client
-
-        Args:
-            no_browser (bool): Whether to open the browser for the Globus Auth URL.
-            no_local_server (bool): Whether a local server is available. This should be `False` when on a remote server (e.g., Google Colab).
-            index (str): Index to use for search and data publication. Choices are `mdf` or `mdf-test`.
-            authorizers (dict): A dictionary of authorizers to use, following the `mdf_toolbox` format.
-            use_globus (bool): If True, download using Globus, otherwise use HTTPS.
-            verbose (bool): If True, print additional debug information.
-            interval (int): How often to poll Globus to check if transfers are complete.
-            local_cache_dir (str): Optional location to store downloaded data.
-                                   If not specified, defaults to either environmental variable ('FOUNDRY_LOCAL_CACHE_DIR') or './data'
-
-            data (dict): Other arguments, e.g., results from an MDF search result that are used to populate Foundry metadata fields.
-
-        Returns:
-            An initialized and authenticated Foundry client.
-        """
+        """Initialize a Foundry client"""
         super().__init__(**data)
         self.index = index
-        self.auths = None
         self.use_globus = use_globus
         self.verbose = verbose
         self.interval = interval
+        self.parallel_https = parallel_https
         if local_cache_dir:
             self.local_cache_dir = local_cache_dir
 
@@ -190,13 +186,13 @@ class Foundry(FoundryBase):
         self.verbose = verbose
         local_cache_dir
 
-        self._foundry_cache = FoundryCache(self.forge_client,
-                                           self.transfer_client,
-                                           use_globus,
-                                           interval,
-                                           parallel_https,
-                                           verbose,
-                                           local_cache_dir)
+        self.foundry_cache = FoundryCache(self.forge_client,
+                                          self.transfer_client,
+                                          use_globus,
+                                          interval,
+                                          parallel_https,
+                                          verbose,
+                                          local_cache_dir)
 
     def search(self, query: str = None, limit: int = None, as_list: bool = False) -> List[FoundryDataset]:
         """Search available Foundry datasets
@@ -277,12 +273,31 @@ class Foundry(FoundryBase):
             ds = FoundryDataset(**{'dataset_name': name,
                                    'datacite_entry': dc,
                                    'foundry_schema': foundry_schema,
-                                   'foundry_cache': self._foundry_cache})
+                                   'foundry_cache': self.foundry_cache})
 
             return ds
 
         except Exception as e:
             logger.error(f"The mdf entry {metadata['mdf']['source_id']} is missing a {e} section - cannot generate a foundry dataset object")
+
+    def get_dataset(self, doi: str) -> FoundryDataset:
+        """Get exactly one dataset by DOI
+
+        Should only return a single result.
+
+        Args:
+            doi (str): doi of desired dataset
+
+        Returns:
+             (FoundryDataset): A FoundryDataset loaded from the dataset metadata
+        """
+        logger.info('using DOI to retrieve metadata')
+        forge = self.forge_client.match_resource_types("dataset")
+        results = forge.match_dois(doi).search()
+        if len(results) < 1:
+            return None
+        else:
+            return self.dataset_from_metadata(results[0])
 
     def get_metadata_by_doi(self, doi: str) -> dict:
         """Query foundry datasets by DOI
@@ -356,8 +371,8 @@ class Foundry(FoundryBase):
         for result in results:
             series_list.append(pd.Series({'dataset_name': result.dataset_name,
                                           'title': result.dc.titles[0].title,
-                                          'year': result.dc.publicationYear.__root__,
-                                          'DOI': result.dc.identifier.identifier.__root__,
+                                          'year': result.dc.publicationYear,
+                                          'DOI': result.dc.identifier.identifier.root,
                                           'FoundryDataset': result}))
         df = HiddenColumnDataFrame(series_list, hidden_column='FoundryDataset')
         return df

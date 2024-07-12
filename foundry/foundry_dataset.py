@@ -110,7 +110,7 @@ class FoundryDataset():
             authors = [creator['creatorName']
                        for creator in self.dc.creators]
             authors = '; '.join(authors)
-            DOI = "DOI: " + self.dc.identifier.identifier.__root__
+            DOI = "DOI: " + self.dc.identifier.identifier.root
 
             buf = f'<h2>{title}</h2>{authors}<p>{DOI}</p>'
 
@@ -133,18 +133,18 @@ class FoundryDataset():
 
     def get_citation(self) -> str:
         subjects = [subject.subject for subject in self.dc.subjects]
-        doi_str = f"doi = {{{self.dc.identifier.identifier.__root__}}}"
-        url_str = f"url = {{https://doi.org/{self.dc.identifier.identifier.__root__}}}"
+        doi_str = f"doi = {{{self.dc.identifier.identifier.root}}}"
+        url_str = f"url = {{https://doi.org/{self.dc.identifier.identifier.root}}}"
         author_str = f"author = {{{' and '.join([creator['creatorName'] for creator in self.dc.creators])}}}"
         title_str = f"title = {{{self.dc.titles[0].title}}}"
         keywords_str = f"keywords = {{{', '.join(subjects)}}}"
         publisher_str = f"publisher = {{{self.dc.publisher}}}"
-        year_str = f"year = {{{self.dc.publicationYear.__root__}}}"
+        year_str = f"year = {{{self.dc.publicationYear}}}"
         bibtex = os.linesep.join([doi_str, url_str,
                                   author_str, title_str,
                                   keywords_str, publisher_str,
                                   year_str])
-        bibtex = f"@misc{{https://doi.org/{self.dc.identifier.identifier.__root__}{os.linesep}{bibtex}}}"
+        bibtex = f"@misc{{https://doi.org/{self.dc.identifier.identifier.root}{os.linesep}{bibtex}}}"
         return bibtex
 
     def validate_metadata(self, metadata):

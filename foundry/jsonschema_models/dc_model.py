@@ -5,10 +5,8 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, List, Optional
-
-from pydantic import BaseModel, Extra, Field
-from typing_extensions import Annotated
+from typing import Any, List, Optional, Annotated
+from pydantic import BaseModel, Extra, Field, RootModel
 
 
 class IdentifierType(Enum):
@@ -252,18 +250,16 @@ class GeoLocation(BaseModel):
     ] = None
 
 
-class Doi(BaseModel):
-    __root__: Annotated[
-        str, Field(description='Digital object identifier.', regex='10\\..+/.+')
-    ]
+class Doi(RootModel):
+    root: Annotated[str, Field(description='Digital object identifier.', pattern='10\\..+/.+')]
 
 
-class Year(BaseModel):
-    __root__: str
+class Year(RootModel):
+    root: Annotated[int, Field(ge=0, le=9999, description='Year')]
 
 
-class Language(BaseModel):
-    __root__: Annotated[
+class Language(RootModel):
+    root: Annotated[
         str,
         Field(
             description='Allowed values are taken from IETF BCP 47, ISO 639-1 language codes.'
@@ -271,29 +267,29 @@ class Language(BaseModel):
     ]
 
 
-class Uri(BaseModel):
-    __root__: Annotated[str, Field(description='For adding future URI validation.')]
+class Uri(RootModel):
+    root: Annotated[str, Field(description='For adding future URI validation.')]
 
 
 class NameIdentifier(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
     nameIdentifier: str
     nameIdentifierScheme: str
     schemeURI: Optional[Uri] = None
 
 
-class NameIdentifiers(BaseModel):
-    __root__: List[NameIdentifier]
+class NameIdentifiers(RootModel):
+    root: List[NameIdentifier]
 
 
 class Identifier(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
     identifier: Doi
     identifierType: IdentifierType
+# class Identifier(BaseModel):
+#     class Config:
+#         extra = Extra.forbid
+
+#     identifier: Doi
+#     identifierType: IdentifierType
 
 
 class Title(BaseModel):
