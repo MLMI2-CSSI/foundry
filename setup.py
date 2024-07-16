@@ -22,7 +22,8 @@ setuptools.setup(
         "pydantic>=2.7.2",
         "mdf_connect_client>=0.5.0",
         "h5py>=2.10.0",
-        "json2table"
+        "json2table",
+        "openpyxl>=3.1.0"
     ],
     python_requires=">=3.7",
     classifiers=[
