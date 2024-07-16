@@ -14,3 +14,4 @@ json2table>=1.1.5
 torch>=1.8.0
 tensorflow>=2
 tqdm>=4.64
+openpyxl>=3.1.0
