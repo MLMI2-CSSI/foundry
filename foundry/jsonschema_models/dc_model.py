@@ -254,10 +254,8 @@ class Doi(RootModel):
     root: Annotated[str, Field(description='Digital object identifier.', pattern='10\\..+/.+')]
 
 
-# class Year(RootModel):
-#     root: Annotated[int, Field(ge=0, le=9999, description='Year')]
 class Year(RootModel):
-    root: Annotated[str, Field(description='Year as a string')]
+    root: Annotated[int, Field(ge=0, le=9999, description='Year')]
 
 
 class Language(RootModel):

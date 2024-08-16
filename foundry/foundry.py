@@ -414,6 +414,7 @@ class Foundry(FoundryBase):
         self.connect_client.dc = foundry_dataset.clean_dc_dict()
         self.connect_client.set_organization(self.organization)
         self.connect_client.set_project_block("foundry", foundry_dataset)
+        self.connect_client.dc['publicationYear'] = str(self.connect_client.dc['publicationYear'])
 
         # Determine and set the data source
         if has_local_path:
