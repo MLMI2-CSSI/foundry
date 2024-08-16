@@ -377,67 +377,75 @@ class Foundry(FoundryBase):
         df = HiddenColumnDataFrame(series_list, hidden_column='FoundryDataset')
         return df
 
+
     def publish_dataset(self,
                         foundry_dataset: FoundryDataset,
                         update: bool = False,
                         test: bool = False):
-        """Submit a dataset for publication; can choose to submit via HTTPS using `local_data_path` or via Globus
-            Transfer using the `globus_data_source` argument. Only one upload method may be specified.
+        """
+        Submit a dataset for publication via HTTPS using `local_data_path` or via Globus
+        Transfer using the `globus_data_source` attribute. Only one upload method may be used.
+
         Args:
             foundry_dataset (FoundryDataset): The dataset to be published.
             update (bool): True if this is an update to a prior data package.
-            test (bool): If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).
-                Default is False.
+            test (bool): If True, do not submit the dataset for publication (i.e., transfer to the MDF endpoint).
+                        Default is False.
 
         Returns:
             dict: MDF Connect Response. Response from MDF Connect to allow tracking
-            of dataset. Contains `source_id`, which can be used to check the
-            status of the submission.
+                of dataset. Contains `source_id`, which can be used to check the
+                status of the submission.
+
+        Raises:
+            ValueError: If no data source is specified or if both data sources are specified.
         """
+        # Check if a data source has been specified
+        has_local_path = hasattr(foundry_dataset, '_local_data_path') and foundry_dataset._local_data_path is not None
+        has_globus_source = hasattr(foundry_dataset, '_globus_data_source') and foundry_dataset._globus_data_source is not None
 
-        # ensure that one of `local_data_path` or `globus_data_source` have been assigned values
-        if (not hasattr(foundry_dataset, '_local_data_path') and not hasattr(foundry_dataset, '_globus_data_source')):
+        if not (has_local_path or has_globus_source):
             raise ValueError("Must add data to your FoundryDataset object (use the FoundryDataset.add_data() method) before publishing")
-        if (hasattr(foundry_dataset, '_local_data_path') and hasattr(foundry_dataset, '_globus_data_source')):
-            raise ValueError("Dataset cannot contain both `local_data_path` and `globus_data_source` attributes. "
-                             "Choose one by adding via the FoundryDataset.add() method.")
-        if (hasattr(foundry_dataset, '_local_data_path') and
-            foundry_dataset._local_data_path is None) or \
-           (hasattr(foundry_dataset, '_globus_data_source') and foundry_dataset._globus_data_source is None):
-            raise ValueError("Must assign a value to `local_data_path` OR `globus_data_source` in your FoundryDataset object - "
-                             "use the FoundryDataset.add_data() method (cannot be None)")
 
+        if has_local_path and has_globus_source:
+            raise ValueError("Dataset cannot contain both `local_data_path` and `globus_data_source` attributes. "
+                            "Choose one by using the FoundryDataset.add_data() method.")
+
+        # Set up MDF Connect client
         self.connect_client.dc = foundry_dataset.clean_dc_dict()
         self.connect_client.set_organization(self.organization)
         self.connect_client.set_project_block("foundry", foundry_dataset)
 
-        # upload via HTTPS if specified
-        if foundry_dataset._local_data_path:
-            # gather auth'd clients necessary for publication to endpoint
+        # Determine and set the data source
+        if has_local_path:
+            # Upload via HTTPS
             endpoint_id = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"  # NCSA endpoint
-            scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"  # lets you HTTPS to specific endpoint
+            scope = f"https://auth.globus.org/scopes/{endpoint_id}/https"
             pub_auths = PubAuths(
                 transfer_client=self.auths["transfer"],
                 auth_client_openid=AuthClient(authorizer=self.auths['openid']),
                 endpoint_auth_clients={endpoint_id: AuthClient(authorizer=self.auths[scope])}
             )
-            # upload (ie publish) data to endpoint
             globus_data_source = upload_to_endpoint(pub_auths, foundry_dataset._local_data_path, endpoint_id)
         else:
-            # set Globus data source URL with MDF
+            # Use existing Globus data source
             globus_data_source = foundry_dataset._globus_data_source
-        # set Globus data source URL with MDF
+
+        # Set Globus data source URL with MDF
         self.connect_client.add_data_source(globus_data_source)
         self.connect_client.set_source_name(foundry_dataset.dataset_name)
 
-        # do not submit to MDF if this is just a test
+        # Submit to MDF if not a test
         if not test:
-            # Globus Transfer the data from the data source to the MDF endpoint
-            res = self.connect_client.submit_dataset(update=update)
+            try:
+                res = self.connect_client.submit_dataset(update=update)
+            except Exception as e:
+                raise RuntimeError(f"Failed to submit dataset: {str(e)}") from e
         else:
             res = None
-        return res
 
+        return res
+    
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
 
