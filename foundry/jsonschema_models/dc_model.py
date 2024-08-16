@@ -260,7 +260,6 @@ class Year(RootModel):
     root: Annotated[str, Field(description='Year as a string')]
 
 
-
 class Language(RootModel):
     root: Annotated[
         str,

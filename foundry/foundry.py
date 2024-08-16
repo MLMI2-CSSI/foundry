@@ -377,7 +377,6 @@ class Foundry(FoundryBase):
         df = HiddenColumnDataFrame(series_list, hidden_column='FoundryDataset')
         return df
 
-
     def publish_dataset(self,
                         foundry_dataset: FoundryDataset,
                         update: bool = False,
@@ -409,7 +408,7 @@ class Foundry(FoundryBase):
 
         if has_local_path and has_globus_source:
             raise ValueError("Dataset cannot contain both `local_data_path` and `globus_data_source` attributes. "
-                            "Choose one by using the FoundryDataset.add_data() method.")
+                             "Choose one by using the FoundryDataset.add_data() method.")
 
         # Set up MDF Connect client
         self.connect_client.dc = foundry_dataset.clean_dc_dict()
@@ -445,7 +444,7 @@ class Foundry(FoundryBase):
             res = None
 
         return res
-    
+
     def check_status(self, source_id, short=False, raw=False):
         """Check the status of your submission.
 

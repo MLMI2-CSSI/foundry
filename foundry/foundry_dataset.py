@@ -189,8 +189,8 @@ class FoundryDataset():
         """
         if local_data_path is None and globus_data_source is None:
             raise ValueError("User must provide either a path to the data on their local machine or a URL to the data "
-                            "on their Globus endpoint.")
-    
+                             "on their Globus endpoint.")
+
         if local_data_path is not None and globus_data_source is not None:
             raise ValueError("User must choose either `globus_data_source` or `local_data_path`, not both.")
 
@@ -205,7 +205,7 @@ class FoundryDataset():
                     delattr(self, '_globus_data_source')
             else:
                 raise ValueError("The path provided does not exist or is not a file or directory.")
-            
+
     def clear_dataset_cache(self):
         """Deletes the cached data for this specific datset"""
         self._foundry_cache.clear_cache(self.dataset_name)
