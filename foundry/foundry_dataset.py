@@ -212,8 +212,6 @@ class FoundryDataset():
 
     def clean_dc_dict(self):
         """Clean the Datacite dictionary of None values"""
-        print(self.dc.json())
-        print()
         print(json.loads(self.dc.json()))
         return self.delete_none(json.loads(self.dc.json()))
 
