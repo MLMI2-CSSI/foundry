@@ -67,6 +67,21 @@ for i in range(n_images):
 
 [See full examples](./examples)
 
+# How to Cite
+If you find Foundry-ML useful, please cite the following [paper](https://doi.org/10.21105/joss.05467)
+
+```
+@article{schmidt2024foundry,
+  title={Foundry-ML-Software and Services to Simplify Access to Machine Learning Datasets in Materials Science},
+  author={Schmidt, Kj and Scourtas, Aristana and Ward, Logan and Wangen, Steve and Schwarting, Marcus and Darling, Isaac and Truelove, Ethan and Ambadkar, Aadit and Bose, Ribhav and Katok, Zoa and others},
+  journal={Journal of Open Source Software},
+  volume={9},
+  number={93},
+  pages={5467},
+  year={2024}
+}
+```
+
 # Contributing
 Foundry is an Open Source project and we encourage contributions from the community. To contribute, please fork from the `main` branch and open a Pull Request on the `main` branch. A member of our team will review your PR shortly.
 
