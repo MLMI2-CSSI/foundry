@@ -9,7 +9,7 @@ import pandas as pd
 
 from foundry import foundry
 
-is_gha = os.getenv("GITHUB_ACTIONS")
+is_gha = os.getenv("GHA")
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 

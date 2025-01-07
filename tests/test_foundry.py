@@ -26,7 +26,7 @@ from tests.test_data import datacite_data, valid_metadata, invalid_metadata
 
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
-is_gha = os.getenv("GITHUB_ACTIONS")
+is_gha = os.getenv("GHA")
 
 services = [
     "data_mdf",
