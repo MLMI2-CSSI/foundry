@@ -10,7 +10,7 @@ import requests
 from filecmp import cmp
 from globus_sdk import AuthClient
 from mdf_connect_client import MDFConnectClient
-import mock
+from unittest import mock
 import json
 import builtins
 

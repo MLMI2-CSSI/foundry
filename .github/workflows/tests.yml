@@ -27,6 +27,7 @@ jobs:
           pip install -e .[all]
         fi
         pip install -r requirements-dev.txt
+        pip install -r test-requirements.txt
         
     - name: Run tests with coverage
       run: |
