@@ -219,13 +219,18 @@ class Foundry(FoundryBase):
             >>> print(len(results))
             10
         """
-        if (query is not None) and (is_doi(query)):
-            metadata_list = [self.get_metadata_by_doi(query)]
-        else:
-            metadata_list = self.get_metadata_by_query(query, limit)
-
-        if len(metadata_list) == 0:
-            raise Exception(f"load: No results found for the query '{query}'")
+        try:
+            if (query is not None) and (is_doi(query)):
+                metadata_list = [self.get_metadata_by_doi(query)]
+            else:
+                metadata_list = self.get_metadata_by_query(query, limit)
+            
+            if len(metadata_list) == 0:
+                raise NoResultsFoundError(f"No results found for query '{query}'")
+            
+        except Exception as e:
+            logger.error(f"Search failed: {str(e)}", exc_info=True)
+            raise
 
         foundry_datasets = []
         for metadata in metadata_list:
