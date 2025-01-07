@@ -9,7 +9,9 @@ jobs:
       matrix:
         python-version: ['3.9', '3.10', '3.11']
         install-type: [core]
-        
+    env:
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
     steps:
     - uses: actions/checkout@v2
     
