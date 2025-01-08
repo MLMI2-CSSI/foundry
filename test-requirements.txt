@@ -4,3 +4,7 @@ pytest-mock
 flake8
 jsonschema
 mdf_toolbox
+rdkit
+pandas
+numpy
+h5py
