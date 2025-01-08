@@ -9,7 +9,7 @@ from foundry.models import FoundrySchema
 def test_loader_not_found():
     registry = LoaderRegistry()
     with pytest.raises(ValueError, match="No suitable loader found"):
-        registry.get_loader(Path('test.xyz'), None, './data')
+        registry.get_loader(Path('test.foo'), None, './data')
 
 def test_missing_file():
     class TestLoader(DataLoader):
