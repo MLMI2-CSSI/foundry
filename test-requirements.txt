@@ -3,4 +3,8 @@ pytest-cov>=2.12
 pytest-mock
 flake8
 jsonschema
-mock
+mdf_toolbox
+rdkit
+pandas
+numpy
+h5py

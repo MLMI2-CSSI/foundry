@@ -1,0 +1,13 @@
+# Include all dependencies for development
+-e .[all]
+
+# Testing dependencies
+pytest>=7.0.0
+pytest-cov>=3.0.0
+coverage>=7.0.0
+flake8>=4.0.0
+mypy>=0.950
+
+# Documentation
+sphinx>=4.0.0
+sphinx-rtd-theme>=1.0.0 

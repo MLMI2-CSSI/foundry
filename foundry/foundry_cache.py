@@ -10,11 +10,16 @@ import pandas as pd
 import shutil
 from tqdm.auto import tqdm
 from typing import List, Any, Tuple
+from pathlib import Path
 
 from .https_download import recursive_ls, download_file
 from foundry.jsonschema_models.project_model import Split as FoundrySplit
 from foundry.models import FoundrySchema
-from foundry.utils import _read_csv, _read_json, _read_excel, is_pandas_pytable
+from .utils import (
+    _read_csv, _read_json, _read_excel, 
+    is_pandas_pytable
+)
+from .loaders.registry import LoaderRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +59,7 @@ class FoundryCache():
         self.interval = interval
         self.parallel_https = parallel_https
         self.verbose = verbose
+        self.loader_registry = LoaderRegistry()
 
     def download_to_cache(self,
                           dataset_name: str,
@@ -342,68 +348,18 @@ class FoundryCache():
         Returns:
         tuple: A tuple containing the input and target data.
         """
-        # Build the path to access the cached data
-        path = os.path.join(self.local_cache_dir, source_id)
-        if path is None:
-            raise ValueError(f"Path to data file is invalid; check that dataset source_id is valid: "
-                             f"{source_id or self.mdf['source_id']}")
-
-        # Check for version folders
-        version_folders = [d for d in os.listdir(path) if re.match(r'\d+\.\d+', d)]
-        if version_folders:
-            # Sort version folders and get the latest one
-            latest_version = sorted(version_folders, key=lambda x: [int(n) for n in x.split('.')], reverse=True)[0]
-            path = os.path.join(path, latest_version)
-            print(f"Loading from version folder: {latest_version}")
-
-        path_to_file = os.path.join(path, file)
-
-        # Check to see whether file exists at path
-        if not os.path.isfile(path_to_file):
-            raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
-
-        # Handle Foundry-defined types.
-        if foundry_schema.data_type == "tabular":
-            # TODO: Add hashes and versioning to metadata and checking to the file
-            read_fns = [(_read_json, {"lines": False, "path_to_file": path_to_file}),
-                        (_read_json, {"lines": True, "path_to_file": path_to_file}),
-                        (_read_csv, {"path_to_file": path_to_file}),
-                        (_read_excel, {"path_to_file": path_to_file})]
-            dataframe = None
-            for fn, params in read_fns:
-                try:
-                    dataframe = fn(**params)
-                except Exception as e:
-                    logger.info(f"Unable to read file with {fn.__name__} with params {params}: {e}")
-                if dataframe is not None:
-                    logger.info(f"Succeeded with {fn.__name__} with params {params}")
-                    break
-            if dataframe is None:
-                logger.fatal(f"Cannot read {path_to_file} as tabular data, failed to load")
-                raise ValueError(f"Cannot read tabular data from {path_to_file}")
-            return (
-                dataframe[self.get_keys(foundry_schema, "input")],
-                dataframe[self.get_keys(foundry_schema, "target")],
-            )
-        elif foundry_schema.data_type == "hdf5":
-            f = h5py.File(path_to_file, "r")
-            special_types = ["input", "target"]
-            tmp_data = {s: {} for s in special_types}
-            for s in special_types:
-                for key in self.get_keys(foundry_schema, s):
-                    if as_hdf5:
-                        tmp_data[s][key] = f[key]
-                    elif isinstance(f[key], h5py.Group):
-                        if is_pandas_pytable(f[key]):
-                            df = pd.read_hdf(path_to_file, key)
-                            tmp_data[s][key] = df
-                        else:
-                            tmp_data[s][key] = f[key]
-                    elif isinstance(f[key], h5py.Dataset):
-                        tmp_data[s][key] = f[key][0:]
-            return tmp_data
-        else:
-            raise NotImplementedError
+        path = Path(self.local_cache_dir) / source_id / file
+        
+        if not path.exists():
+            raise FileNotFoundError(f"No file found at: {path}")
+            
+        loader = self.loader_registry.get_loader(
+            path,
+            foundry_schema.data_type,
+            self.local_cache_dir
+        )
+        
+        return loader.load(path, foundry_schema, as_hdf5=as_hdf5)
 
     def get_keys(self,
                  foundry_schema: FoundrySchema,

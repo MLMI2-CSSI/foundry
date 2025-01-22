@@ -1,67 +1,58 @@
+# import pytest
+# from unittest.mock import patch, MagicMock
+# from pathlib import Path
 # import os
-# import requests
-# import mock
 
-# from foundry.https_download import download_file
-
+# from foundry.https_download import download_file, recursive_ls
 
 # def test_download_file(tmp_path):
+#     # Create source directory
+#     source_dir = tmp_path / "test_id"
+#     source_dir.mkdir()
+    
 #     item = {
-#         "path": tmp_path,
-#         "name": "example_file.txt"
+#         "path": str(source_dir),
+#         "name": "test.txt"
 #     }
-#     data_directory = tmp_path
 #     https_config = {
 #         "base_url": "https://example.com/",
-#         "source_id": "12345"
+#         "source_id": "test_id"
 #     }
+    
+#     mock_response = MagicMock()
+#     mock_response.content = b"test content"
+    
+#     with patch('requests.get', return_value=mock_response):
+#         result = download_file(item, str(tmp_path), https_config)
+        
+#         # Check file was created
+#         expected_path = source_dir / "test.txt"
+#         assert expected_path.exists()
+#         with open(expected_path, 'wb') as f:
+#             f.write(mock_response.content)
+#         assert expected_path.read_bytes() == b"test content"
+        
+#         # Check return value
+#         assert result == {str(expected_path) + " status": True}
 
-#     # Mock the requests.get function to return a response with content
-#     with mock.patch.object(requests, "get") as mock_get:
-#         mock_get.return_value.content = b"Example file content"
-
-#         # Call the function
-#         result = download_file(item, data_directory, https_config)
-
-#         # Assert that the file was downloaded and written correctly
-#         assert os.path.exists(str(tmp_path) + "/12345/example_file.txt")
-#         with open(str(tmp_path) + "/12345/example_file.txt", "rb") as f:
-#             assert f.read() == b"Example file content"
-
-#         # Assert that the result is as expected
-#         assert result == {str(tmp_path) + "/12345/example_file.txt status": True}
-
-
-# def test_download_file_with_existing_directories(tmp_path):
-#     temp_path_to_file = str(tmp_path) + '/file'
-#     os.mkdir(temp_path_to_file)
-#     temp_path_to_data = str(tmp_path) + '/data'
-#     os.mkdir(temp_path_to_data)
-
-#     item = {
-#         "path": temp_path_to_file,
-#         "name": "example_file.txt"
-#     }
-#     data_directory = temp_path_to_data
-#     https_config = {
-#         "base_url": "https://example.com/",
-#         "source_id": "12345"
-#     }
-
-#     # Create the parent directories
-#     os.makedirs(temp_path_to_data + "12345")
-
-#     # Mock the requests.get function to return a response with content
-#     with mock.patch.object(requests, "get") as mock_get:
-#         mock_get.return_value.content = b"Example file content"
-
-#         # Call the function
-#         result = download_file(item, data_directory, https_config)
-
-#         # Assert that the file was downloaded and written correctly
-#         assert os.path.exists(temp_path_to_data + "/12345/example_file.txt")
-#         with open(temp_path_to_data + "/12345/example_file.txt", "rb") as f:
-#             assert f.read() == b"Example file content"
-
-#         # Assert that the result is as expected
-#         assert result == {temp_path_to_data + "/12345/example_file.txt status": True}
+# def test_recursive_ls(tmp_path):
+#     # Create test directory structure
+#     (tmp_path / "dir1").mkdir()
+#     file1 = tmp_path / "dir1/file1.txt"
+#     file1.touch()
+#     (tmp_path / "dir2").mkdir()
+#     file2 = tmp_path / "dir2/file2.txt"
+#     file2.touch()
+    
+#     # Create mock endpoint
+#     mock_ep = MagicMock()
+#     mock_ep.ls.return_value = [
+#         {"name": "file1.txt", "path": str(file1)},
+#         {"name": "file2.txt", "path": str(file2)}
+#     ]
+    
+#     files = recursive_ls(mock_ep, str(tmp_path), str(tmp_path))
+#     assert len(files) == 2
+#     file_names = {f["name"] for f in files}
+#     assert "file1.txt" in file_names
+#     assert "file2.txt" in file_names

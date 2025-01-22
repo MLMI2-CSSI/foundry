@@ -10,7 +10,7 @@ import requests
 from filecmp import cmp
 from globus_sdk import AuthClient
 from mdf_connect_client import MDFConnectClient
-import mock
+from unittest import mock
 import json
 import builtins
 
@@ -42,6 +42,7 @@ services = [
 ]
 
 if is_gha:
+    print("is_gha")
     auths = mdf_toolbox.confidential_login(client_id=client_id,
                                            client_secret=client_secret,
                                            services=services, make_clients=True)
@@ -49,9 +50,12 @@ if is_gha:
     search_auth = mdf_toolbox.confidential_login(client_id=client_id,
                                                  client_secret=client_secret,
                                                  services=["search"], make_clients=False)
+    print(search_auth)
 else:
+    print("not gha")
     auths = mdf_toolbox.login(services=services, make_clients=True)
     search_auth = mdf_toolbox.login(services=["search"], make_clients=False)
+    print(search_auth)
 
 auths['search_authorizer'] = search_auth['search']
 

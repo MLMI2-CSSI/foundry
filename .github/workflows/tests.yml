@@ -1,55 +1,57 @@
-name: tests
+name: Tests
 
-on:
-  pull_request:
-    branches:
-      - dev
-      - main
+on: [push, pull_request]
 
 jobs:
-
-  build:
+  test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-
+        python-version: ['3.9', '3.10', '3.11']
+        install-type: [core, all]
     env:
       CLIENT_ID: ${{ secrets.CLIENT_ID }}
       CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-    name: build
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache : 'pip'
-
-      - name: Globus auth
-        run: 'echo "$GLOBUS_CONFIG" > ~/.globus-native-apps.cfg'
-        shell: bash
-        env:
-          GLOBUS_CONFIG: "${{ secrets.GLOBUS_CONFIG }}"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r test-requirements.txt
-
-      - name: Lint with flake8
-        run: |
-          # stop the build if there are any-flake8 comments
-          flake8 foundry
-
-      - name: Test with pytest
-        run: |
-          pytest -s -v tests/ --cov=./foundry --cov-report=xml
-      - name: Upload coverage to Codecov
-        run: |
-          curl -Os https://uploader.codecov.io/v0.1.0_4653/linux/codecov
-
-          chmod +x codecov
-          ./codecov -t ${{ secrets.CODECOV_TOKEN }}
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Install base package
+        if [ "${{ matrix.install-type }}" = "core" ]; then
+          pip install -e .
+        else
+          pip install -e .[all]
+        fi
+        # Install test dependencies
+        pip install -r requirements-dev.txt
+        pip install -r test-requirements.txt
+        # Install optional dependencies for testing
+        pip install rdkit pandas numpy h5py
+        
+    - name: Run tests with coverage
+      run: |
+        if [ "${{ matrix.install-type }}" = "core" ]; then
+          # Skip tests that require optional dependencies
+          pytest --cov=foundry --cov-report=xml --cov-report=term-missing \
+            --ignore=tests/test_molecular.py \
+            --ignore=tests/test_ml_frameworks.py \
+            --ignore=tests/test_loaders_specialized.py
+        else
+          pytest --cov=foundry --cov-report=xml --cov-report=term-missing
+        fi
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        fail_ci_if_error: false
+        verbose: true

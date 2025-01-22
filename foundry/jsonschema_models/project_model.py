@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Extra, Field
+from .config import get_model_config
 
 
 class Nanomfg(BaseModel):
@@ -93,8 +94,8 @@ class Verde(BaseModel):
 
 
 class Split(BaseModel):
-    class Config:
-        extra = Extra.forbid
+    """A split of data in the dataset"""
+    model_config = get_model_config('forbid')
 
     type: Optional[str] = Field(
         None,
