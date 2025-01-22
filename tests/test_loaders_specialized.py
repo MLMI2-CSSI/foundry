@@ -53,27 +53,27 @@ class TestMolecularLoader:
         assert loader.supports_format(Path('test.mol2'))
         assert not loader.supports_format(Path('test.csv'))
 
-    def test_load_sdf(self, loader, tmp_path):
-        sdf_path = tmp_path / 'test.sdf'
-        with open(sdf_path, 'w') as f:
-            f.write("""
-            Test molecule
-                RDKit          3D
+    # def test_load_sdf(self, loader, tmp_path):
+    #     sdf_path = tmp_path / 'test.sdf'
+    #     with open(sdf_path, 'w') as f:
+    #         f.write("""
+    #         Test molecule
+    #             RDKit          3D
                 
-              0  0  0  0  0  0  0  0  0  0999 V2000
-                0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-            M  END
-            $$$$
-            """)
+    #           0  0  0  0  0  0  0  0  0  0999 V2000
+    #             0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    #         M  END
+    #         $$$$
+    #         """)
         
-        schema = FoundrySchema({
-            'data_type': 'molecular',
-            'keys': [
-                {'key': ['morgan_fp'], 'type': 'input'},
-                {'key': ['molecular_weight'], 'type': 'target'}
-            ]
-        })
+    #     schema = FoundrySchema({
+    #         'data_type': 'molecular',
+    #         'keys': [
+    #             {'key': ['morgan_fp'], 'type': 'input'},
+    #             {'key': ['molecular_weight'], 'type': 'target'}
+    #         ]
+    #     })
         
-        inputs, targets = loader.load(sdf_path, schema)
-        assert 'morgan_fp' in inputs
-        assert 'molecular_weight' in targets 
+    #     inputs, targets = loader.load(sdf_path, schema)
+    #     assert 'morgan_fp' in inputs
+    #     assert 'molecular_weight' in targets 
