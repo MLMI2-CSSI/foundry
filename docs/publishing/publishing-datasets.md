@@ -154,38 +154,102 @@ Once your dataset is in the proper shape, and you have created the associated me
 }
 ```
 
-Currently, you can publish any dataset you have stored on a Globus endpoint or Google Drive. In the following, assume your [previously defined metadata](publishing-datasets.md#describing-datasets) are stored in `metadata` :
+Currently, you can publish datasets stored locally on your machine or on a Globus endpoint.
 
-```python
-from foundry import Foundry
+To publish a dataset, you first need to create a `FoundryDataset` object, which encapsulates your dataset's metadata and data location.
 
-# Globus endpoint URL where your dataset is located
-data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6d04-11e5-ba46-22000b92c6ec&origin_path=%2Ffoundry%2F_test_blaiszik_foundry_iris_v1.2%2F"
+**1. Prepare Your Metadata:**
 
-# full title of dataset
-title = "Scourtas example iris dataset"
+   You'll need two main pieces of metadata, typically as Python dictionaries:
+   *   **DataCite Metadata (`datacite_entry`):** This dictionary should conform to the [DataCite schema](https://schema.datacite.org) and include information like titles, creators, publisher, publication year, etc.
+       ```python
+       # Example DataCite dictionary
+       datacite_entry = {
+           "titles": [{"title": "My Awesome Materials Dataset"}],
+           "creators": [{"creatorName": "Doe, Jane", "affiliations": ["University of Science"]}],
+           "publisher": "My Research Group",
+           "publicationYear": "2023",
+           "identifier": { # Optional: If you already have a DOI, include it
+               "identifier": "10.1234/mydataset",
+               "identifierType": "DOI"
+           },
+           "subjects": [{"subject": "materials science"}, {"subject": "machine learning"}]
+           # Add other required and optional DataCite fields as needed
+       }
+       ```
+   *   **Foundry Schema (`foundry_schema`):** This dictionary describes how Foundry should interpret your dataset, including splits (e.g., train, test), input/output specifications, data types, etc.
+       ```python
+       # Example Foundry schema dictionary
+       foundry_schema = {
+           "dataset_name": "my_awesome_dataset_v1", # Choose a unique name for your dataset
+           "data_type": "tabular", # or "hdf5", "files", "other"
+           "splits": [
+               {"label": "train", "path": "data/train.csv", "type": "tabular"},
+               {"label": "test", "path": "data/test.csv", "type": "tabular"}
+           ],
+           "inputs": ["feature1", "feature2"],
+           "outputs": ["target_property"],
+           # ... other fields like 'input_details', 'output_details' as needed
+       }
+       ```
+       **Important:** The `dataset_name` in `foundry_schema` will be used as the `source_id` for your dataset in MDF. It should be unique.
 
-# authors to list 
-authors = ["A. Scourtas", "B. Blaiszik"]
+**2. Create a `FoundryDataset` Object:**
 
-# shorthand title (optional)
-short_name = "example_AS_iris"
+   ```python
+   from foundry import FoundryDataset
 
-# affiliations of authors (optional)
-affiliations = ["Globus Labs, UChicago"]
+   try:
+       dataset_to_publish = FoundryDataset(
+           dataset_name=foundry_schema["dataset_name"], # Must match the one in foundry_schema
+           datacite_entry=datacite_entry,
+           foundry_schema=foundry_schema
+       )
+   except Exception as e: # Catches Pydantic ValidationError or other issues
+       print(f"Error creating FoundryDataset: {e}")
+       # Handle error appropriately
+   ```
 
-# publisher of the data (optional)
-publisher = "Materials Data Facility"
+**3. Add Your Data Source:**
 
-# publication year (optional)
-publication_year = 2021
+   Specify where your actual data files are located. You have two options:
 
+   *   **Local Data (`local_data_path`):** If your data is on your local machine. Foundry will upload it to a temporary Globus endpoint location before transferring it to MDF.
+       ```python
+       dataset_to_publish.add_data(local_data_path="/path/to/your/dataset_folder_or_file")
+       ```
+   *   **Globus Endpoint (`globus_data_source`):** If your data is already on a Globus endpoint that you own or have access to. Provide the Globus URL to the data folder.
+       ```python
+       globus_url = "globus://<your_endpoint_id>/path/to/your_data/"
+       dataset_to_publish.add_data(globus_data_source=globus_url)
+       ```
+       You can obtain this URL from the Globus Web UI by navigating to your data and copying the path from the "Path" field, then prepending `globus://<your_endpoint_id>`.
 
-f = Foundry()
-res = f.publish(metadata, data_source, title, authors, short_name=short_name))
-```
+**4. Publish the Dataset:**
 
-The `publish()` method returns a result object that you can inspect for information about the state of the publication. For the above publication, `res` would have the format:
+   ```python
+   from foundry import Foundry
+
+   f = Foundry() # Initialize Foundry client
+   try:
+       res = f.publish_dataset(foundry_dataset=dataset_to_publish)
+       # To publish as an update to an existing dataset (ensure dataset_name matches):
+       # res = f.publish_dataset(foundry_dataset=dataset_to_publish, update=True)
+       
+       # To test the publication process without actually submitting to MDF:
+       # res = f.publish_dataset(foundry_dataset=dataset_to_publish, test=True)
+       
+       if res and res.get('success'):
+           print(f"Dataset publication submitted successfully!")
+           print(f"Source ID: {res.get('source_id')}") # Use this to check status
+       else:
+           print(f"Dataset publication failed. Response: {res}")
+           
+   except Exception as e:
+       print(f"An error occurred during publication: {e}")
+   ```
+
+The `publish_dataset()` method returns a result object that you can inspect for information about the state of the publication. For a successful submission, `res` would typically have the format:
 
 ```python
 {'error': None,

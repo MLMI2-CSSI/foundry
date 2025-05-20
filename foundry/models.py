@@ -72,18 +72,12 @@ class FoundrySchema(FoundryModel):
     A model for the Foundry schema based on the FoundryModel (project_model.py) class.
     """
 
-    def __init__(self, project_dict: Dict[str, Any]):
+    def __init__(self, **project_dict: Any): # Changed to accept **kwargs for direct dict unpacking
         try:
             super().__init__(**project_dict)
         except ValidationError as e:
-            print("FoundrySchema validation failed!")
-            for error in e.errors():
-                field_name = ".".join([str(item) for item in error['loc']])
-                error_description = error['msg']
-                error_message = f"""There is an issue validating the entry for the field '{field_name}':
-                The error message returned is: '{error_description}'.
-                The description for this field is: '{FoundryModel.model_json_schema()['properties'][field_name]['description']}'"""
-                print(error_message)
+            # Removed print statements, rely on caller to handle ValidationError
+            # logger.error(f"FoundrySchema validation failed: {e.errors()}") # Optional: log here if desired
             raise e
 
 
@@ -91,23 +85,20 @@ class FoundryDatacite(DataciteModel):
     """
     A model for the Datacite schema based on the Datacite (dc_model.py) class.
     """
-    def __init__(self, datacite_dict: Dict[str, Any], **kwargs):
+    def __init__(self, **datacite_dict: Any): # Changed to accept **kwargs for direct dict unpacking
         try:
-            dc_dict = datacite_dict.copy()
-            if 'identifier' in dc_dict:
-                if isinstance(dc_dict['identifier'], dict) and 'identifier' in dc_dict['identifier']:
-                    if isinstance(dc_dict['identifier']['identifier'], dict) and '__root__' in dc_dict['identifier']['identifier']:
-                        dc_dict['identifier']['identifier'] = dc_dict['identifier']['identifier']['__root__']
-            super().__init__(**dc_dict, **kwargs)
+            # The __root__ handling is a workaround for a specific data shape.
+            # It's kept, but ideally, the input data should conform to the schema.
+            dc_copy = datacite_dict.copy() # Operate on a copy
+            if 'identifier' in dc_copy:
+                if isinstance(dc_copy['identifier'], dict) and 'identifier' in dc_copy['identifier']:
+                    if isinstance(dc_copy['identifier']['identifier'], dict) and '__root__' in dc_copy['identifier']['identifier']:
+                        logger.debug("Applying __root__ workaround for identifier in FoundryDatacite")
+                        dc_copy['identifier']['identifier'] = dc_copy['identifier']['identifier']['__root__']
+            super().__init__(**dc_copy)
         except ValidationError as e:
-            print("Datacite validation failed!")
-            for error in e.errors():
-                field_name = ".".join(str(loc) for loc in error["loc"])
-                error_description = error['msg']
-                error_message = f"""There is an issue validating the entry for the field '{field_name}':
-                The error message returned is: '{error_description}'.
-                The description is: '{self.model_json_schema()['properties'].get(field_name, {}).get('description', 'No description available')}'"""
-                print(error_message)
+            # Removed print statements, rely on caller to handle ValidationError
+            # logger.error(f"FoundryDatacite validation failed: {e.errors()}") # Optional: log here if desired
             raise e
 
 

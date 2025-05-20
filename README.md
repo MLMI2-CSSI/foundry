@@ -30,29 +30,97 @@ DLHub documentation for model publication and running information can be found [
 Install Foundry-ML via command line with:
 `pip install foundry_ml`
 
-You can use the following code to import and instantiate Foundry-ML, then load a dataset.
+You can use the following code to import and instantiate Foundry-ML, then find and load a dataset.
 
 ```python
 from foundry import Foundry
-f = Foundry(index="mdf")
+import pandas as pd # Optional: for handling search results as a DataFrame
 
+# Initialize Foundry. 
+# For remote environments (e.g., Google Colab, Binder), use:
+# f = Foundry(no_browser=True, no_local_server=True)
+# By default, Foundry uses the "mdf" index and Globus for data transfers.
+# To disable Globus transfers (e.g., if Globus Connect Personal is not set up), use:
+# f = Foundry(use_globus=False) 
+f = Foundry() 
 
-f = f.load("10.18126/e73h-3w6n", globus=True)
+# Search for a dataset by DOI or query string
+# This example uses a DOI. Searching by query (e.g., "elwood") also works.
+dataset_doi = "10.18126/e73h-3w6n" # Example: Elwood Monomer Properties
+results_df = f.search(dataset_doi)
+
+if results_df.empty:
+    print(f"Dataset with DOI {dataset_doi} not found.")
+else:
+    # Access the FoundryDataset object from the search results DataFrame
+    # The DataFrame might contain multiple results if searching by query string.
+    dataset = results_df.iloc[0].FoundryDataset
+
+    # Display dataset metadata (if in a Jupyter environment, it renders as HTML)
+    print(f"Dataset Name: {dataset.dataset_name}")
+    # In Jupyter, just 'dataset' on a line would render its HTML representation:
+    # dataset 
+
+    # Load the actual data from the dataset
+    # This might download files if not already cached.
+    # 'load()' is an alias for 'get_as_dict()'.
+    # Specify splits if the dataset has them (e.g., "train", "test").
+    # The structure of 'data_splits' depends on the dataset's specific schema.
+    try:
+        data_splits = dataset.load() # Loads all available splits if `split` param is None
+        
+        # Example: Accessing data from a 'train' split (structure is dataset-dependent)
+        # This part of the example assumes a specific dataset structure for demonstration.
+        # You'll need to inspect 'data_splits.keys()' and the dataset's metadata
+        # to understand how to access its specific contents.
+        if "train" in data_splits:
+            train_data = data_splits["train"]
+            # Suppose train_data is a dict with 'input' and 'target' keys,
+            # and 'input' itself is a dict containing 'imgs', 'metadata', etc.
+            if isinstance(train_data, dict) and "input" in train_data and "target" in train_data:
+                 # The following lines are highly specific to the original example's dataset structure
+                 # and may not apply to the dataset "10.18126/e73h-3w6n".
+                 # Adapt based on the actual structure of the loaded dataset.
+                 # imgs = train_data['input'].get('imgs', {}) 
+                 # desc = train_data['input'].get('metadata', {})
+                 # coords = train_data['target'].get('coords', {})
+                 print("Train data loaded successfully. Explore its structure.")
+            else:
+                 print(f"Train data structure: {type(train_data)}")
+        else:
+            print(f"No 'train' split found. Available splits: {list(data_splits.keys())}")
+
+    except Exception as e:
+        print(f"Error loading data: {e}")
+
 ```
-*NOTE*: If you run locally and don't want to install the [Globus Connect Personal endpoint](https://www.globus.org/globus-connect-personal), just set the `globus=False`.
+*NOTE*: Foundry uses Globus for authentication and (by default) for efficient data transfers. If you run locally and don't want to install [Globus Connect Personal](https://www.globus.org/globus-connect-personal), you can initialize Foundry with `f = Foundry(use_globus=False)`. This will use HTTPS for downloads, which may be slower for large datasets. For cloud environments, initializing with `f = Foundry(no_browser=True, no_local_server=True)` enables a compatible authentication flow.
 
-If running this code in a notebook, a table of metadata for the dataset will appear:
-
+If running this code in a notebook and a `FoundryDataset` object is the last item in a cell, its metadata will be displayed as an HTML table:
 <img width="903" alt="metadata" src="https://user-images.githubusercontent.com/16869564/197038472-0b6ae559-4a6b-4b20-88e5-679bb6eb4f5c.png">
+*(Image shows an example of metadata display)*
 
-We can use the data with `f.load_data()` and specifying splits such as `train` for different segments of the dataset, then use matplotlib to visualize it.
-
+Visualizing data (example assumes a specific image dataset structure):
 ```python
-res = f.load_data()
+# This visualization example is illustrative and depends heavily on the dataset's structure.
+# After loading data with `data_splits = dataset.load()`, 
+# you would adapt the following based on the actual content of `data_splits`.
 
-imgs = res['train']['input']['imgs']
-desc = res['train']['input']['metadata']
-coords = res['train']['target']['coords']
+# For instance, if you loaded the original example's atomic position dataset:
+# imgs = data_splits['train']['input']['imgs']
+# coords = data_splits['train']['target']['coords']
+
+# key_list = list(imgs.keys())[offset:n_images+offset] # Choose some images
+
+# import matplotlib.pyplot as plt # Ensure plt is imported
+# fig, axs = plt.subplots(1, n_images, figsize=(20,20))
+# for i in range(n_images):
+#     axs[i].imshow(imgs[key_list[i]])
+#     axs[i].scatter(coords[key_list[i]][:,0], coords[key_list[i]][:,1], s=20, c='r', alpha=0.5)
+# plt.show() # Display the plot
+```
+<img width="595" alt="Screen Shot 2022-10-20 at 2 22 43 PM" src="https://user-images.githubusercontent.com/16869564/197039252-6d9c78ba-dc09-4037-aac2-d6f7e8b46851.png">
+*(Image shows an example of data visualization)*
 
 n_images = 3
 offset = 150

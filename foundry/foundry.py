@@ -114,7 +114,30 @@ class Foundry(FoundryBase):
                  parallel_https: int = 4,
                  local_cache_dir: str = None,
                  **data):
-        """Initialize a Foundry client"""
+        """Initialize a Foundry client
+        
+        Handles authentication using Globus and initializes clients for interacting with Foundry services.
+
+        Args:
+            no_browser (bool): If True, disables automatically opening a web browser for Globus authentication.
+                               The user will need to manually copy and paste a URL. Defaults to False.
+            no_local_server (bool): If True, disables starting a local server to handle the Globus authentication
+                                    redirect. Useful for environments where a local server cannot be started.
+                                    Defaults to False.
+            index (str): The search index to use. Defaults to "mdf".
+            authorizers (dict, optional): A dictionary of pre-existing Globus authorizers. If provided,
+                                          these will be used instead of performing a new login.
+            use_globus (bool): Whether to use Globus for data transfers. Defaults to True.
+            verbose (bool): If True, enables verbose logging. Defaults to False.
+            interval (int): Interval in seconds for checking Globus transfer status. Defaults to 10.
+            parallel_https (int): Number of parallel HTTPS transfers for local uploads. Defaults to 4.
+            local_cache_dir (str, optional): Path to a directory for local caching of datasets.
+                                             Defaults to None (no local caching beyond session).
+            **data: Additional keyword arguments passed to the Pydantic model.
+        
+        Raises:
+            RuntimeError: If authentication via `mdf_toolbox.login` fails.
+        """
         super().__init__(**data)
         self.index = index
         self.use_globus = use_globus
@@ -124,11 +147,45 @@ class Foundry(FoundryBase):
         if local_cache_dir:
             self.local_cache_dir = local_cache_dir
 
-        if authorizers:
-            self.auths = authorizers
-        else:
-            services = [
-                    "data_mdf",
+        try:
+            if authorizers:
+                self.auths = authorizers
+            else:
+                services = [
+                        "data_mdf",
+                        "mdf_connect",
+                        "search",
+                        "petrel",
+                        "transfer",
+                        "openid",
+                        "https://auth.globus.org/scopes/facd7ccc-c5f4-42aa-916b-a0e270e2c2a9/all",  # funcx
+                        "https://auth.globus.org/scopes/f10a69a9-338c-4e5b-baa1-0dc92359ab47/https",  # Eagle HTTPS
+                        "https://auth.globus.org/scopes/82f1b5c6-6e9b-11e5-ba47-22000b92c6ec/https",  # NCSA HTTPS
+                        "https://auth.globus.org/scopes/d31d4f5d-be37-4adc-a761-2f716b7af105/action_all",  # Globus Search Lambda
+                    ]
+                self.auths = mdf_toolbox.login(
+                    services=services,
+                    app_name="Foundry",
+                    make_clients=True,
+                    no_browser=no_browser,
+                    no_local_server=no_local_server,
+                )
+                # request Search as an authorizer and not a client
+                search_auth = mdf_toolbox.login(
+                    services=['search'],
+                    app_name="Foundry",
+                    make_clients=False,
+                    no_browser=no_browser,
+                    no_local_server=no_local_server,
+                )
+                # add special SearchAuthorizer object
+                self.auths['search_authorizer'] = search_auth['search']
+        except Exception as e:
+            logger.error(f"Foundry authentication failed: {e}")
+            raise RuntimeError(f"Foundry authentication failed. Please ensure you can authenticate with Globus. Original error: {e}") from e
+
+        self.forge_client = Forge(
+            index=index,
                     "mdf_connect",
                     "search",
                     "petrel",
@@ -154,9 +211,6 @@ class Foundry(FoundryBase):
                 no_browser=no_browser,
                 no_local_server=no_local_server,
             )
-            # add special SearchAuthorizer object
-            self.auths['search_authorizer'] = search_auth['search']
-
         self.forge_client = Forge(
             index=index,
             services=None,
@@ -224,8 +278,11 @@ class Foundry(FoundryBase):
         else:
             metadata_list = self.get_metadata_by_query(query, limit)
 
-        if len(metadata_list) == 0:
-            raise Exception(f"load: No results found for the query '{query}'")
+        if not metadata_list: # Check if list is empty or None
+            # Define a more specific exception for not found errors
+            class DatasetNotFoundError(Exception):
+                pass
+            raise DatasetNotFoundError(f"No results found for the query '{query}'")
 
         foundry_datasets = []
         for metadata in metadata_list:
@@ -249,9 +306,12 @@ class Foundry(FoundryBase):
             limit (int): maximum number of results to return
 
         Returns:
-            List[FoundryDataset]: List of FoundryDataset objects
+            List[FoundryDataset] or DataFrame: A list of search results as FoundryDataset objects or a DataFrame,
+                                              depending on the `as_list` parameter of the underlying search call.
+                                              This method now consistently returns a list.
         """
-        return self.search(limit=limit)
+        # To make it consistently return a list as per typical expectation of a "list" method:
+        return self.search(limit=limit, as_list=True)
 
     def dataset_from_metadata(self, metadata: dict) -> FoundryDataset:
         """ Converts the result of a forge query to a FoundryDatset object
@@ -328,8 +388,7 @@ class Foundry(FoundryBase):
                 The maximum number of results to be returned by the foundry client.
 
         Returns:
-            metadata (dict): result from a forge query
-                The result from the forge query, represented as a dictionary.
+            List[dict]: A list of metadata dictionaries from the forge query.
         """
 
         forge = self.forge_client.match_resource_types("dataset").match_organizations('foundry')

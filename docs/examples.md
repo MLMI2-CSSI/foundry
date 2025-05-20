@@ -29,24 +29,54 @@ f.list()
 
 ### Loading Datasets
 
-The Foundry client can be used to access datasets using a `source_id`, e.g. here `"_test_foundry_fashion_mnist_v1.1"`_._ You can retrieve the `source_id` from the [`list()` method](examples.md#listing-datasets).
+The Foundry client can be used to access datasets using their unique identifier (often a DOI or a specific `source_id`). You can find these identifiers by using the `f.list()` or `f.search("your query")` methods.
 
+Let's load the metadata for a dataset. This example uses the `source_id` for the Fashion MNIST test dataset.
 ```python
 from foundry import Foundry
-f = Foundry()
-f = f.load("_test_foundry_fashion_mnist_v1.1")
+f = Foundry() # Assumes default interactive authentication
+
+# Search for the dataset
+# Replace with a known DOI or source_id for a dataset you want to access
+dataset_identifier = "_test_foundry_fashion_mnist_v1.1" 
+results_df = f.search(dataset_identifier)
+
+if results_df.empty:
+    print(f"Dataset '{dataset_identifier}' not found.")
+    dataset = None
+else:
+    # Get the FoundryDataset object
+    dataset = results_df.iloc[0].FoundryDataset
+    print(f"Found dataset: {dataset.dataset_name}")
+    # In a Jupyter notebook, simply typing 'dataset' on its own line would display its metadata.
 ```
 
-This will remotely load the metadata \(e.g., data location, data keys, etc.\) and download the data to local storage if it is not already cached. Data can be downloaded via HTTPS without additional setup or more optimally with a Globus endpoint [set up](https://www.globus.org/globus-connect-personal) on your machine.
+This will remotely load the dataset's metadata (e.g., data location, data keys, etc.). The actual data files are downloaded by the `FoundryCache` when you request the data if they are not already cached locally. By default, data is downloaded via Globus Transfer if `use_globus=True` (the default) and you have Globus Connect Personal set up. Otherwise, or if `use_globus=False`, it will use HTTPS.
 
-Once the data are accessible locally, access the data with the `load_data()` method. Load data allows you to load data from a specific split that is defined for the dataset, here we use `train`.
-
+Once you have the `dataset` object, you can load its data:
 ```python
-res = f.load_data()
-X,y = res['train']
+if dataset:
+    try:
+        # Load the data. dataset.load() is an alias for dataset.get_as_dict()
+        # This loads all splits by default. You can specify splits, e.g., dataset.load(split="train")
+        data_splits = dataset.load() 
+        
+        # The structure of data_splits depends on the dataset.
+        # For Fashion MNIST, it might look like:
+        # {'train': {'input': <data>, 'output': <data>}, 'test': {'input': <data>, 'output': <data>}}
+        
+        if "train" in data_splits:
+            X_train = data_splits['train']['input']
+            y_train = data_splits['train']['output']
+            print(f"Successfully loaded train data. X_train type: {type(X_train)}, y_train type: {type(y_train)}")
+        else:
+            print(f"No 'train' split found. Available splits: {list(data_splits.keys())}")
+            
+    except Exception as e:
+        print(f"Error loading data for {dataset.dataset_name}: {e}")
 ```
 
-The data are then usable within the `X` and `y` variables. This full example can be found in [`/examples/fashion-mnist/`](https://github.com/MLMI2-CSSI/foundry/tree/master/examples/fashion-mnist).
+The data are then usable within the variables like `X_train` and `y_train`. This full example can be found in [`/examples/fashion-mnist/`](https://github.com/MLMI2-CSSI/foundry/tree/master/examples/fashion-mnist) (Note: the example notebook there might also need updates to align with current API).
 
 ## Using Foundry on Cloud Computing Resources
 
@@ -56,14 +86,17 @@ Foundry works with common cloud computing providers \(e.g., the NSF sponsored Je
 f = Foundry(no_browser=True, no_local_server=True)
 ```
 
-When downloading data, add the following argument to download via HTTPS.
+When downloading data (which happens when `dataset.load()` or similar methods are called), Foundry uses Globus by default. To use HTTPS instead (e.g., if Globus Connect Personal is not available or desired for transfers):
 
 {% hint style="info" %}
 This method may be slow for large datasets and datasets with many files
 {% endhint %}
 
 ```python
-f.load(globus=False)
-X, y = f.load_data()
+# Initialize Foundry to use HTTPS for all data transfers
+f = Foundry(use_globus=False, no_browser=True, no_local_server=True) 
+# Then proceed with f.search(...) and dataset.load() as above.
+# The dataset object created from this Foundry instance will inherit the use_globus=False setting.
 ```
+Alternatively, if you have an existing `Foundry` instance `f` that was initialized with `use_globus=True`, creating a new one with `use_globus=False` is the way to switch to HTTPS for subsequent operations with datasets derived from that new instance. The `use_globus` preference is tied to the `FoundryCache` object, which is set up when `Foundry` is initialized.
 

@@ -43,10 +43,27 @@ class FoundryDataset():
 
         self.dataset_name = dataset_name
         try:
-            self.dc = FoundryDatacite(datacite_entry)
-            self.foundry_schema = FoundrySchema(foundry_schema)
+            # If already Pydantic models, don't re-wrap; otherwise, parse from dict.
+            # If dicts are passed, they are unpacked into the Pydantic model constructors.
+            if isinstance(datacite_entry, FoundryDatacite):
+                self.dc = datacite_entry
+            else:
+                self.dc = FoundryDatacite(**datacite_entry)
+
+            if isinstance(foundry_schema, FoundrySchema):
+                self.foundry_schema = foundry_schema
+            else:
+                self.foundry_schema = FoundrySchema(**foundry_schema)
+                
+        except ValidationError as ve:
+            # Log the detailed Pydantic validation error for debugging purposes
+            logger.error(f"Pydantic validation failed during FoundryDataset initialization for '{dataset_name}': {ve.errors()}")
+            # Re-raise the validation error to provide detailed feedback to the caller
+            raise ve
         except Exception as e:
-            raise Exception('there was a problem creating the dataset: ', e)
+            logger.error(f"An unexpected error occurred during FoundryDataset initialization for '{dataset_name}': {e}")
+            # Wrap other exceptions in a RuntimeError for consistency
+            raise RuntimeError(f"An unexpected error occurred while creating dataset '{dataset_name}'. Original error: {type(e).__name__} - {e}") from e
         self._foundry_cache = foundry_cache
 
     def get_as_dict(self, split: str = None, as_hdf5: bool = False):
@@ -211,9 +228,15 @@ class FoundryDataset():
         self._foundry_cache.clear_cache(self.dataset_name)
 
     def clean_dc_dict(self):
-        """Clean the Datacite dictionary of None values"""
-        print(json.loads(self.dc.json()))
-        return self.delete_none(json.loads(self.dc.json()))
+        """Clean the Datacite dictionary of None values for Connect client compatibility"""
+        # Use model_dump_json for Pydantic V2, then parse to dict
+        dc_json_str = self.dc.model_dump_json() 
+        dc_dict = json.loads(dc_json_str)
+        # The print statement was likely for debugging, converting to logger.debug
+        logger.debug(f"Original dc_dict for cleaning: {dc_dict}")
+        cleaned_dict = self.delete_none(dc_dict)
+        logger.debug(f"Cleaned dc_dict: {cleaned_dict}")
+        return cleaned_dict
 
     def delete_none(self, _dict):
         """Delete None values recursively from all of the dictionaries"""
