@@ -354,7 +354,7 @@ class FoundryCache():
             # Sort version folders and get the latest one
             latest_version = sorted(version_folders, key=lambda x: [int(n) for n in x.split('.')], reverse=True)[0]
             path = os.path.join(path, latest_version)
-            print(f"Loading from version folder: {latest_version}")
+            logger.info(f"Loading from version folder: {latest_version}")
 
         path_to_file = os.path.join(path, file)
 

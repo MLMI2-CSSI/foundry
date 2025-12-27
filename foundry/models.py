@@ -76,15 +76,18 @@ class FoundrySchema(FoundryModel):
         try:
             super().__init__(**project_dict)
         except ValidationError as e:
-            print("FoundrySchema validation failed!")
+            logger.error("FoundrySchema validation failed!")
             for error in e.errors():
                 field_name = ".".join([str(item) for item in error['loc']])
                 error_description = error['msg']
-                error_message = f"""There is an issue validating the entry for the field '{field_name}':
-                The error message returned is: '{error_description}'.
-                The description for this field is: '{FoundryModel.model_json_schema()['properties'][field_name]['description']}'"""
-                print(error_message)
-            raise e
+                schema_props = FoundryModel.model_json_schema().get('properties', {})
+                field_desc = schema_props.get(field_name, {}).get('description', 'No description available')
+                error_message = (
+                    f"Validation error for field '{field_name}': {error_description}. "
+                    f"Field description: {field_desc}"
+                )
+                logger.error(error_message)
+            raise
 
 
 class FoundryDatacite(DataciteModel):
@@ -100,15 +103,18 @@ class FoundryDatacite(DataciteModel):
                         dc_dict['identifier']['identifier'] = dc_dict['identifier']['identifier']['__root__']
             super().__init__(**dc_dict, **kwargs)
         except ValidationError as e:
-            print("Datacite validation failed!")
+            logger.error("Datacite validation failed!")
+            schema_props = DataciteModel.model_json_schema().get('properties', {})
             for error in e.errors():
                 field_name = ".".join(str(loc) for loc in error["loc"])
                 error_description = error['msg']
-                error_message = f"""There is an issue validating the entry for the field '{field_name}':
-                The error message returned is: '{error_description}'.
-                The description is: '{self.model_json_schema()['properties'].get(field_name, {}).get('description', 'No description available')}'"""
-                print(error_message)
-            raise e
+                field_desc = schema_props.get(field_name, {}).get('description', 'No description available')
+                error_message = (
+                    f"Validation error for field '{field_name}': {error_description}. "
+                    f"Field description: {field_desc}"
+                )
+                logger.error(error_message)
+            raise
 
 
 class FoundryBase(BaseModel):

@@ -2,11 +2,15 @@
 """
 
 
+import logging
 import os
 from collections import deque
 
 import requests
 from globus_sdk import TransferClient
+
+
+logger = logging.getLogger(__name__)
 
 
 def recursive_ls(tc: TransferClient, ep: str, path: str, max_depth: int = 3):
@@ -52,6 +56,16 @@ def _get_files(tc, ep, queue, max_depth):
                 yield item
 
 
+class DownloadError(Exception):
+    """Raised when a file download fails."""
+
+    def __init__(self, url: str, reason: str, destination: str = None):
+        self.url = url
+        self.reason = reason
+        self.destination = destination
+        super().__init__(f"Failed to download {url}: {reason}")
+
+
 def download_file(item, base_directory, https_config, timeout=1800):
     """Download a file to disk
 
@@ -60,6 +74,12 @@ def download_file(item, base_directory, https_config, timeout=1800):
         base_directory: Base directory for storing downloaded files
         https_config: Configuration defining the URL of the server and the name of the dataset
         timeout: Timeout for the download request in seconds (default: 1800)
+
+    Returns:
+        str: Path to the downloaded file
+
+    Raises:
+        DownloadError: If the download fails for any reason
     """
     base_url = https_config['base_url'].rstrip('/')
     path = item.get('path', '').strip('/')
@@ -89,20 +109,18 @@ def download_file(item, base_directory, https_config, timeout=1800):
             response.raise_for_status()
 
             downloaded_size = 0
-            print(f"\rStarting Download of: {url}")
+            logger.info(f"Starting download: {url}")
 
             with open(destination, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
                         f.write(chunk)
                         downloaded_size += len(chunk)
-                        # Calculate and print the download progress
-                        print(f"\rDownloading... {downloaded_size/(1 << 20):,.2f} MB", end="")
+
+            logger.info(f"Downloaded {downloaded_size / (1 << 20):,.2f} MB to {destination}")
             return destination
 
     except requests.exceptions.RequestException as e:
-        print(f"Error downloading file: {e}")
+        raise DownloadError(url, str(e), destination) from e
     except IOError as e:
-        print(f"Error writing file to disk: {e}")
-
-    return {destination + " status": True}
+        raise DownloadError(url, f"Failed to write to disk: {e}", destination) from e
