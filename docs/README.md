@@ -1,43 +1,87 @@
-# Getting started with Foundry
+# Introduction
 
-![](.gitbook/assets/foundry-purple%20%283%29.png)
+<p align="center">
+  <img src=".gitbook/assets/foundry-purple%20%283%29.png" alt="Foundry" width="400">
+</p>
 
-## What is Foundry?
+**Foundry-ML** is a Python library that simplifies access to machine learning-ready datasets in materials science and chemistry.
 
-Foundry is a Python package that simplifies the discovery and usage of machine-learning ready datasets in materials science and chemistry. Foundry provides software tools that make it easy to load these datasets and work with them in local or cloud environments. Further, Foundry provides a dataset specification, and defined curation flows, that allow users to create new datasets for the community to use through this same interface.
+## Features
+
+- **Search & Discover** - Find datasets by keyword or browse the catalog
+- **Rich Metadata** - Understand datasets before downloading with detailed schemas
+- **Easy Loading** - Get data in Python, PyTorch, or TensorFlow format
+- **Automatic Caching** - Fast subsequent access after first download
+- **Publishing** - Share your own datasets with the community
+- **AI Integration** - MCP server for AI assistant access
+- **CLI** - Terminal-based workflows
+
+## Quick Example
+
+```python
+from foundry import Foundry
+
+# Connect
+f = Foundry()
+
+# Search for datasets
+results = f.search("band gap", limit=5)
+
+# Load a dataset
+dataset = results.iloc[0].FoundryDataset
+X, y = dataset.get_as_dict()['train']
+
+# Get citation for your paper
+print(dataset.get_citation())
+```
 
 ## Installation
 
-Foundry can be installed on any operating system with Python with pip
-
-```text
+```bash
 pip install foundry-ml
 ```
 
-### Globus
+For cloud environments (Colab, remote Jupyter):
 
-Foundry uses the Globus platform for authentication, search, and to optimize some data transfer operations. Follow the steps below to get set up.
+```python
+f = Foundry(no_browser=True, no_local_server=True)
+```
 
-* [Create a free account.](https://app.globus.org) You can create a free account here with your institutional credentials or with free IDs \(GlobusID, Google, ORCID, etc\).
-* [Set up a Globus Connect Personal endpoint ](https://www.globus.org/globus-connect-personal)_**\(optional\)**_. While this step is optional, some Foundry capabilities will work more efficiently when using GCP.
+## What's Next?
+
+<table>
+<tr>
+<td>
+
+**Getting Started**
+- [Installation](installation.md)
+- [Quick Start](quickstart.md)
+
+</td>
+<td>
+
+**User Guide**
+- [Searching](guide/searching.md)
+- [Loading Data](guide/loading-data.md)
+- [ML Frameworks](guide/ml-frameworks.md)
+
+</td>
+<td>
+
+**Features**
+- [CLI](features/cli.md)
+- [MCP Server](features/mcp-server.md)
+- [HuggingFace](features/huggingface.md)
+
+</td>
+</tr>
+</table>
 
 ## Project Support
 
 This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure".
 
-### Other Support
-
-Foundry brings together many components in the materials data ecosystem. Including MAST-ML, the Data and Learning Hub for Science \(DLHub\), and The Materials Data Facility \(MDF\).
-
-#### MAST-ML
-
-This work was supported by the National Science Foundation \(NSF\) SI2 award No. 1148011 and DMREF award number DMR-1332851
-
-#### The Data and Learning Hub for Science \(DLHub\)
-
-This material is based upon work supported by Laboratory Directed Research and Development \(LDRD\) funding from Argonne National Laboratory, provided by the Director, Office of Science, of the U.S. Department of Energy under Contract No. DE-AC02-06CH11357. [https://www.dlhub.org](https://www.dlhub.org)
-
-#### The Materials Data Facility
-
-This work was performed under financial assistance award 70NANB14H012 from U.S. Department of Commerce, National Institute of Standards and Technology as part of the [Center for Hierarchical Material Design \(CHiMaD\)](http://chimad.northwestern.edu). This work was performed under the following financial assistance award 70NANB19H005 from U.S. Department of Commerce, National Institute of Standards and Technology as part of the Center for Hierarchical Materials Design \(CHiMaD\). This work was also supported by the National Science Foundation as part of the [Midwest Big Data Hub](http://midwestbigdatahub.org) under NSF Award Number: 1636950 "BD Spokes: SPOKE: MIDWEST: Collaborative: Integrative Materials Design \(IMaD\): Leverage, Innovate, and Disseminate". [https://www.materialsdatafacility.org](https://www.materialsdatafacility.org)
-
+Foundry brings together components from:
+- [Materials Data Facility (MDF)](https://materialsdatafacility.org)
+- [Data and Learning Hub for Science (DLHub)](https://www.dlhub.org)
+- [MAST-ML](https://mastmldocs.readthedocs.io/)

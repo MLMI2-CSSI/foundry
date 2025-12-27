@@ -91,7 +91,7 @@ class Foundry(FoundryBase):
     index: str = Field(default="")
     auths: Any = Field(default=None)
 
-    use_globus: bool = Field(default=True)
+    use_globus: bool = Field(default=False)
     verbose: bool = Field(default=False)
     interval: int = Field(default=10)
     parallel_https: int = Field(default=4)
@@ -108,7 +108,7 @@ class Foundry(FoundryBase):
                  no_local_server: bool = False,
                  index: str = "mdf",
                  authorizers: dict = None,
-                 use_globus: bool = True,
+                 use_globus: bool = False,
                  verbose: bool = False,
                  interval: int = 10,
                  parallel_https: int = 4,
