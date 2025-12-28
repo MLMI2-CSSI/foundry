@@ -161,6 +161,50 @@ def _to_list(value: Any) -> list:
         return [value]
 
 
+def _normalize_license(license_str: str) -> str:
+    """Map license string to a valid HuggingFace license identifier."""
+    if not license_str:
+        return "other"
+
+    license_lower = license_str.lower()
+
+    # Direct matches to HF identifiers
+    hf_licenses = {
+        "cc0", "cc0-1.0", "cc-by-4.0", "cc-by-sa-4.0", "cc-by-nc-4.0",
+        "cc-by-nc-sa-4.0", "cc-by-nc-nd-4.0", "mit", "apache-2.0",
+        "bsd", "bsd-2-clause", "bsd-3-clause", "gpl-3.0", "lgpl-3.0",
+        "unknown", "other"
+    }
+
+    # Check for direct match
+    if license_lower in hf_licenses:
+        return license_lower
+
+    # Common mappings
+    mappings = {
+        "creative commons": "cc-by-4.0",
+        "cc by": "cc-by-4.0",
+        "cc-by": "cc-by-4.0",
+        "cc by 4": "cc-by-4.0",
+        "cc by-sa": "cc-by-sa-4.0",
+        "cc by-nc": "cc-by-nc-4.0",
+        "cc0": "cc0-1.0",
+        "public domain": "cc0-1.0",
+        "apache": "apache-2.0",
+        "mit license": "mit",
+        "bsd license": "bsd-3-clause",
+        "gpl": "gpl-3.0",
+        "lgpl": "lgpl-3.0",
+    }
+
+    for pattern, hf_id in mappings.items():
+        if pattern in license_lower:
+            return hf_id
+
+    # If we can't map it, use "other"
+    return "other"
+
+
 def _generate_dataset_card(dataset) -> str:
     """Generate a HuggingFace Dataset Card from Foundry DataCite metadata."""
     dc = dataset.dc
@@ -169,14 +213,41 @@ def _generate_dataset_card(dataset) -> str:
     # Extract metadata
     title = dc.titles[0].title if dc.titles else dataset.dataset_name
     description = dc.descriptions[0].description if dc.descriptions else ""
-    doi = str(dc.identifier.identifier) if dc.identifier else ""
-    authors = [c.get('creatorName', 'Unknown') for c in (dc.creators or [])]
-    year = dc.publicationYear if hasattr(dc, 'publicationYear') else ""
 
-    # Get license if available
-    license_info = "unknown"
+    # DOI is a RootModel with .root containing the actual string
+    doi = ""
+    if dc.identifier and dc.identifier.identifier:
+        doi_obj = dc.identifier.identifier
+        doi = doi_obj.root if hasattr(doi_obj, 'root') else str(doi_obj)
+
+    # Handle creators (can be dicts or pydantic objects)
+    authors = []
+    for c in (dc.creators or []):
+        if isinstance(c, dict):
+            authors.append(c.get('creatorName', 'Unknown'))
+        elif hasattr(c, 'creatorName'):
+            authors.append(c.creatorName or 'Unknown')
+        else:
+            authors.append(str(c))
+
+    # Year is a RootModel with .root containing the actual int
+    year = ""
+    if hasattr(dc, 'publicationYear') and dc.publicationYear:
+        year_obj = dc.publicationYear
+        year = year_obj.root if hasattr(year_obj, 'root') else str(year_obj)
+
+    # Get license if available (rightsList contains RightsListItem objects)
+    license_raw = None
     if hasattr(dc, 'rightsList') and dc.rightsList:
-        license_info = dc.rightsList[0].get('rights', 'unknown')
+        rights_item = dc.rightsList[0]
+        if isinstance(rights_item, dict):
+            license_raw = rights_item.get('rights')
+        elif hasattr(rights_item, 'rights'):
+            license_raw = rights_item.rights
+
+    license_id = _normalize_license(license_raw)
+    # For display, show original if different from ID
+    license_display = license_raw if license_raw and license_raw != license_id else license_id
 
     # Build field documentation
     fields_doc = ""
@@ -200,7 +271,7 @@ def _generate_dataset_card(dataset) -> str:
     citation = dataset.get_citation()
 
     return f"""---
-license: {license_info}
+license: {license_id}
 task_categories:
   - tabular-regression
   - tabular-classification
@@ -255,7 +326,7 @@ dataset = load_dataset("{dataset.dataset_name}")
 
 ## License
 
-{license_info}
+{license_display}
 
 ---
 

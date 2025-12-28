@@ -5,7 +5,7 @@ import logging
 from pydantic import Field, ConfigDict
 
 from mdf_connect_client import MDFConnectClient
-from mdf_forge import Forge
+from .mdf_client import MDFClient
 from globus_sdk import AuthClient
 
 from .auth import PubAuths
@@ -157,7 +157,7 @@ class Foundry(FoundryBase):
             # add special SearchAuthorizer object
             self.auths['search_authorizer'] = search_auth['search']
 
-        self.forge_client = Forge(
+        self.forge_client = MDFClient(
             index=index,
             services=None,
             search_client=self.auths["search"],

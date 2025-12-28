@@ -4,7 +4,7 @@ import re
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import h5py
-from mdf_forge import Forge
+from .mdf_client import MDFClient
 import numpy as np
 import pandas as pd
 import shutil
@@ -23,7 +23,7 @@ class FoundryCache():
     """The FoundryCache manages the local storage of FoundryDataset objects"""
 
     def __init__(self,
-                 forge_client: Forge,
+                 forge_client: MDFClient,
                  transfer_client: Any,
                  use_globus,
                  interval,
@@ -34,7 +34,7 @@ class FoundryCache():
         Initializes a FoundryCache object.
 
         Args:
-            forge_client (Forge): The Forge client object.
+            forge_client (MDFClient): The MDF client object.
             transfer_client (Any): The transfer client object.
             use_globus (bool): Flag indicating whether to use Globus for downloading.
             interval (int): How often to wait before checking Globus transfer status.
