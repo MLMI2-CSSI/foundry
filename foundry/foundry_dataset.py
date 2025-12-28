@@ -45,24 +45,70 @@ class FoundryDataset():
         try:
             self.dc = FoundryDatacite(datacite_entry)
             self.foundry_schema = FoundrySchema(foundry_schema)
+        except ValidationError as e:
+            logger.error(f"Invalid metadata for dataset '{dataset_name}': {e}")
+            raise
         except Exception as e:
-            raise Exception('there was a problem creating the dataset: ', e)
+            raise ValueError(
+                f"Failed to create dataset '{dataset_name}': {e}. "
+                "Check that datacite_entry and foundry_schema are valid."
+            ) from e
         self._foundry_cache = foundry_cache
 
-    def get_as_dict(self, split: str = None, as_hdf5: bool = False):
+    def get_as_dict(self, split: str = None, as_hdf5: bool = False, include_schema: bool = False):
         """Returns the data from the dataset as a dictionary
 
         Arguments:
             split (string): Split to create dataset on.
                     **Default:** ``None``
+            as_hdf5 (bool): If True, return raw HDF5 data.
+                    **Default:** ``False``
+            include_schema (bool): If True, return data with schema information.
+                    Useful for AI agents that need to understand the data structure.
+                    **Default:** ``False``
 
-        Returns: (dict) Dictionary of all the data from the specified split
+        Returns:
+            dict: Dictionary of all the data from the specified split.
+            If include_schema is True, returns {"data": ..., "schema": ...}
 
         """
-        return self._foundry_cache.load_as_dict(split,
+        data = self._foundry_cache.load_as_dict(split,
                                                 self.dataset_name,
                                                 self.foundry_schema,
                                                 as_hdf5)
+        if include_schema:
+            return {
+                "data": data,
+                "schema": self.get_schema(),
+            }
+        return data
+
+    def get_schema(self) -> dict:
+        """Get the schema of this dataset - what fields it contains.
+
+        Returns:
+            dict: Schema with fields, splits, data type, and metadata.
+        """
+        return {
+            "name": self.dataset_name,
+            "title": self.dc.titles[0].title if self.dc.titles else None,
+            "doi": str(self.dc.identifier.identifier) if self.dc.identifier else None,
+            "data_type": self.foundry_schema.data_type,
+            "splits": [
+                {"name": s.label, "type": s.type}
+                for s in (self.foundry_schema.splits or [])
+            ],
+            "fields": [
+                {
+                    "name": k.key[0] if k.key else None,
+                    "role": k.type,  # "input" or "target"
+                    "description": k.description,
+                    "units": k.units,
+                }
+                for k in (self.foundry_schema.keys or [])
+            ],
+        }
+
     load = get_as_dict
 
     def get_as_torch(self, split: str = None):
@@ -212,7 +258,6 @@ class FoundryDataset():
 
     def clean_dc_dict(self):
         """Clean the Datacite dictionary of None values"""
-        print(json.loads(self.dc.json()))
         return self.delete_none(json.loads(self.dc.json()))
 
     def delete_none(self, _dict):

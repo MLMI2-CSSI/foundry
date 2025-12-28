@@ -1,67 +1,99 @@
-# import os
-# import requests
-# import mock
+"""Tests for https_download module."""
 
-# from foundry.https_download import download_file
+import os
+import pytest
+from unittest import mock
 
+import requests
 
-# def test_download_file(tmp_path):
-#     item = {
-#         "path": tmp_path,
-#         "name": "example_file.txt"
-#     }
-#     data_directory = tmp_path
-#     https_config = {
-#         "base_url": "https://example.com/",
-#         "source_id": "12345"
-#     }
-
-#     # Mock the requests.get function to return a response with content
-#     with mock.patch.object(requests, "get") as mock_get:
-#         mock_get.return_value.content = b"Example file content"
-
-#         # Call the function
-#         result = download_file(item, data_directory, https_config)
-
-#         # Assert that the file was downloaded and written correctly
-#         assert os.path.exists(str(tmp_path) + "/12345/example_file.txt")
-#         with open(str(tmp_path) + "/12345/example_file.txt", "rb") as f:
-#             assert f.read() == b"Example file content"
-
-#         # Assert that the result is as expected
-#         assert result == {str(tmp_path) + "/12345/example_file.txt status": True}
+from foundry.https_download import download_file, DownloadError
 
 
-# def test_download_file_with_existing_directories(tmp_path):
-#     temp_path_to_file = str(tmp_path) + '/file'
-#     os.mkdir(temp_path_to_file)
-#     temp_path_to_data = str(tmp_path) + '/data'
-#     os.mkdir(temp_path_to_data)
+class TestDownloadFile:
+    """Tests for the download_file function."""
 
-#     item = {
-#         "path": temp_path_to_file,
-#         "name": "example_file.txt"
-#     }
-#     data_directory = temp_path_to_data
-#     https_config = {
-#         "base_url": "https://example.com/",
-#         "source_id": "12345"
-#     }
+    def test_download_file_success(self, tmp_path):
+        """Test successful file download."""
+        item = {
+            "path": "/data",
+            "name": "example_file.txt"
+        }
+        https_config = {
+            "base_url": "https://example.com/",
+            "source_id": "test_dataset"
+        }
 
-#     # Create the parent directories
-#     os.makedirs(temp_path_to_data + "12345")
+        # Mock successful response
+        mock_response = mock.Mock()
+        mock_response.iter_content = mock.Mock(return_value=[b"Example file content"])
+        mock_response.raise_for_status = mock.Mock()
+        mock_response.__enter__ = mock.Mock(return_value=mock_response)
+        mock_response.__exit__ = mock.Mock(return_value=False)
 
-#     # Mock the requests.get function to return a response with content
-#     with mock.patch.object(requests, "get") as mock_get:
-#         mock_get.return_value.content = b"Example file content"
+        with mock.patch.object(requests, "get", return_value=mock_response):
+            result = download_file(item, str(tmp_path), https_config)
 
-#         # Call the function
-#         result = download_file(item, data_directory, https_config)
+        # Assert file was downloaded
+        expected_path = tmp_path / "test_dataset" / "example_file.txt"
+        assert os.path.exists(expected_path)
+        assert result == str(expected_path)
 
-#         # Assert that the file was downloaded and written correctly
-#         assert os.path.exists(temp_path_to_data + "/12345/example_file.txt")
-#         with open(temp_path_to_data + "/12345/example_file.txt", "rb") as f:
-#             assert f.read() == b"Example file content"
+    def test_download_file_request_error(self, tmp_path):
+        """Test that RequestException raises DownloadError."""
+        item = {
+            "path": "/data",
+            "name": "example_file.txt"
+        }
+        https_config = {
+            "base_url": "https://example.com/",
+            "source_id": "test_dataset"
+        }
 
-#         # Assert that the result is as expected
-#         assert result == {temp_path_to_data + "/12345/example_file.txt status": True}
+        # Mock request failure
+        with mock.patch.object(requests, "get", side_effect=requests.exceptions.RequestException("Connection failed")):
+            with pytest.raises(DownloadError) as exc_info:
+                download_file(item, str(tmp_path), https_config)
+
+        error = exc_info.value
+        assert error.url == "https://example.com/data/example_file.txt"
+        assert "Connection failed" in error.reason
+        assert error.destination is not None
+
+    def test_download_file_io_error(self, tmp_path):
+        """Test that IOError raises DownloadError."""
+        item = {
+            "path": "/data",
+            "name": "example_file.txt"
+        }
+        https_config = {
+            "base_url": "https://example.com/",
+            "source_id": "test_dataset"
+        }
+
+        # Mock successful response but write failure
+        mock_response = mock.Mock()
+        mock_response.iter_content = mock.Mock(return_value=[b"data"])
+        mock_response.raise_for_status = mock.Mock()
+        mock_response.__enter__ = mock.Mock(return_value=mock_response)
+        mock_response.__exit__ = mock.Mock(return_value=False)
+
+        with mock.patch.object(requests, "get", return_value=mock_response):
+            with mock.patch("builtins.open", side_effect=IOError("Disk full")):
+                with pytest.raises(DownloadError) as exc_info:
+                    download_file(item, str(tmp_path), https_config)
+
+        error = exc_info.value
+        assert "Disk full" in error.reason
+
+    def test_download_error_has_structured_info(self):
+        """Test that DownloadError provides structured information."""
+        error = DownloadError(
+            url="https://example.com/file.txt",
+            reason="Connection timeout",
+            destination="/tmp/file.txt"
+        )
+
+        assert error.url == "https://example.com/file.txt"
+        assert error.reason == "Connection timeout"
+        assert error.destination == "/tmp/file.txt"
+        assert "Connection timeout" in str(error)

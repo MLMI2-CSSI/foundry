@@ -5,7 +5,7 @@ import logging
 from pydantic import Field, ConfigDict
 
 from mdf_connect_client import MDFConnectClient
-from mdf_forge import Forge
+from .mdf_client import MDFClient
 from globus_sdk import AuthClient
 
 from .auth import PubAuths
@@ -91,7 +91,7 @@ class Foundry(FoundryBase):
     index: str = Field(default="")
     auths: Any = Field(default=None)
 
-    use_globus: bool = Field(default=True)
+    use_globus: bool = Field(default=False)
     verbose: bool = Field(default=False)
     interval: int = Field(default=10)
     parallel_https: int = Field(default=4)
@@ -108,7 +108,7 @@ class Foundry(FoundryBase):
                  no_local_server: bool = False,
                  index: str = "mdf",
                  authorizers: dict = None,
-                 use_globus: bool = True,
+                 use_globus: bool = False,
                  verbose: bool = False,
                  interval: int = 10,
                  parallel_https: int = 4,
@@ -157,7 +157,7 @@ class Foundry(FoundryBase):
             # add special SearchAuthorizer object
             self.auths['search_authorizer'] = search_auth['search']
 
-        self.forge_client = Forge(
+        self.forge_client = MDFClient(
             index=index,
             services=None,
             search_client=self.auths["search"],
@@ -194,7 +194,7 @@ class Foundry(FoundryBase):
                                           verbose,
                                           local_cache_dir)
 
-    def search(self, query: str = None, limit: int = None, as_list: bool = False) -> List[FoundryDataset]:
+    def search(self, query: str = None, limit: int = None, as_list: bool = False, as_json: bool = False) -> List[FoundryDataset]:
         """Search available Foundry datasets
 
         This method searches for available Foundry datasets based on the provided query string.
@@ -206,9 +206,10 @@ class Foundry(FoundryBase):
             query (str): The query string to match. If a DOI is provided, it retrieves the metadata for that specific dataset.
             limit (int): The maximum number of results to return.
             as_list (bool): If True, the search results will be returned as a list instead of a DataFrame.
+            as_json (bool): If True, return results as a list of dictionaries (agent-friendly).
 
         Returns:
-            List[FoundryDataset] or DataFrame: A list of search results as FoundryDataset objects or a DataFrame if as_list is False.
+            List[FoundryDataset] or DataFrame or List[dict]: Search results in the requested format.
 
         Raises:
             Exception: If no results are found for the provided query.
@@ -219,13 +220,15 @@ class Foundry(FoundryBase):
             >>> print(len(results))
             10
         """
+        from .errors import DatasetNotFoundError
+
         if (query is not None) and (is_doi(query)):
             metadata_list = [self.get_metadata_by_doi(query)]
         else:
             metadata_list = self.get_metadata_by_query(query, limit)
 
         if len(metadata_list) == 0:
-            raise Exception(f"load: No results found for the query '{query}'")
+            raise DatasetNotFoundError(query or "all datasets", "query")
 
         foundry_datasets = []
         for metadata in metadata_list:
@@ -235,6 +238,9 @@ class Foundry(FoundryBase):
 
         logger.info(f"Search for '{query}' returned {len(foundry_datasets)} foundry datasets out of {len(metadata_list)} matches")
 
+        if as_json:
+            return [self._dataset_to_dict(ds) for ds in foundry_datasets]
+
         if as_list:
             return foundry_datasets
 
@@ -242,16 +248,37 @@ class Foundry(FoundryBase):
 
         return foundry_datasets
 
-    def list(self, limit: int = None):
+    def _dataset_to_dict(self, ds: FoundryDataset) -> Dict[str, Any]:
+        """Convert a FoundryDataset to an agent-friendly dictionary.
+
+        Args:
+            ds: The FoundryDataset to convert.
+
+        Returns:
+            Dictionary with dataset metadata suitable for JSON serialization.
+        """
+        return {
+            "name": ds.dataset_name,
+            "title": ds.dc.titles[0].title if ds.dc.titles else None,
+            "doi": str(ds.dc.identifier.identifier) if ds.dc.identifier else None,
+            "description": ds.dc.descriptions[0].description if ds.dc.descriptions else None,
+            "year": ds.dc.publicationYear if hasattr(ds.dc, 'publicationYear') else None,
+            "fields": [k.key[0] for k in (ds.foundry_schema.keys or []) if k.key],
+            "splits": [s.label for s in (ds.foundry_schema.splits or [])],
+            "data_type": ds.foundry_schema.data_type,
+        }
+
+    def list(self, limit: int = None, as_json: bool = False):
         """List available Foundry datasets
 
         Args:
             limit (int): maximum number of results to return
+            as_json (bool): If True, return results as list of dicts (agent-friendly)
 
         Returns:
-            List[FoundryDataset]: List of FoundryDataset objects
+            List[FoundryDataset] or DataFrame or List[dict]: Available datasets
         """
-        return self.search(limit=limit)
+        return self.search(limit=limit, as_json=as_json)
 
     def dataset_from_metadata(self, metadata: dict) -> FoundryDataset:
         """ Converts the result of a forge query to a FoundryDatset object
