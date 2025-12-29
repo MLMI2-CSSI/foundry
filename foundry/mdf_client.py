@@ -195,6 +195,7 @@ class MDFClient:
         self.petrel_authorizer = petrel_authorizer
         self._resource_types: List[str] = []
         self._organizations: List[str] = []
+        self._dois: List[str] = []
 
     def match_resource_types(self, resource_type: str) -> "MDFClient":
         """Filter by resource type."""
@@ -204,6 +205,11 @@ class MDFClient:
     def match_organizations(self, organization: str) -> "MDFClient":
         """Filter by organization."""
         self._organizations = [organization]
+        return self
+
+    def match_dois(self, doi: str) -> "MDFClient":
+        """Filter by DOI."""
+        self._dois = [doi]
         return self
 
     def search(
@@ -224,6 +230,8 @@ class MDFClient:
             query_parts.append(f'mdf.resource_type:"{rt}"')
         for org in self._organizations:
             query_parts.append(f'mdf.organizations:"{org}"')
+        for doi in self._dois:
+            query_parts.append(f'dc.identifier.identifier:"{doi}"')
 
         full_query = " AND ".join(query_parts) if query_parts else "*"
 
@@ -233,8 +241,16 @@ class MDFClient:
 
         self._resource_types = []
         self._organizations = []
+        self._dois = []
 
-        return [entry["content"] for entry in results.get("gmeta", [])]
+        # Extract content from Globus Search response structure
+        # Structure: gmeta[].entries[].content
+        contents = []
+        for gmeta_entry in results.get("gmeta", []):
+            for entry in gmeta_entry.get("entries", []):
+                if "content" in entry:
+                    contents.append(entry["content"])
+        return contents
 
     def globus_download(
         self,
