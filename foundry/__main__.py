@@ -400,6 +400,288 @@ def install():
 
 
 @app.command()
+def extract(
+    paper_path: str = typer.Argument(..., help="Path to paper file (HTML or PDF)"),
+    supplementary: Optional[list[str]] = typer.Option(None, "--supplementary", "-s", help="Supplementary data files"),
+    output: str = typer.Option("extracted_dataset", "--output", "-o", help="Output directory"),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Anthropic API key for LLM description generation"),
+    no_publish: bool = typer.Option(False, "--no-publish", help="Skip the publish prompt"),
+    no_interactive: bool = typer.Option(False, "--no-interactive", "-y", help="Download all files without prompting"),
+):
+    """Extract a dataset from a scientific paper.
+
+    Parses the paper, finds data links (Zenodo, GitHub, Figshare),
+    downloads the data, and generates MDF-ready metadata.
+
+    Features:
+    - Shows file sizes before downloading
+    - Lets you select which files to download
+    - Progress bars for large downloads
+    - Caches downloaded files
+
+    Example:
+        foundry extract paper.html --output my_dataset
+        foundry extract paper.html -s data.csv -s extra.json
+        foundry extract paper.html -y  # Download all without prompting
+    """
+    from pathlib import Path
+    from foundry.agents import PaperExtractor
+
+    paper = Path(paper_path)
+    if not paper.exists():
+        console.print(f"[red]Error: File not found: {paper_path}[/red]")
+        raise typer.Exit(1)
+
+    supp_paths = [Path(s) for s in (supplementary or [])]
+    for s in supp_paths:
+        if not s.exists():
+            console.print(f"[red]Error: Supplementary file not found: {s}[/red]")
+            raise typer.Exit(1)
+
+    extractor = PaperExtractor(
+        output_dir=Path(output),
+        api_key=api_key,
+    )
+
+    try:
+        result = extractor.extract(
+            paper_path=paper,
+            supplementary=supp_paths if supp_paths else None,
+            interactive=not no_interactive,
+        )
+    except Exception as e:
+        console.print(f"[red]Extraction failed: {e}[/red]")
+        raise typer.Exit(1)
+
+    # Show summary
+    if result.errors:
+        console.print(Panel(
+            f"[yellow]Extraction completed with warnings:[/yellow]\n" +
+            "\n".join(f"- {e}" for e in result.errors),
+            title="Warnings",
+        ))
+
+    console.print(Panel(
+        f"[green]Dataset extracted successfully![/green]\n\n"
+        f"[bold]Title:[/bold] {result.paper.title}\n"
+        f"[bold]Authors:[/bold] {', '.join(result.paper.authors[:3])}{'...' if len(result.paper.authors) > 3 else ''}\n"
+        f"[bold]Files:[/bold] {len(result.data_files)}\n"
+        f"[bold]Confidence:[/bold] {result.confidence*100:.0f}%\n"
+        f"[bold]Output:[/bold] {result.output_dir}",
+        title="Extraction Complete",
+    ))
+
+    if not no_publish:
+        if typer.confirm("Publish to MDF?", default=False):
+            console.print("[yellow]MDF publishing coming soon![/yellow]")
+
+
+@app.command()
+def publish(
+    extraction_dir: str = typer.Argument(..., help="Path to extraction output directory"),
+    source_name: Optional[str] = typer.Option(None, "--name", "-n", help="Short unique name for the dataset (e.g., 'compression_mlip_2025')"),
+    test: bool = typer.Option(True, "--test/--production", help="Submit to test or production MDF"),
+    update: Optional[str] = typer.Option(None, "--update", "-u", help="Source ID to update (for republishing)"),
+):
+    """Publish an extracted dataset to MDF.
+
+    Takes the output from 'foundry extract' and submits it to the
+    Materials Data Facility.
+
+    Data is automatically staged to the MDF public endpoint before submission,
+    so you don't need Globus Connect Personal running locally.
+
+    Example:
+        foundry publish ./extracted_dataset --name my_dataset_2025
+        foundry publish ./extracted_dataset --name my_dataset --production
+    """
+    from pathlib import Path
+    import yaml
+
+    extraction_path = Path(extraction_dir)
+    metadata_path = extraction_path / "mdf_metadata.yaml"
+    data_dir = extraction_path / "data"
+
+    # Validate extraction directory
+    if not metadata_path.exists():
+        console.print(f"[red]Error: No mdf_metadata.yaml found in {extraction_dir}[/red]")
+        console.print("[dim]Run 'foundry extract' first to generate metadata.[/dim]")
+        raise typer.Exit(1)
+
+    if not data_dir.exists() or not any(data_dir.iterdir()):
+        console.print(f"[red]Error: No data files found in {data_dir}[/red]")
+        raise typer.Exit(1)
+
+    # Load metadata
+    with open(metadata_path) as f:
+        meta = yaml.safe_load(f)
+
+    # Count and size files
+    data_files = list(data_dir.iterdir())
+    data_files = [f for f in data_files if f.is_file()]
+    total_size = sum(f.stat().st_size for f in data_files)
+    size_str = f"{total_size / (1024*1024):.1f} MB" if total_size > 1024*1024 else f"{total_size / 1024:.1f} KB"
+
+    console.print(Panel(
+        f"[bold]Title:[/bold] {meta.get('title', 'N/A')}\n"
+        f"[bold]Authors:[/bold] {', '.join(meta.get('authors', [])[:3])}{'...' if len(meta.get('authors', [])) > 3 else ''}\n"
+        f"[bold]Files:[/bold] {len(data_files)} ({size_str})\n"
+        f"[bold]License:[/bold] {meta.get('license', 'unknown')}",
+        title="Dataset to Publish",
+    ))
+
+    # Get source name if not provided
+    if not source_name:
+        console.print("\n[bold]Enter a short unique name for this dataset[/bold]")
+        console.print("[dim]Use lowercase, underscores, no spaces (e.g., 'bandgap_ml_2025')[/dim]")
+        source_name = typer.prompt("Source name")
+
+    # Validate source name
+    import re
+    if not re.match(r'^[a-z][a-z0-9_]*$', source_name):
+        console.print("[red]Error: Source name must be lowercase, start with a letter, and contain only letters, numbers, and underscores[/red]")
+        raise typer.Exit(1)
+
+    # Confirm submission
+    env = "TEST" if test else "PRODUCTION"
+    if not typer.confirm(f"\nSubmit to MDF ({env})?", default=True):
+        console.print("[yellow]Cancelled[/yellow]")
+        raise typer.Exit(0)
+
+    # Submit to MDF
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Authenticating with Globus...", total=None)
+
+        try:
+            # Use Foundry's auth flow which handles Globus login
+            f = get_foundry(no_browser=False)
+
+            # Stage data to MDF public endpoint
+            progress.update(task, description="Creating staging directory...")
+
+            from foundry.mdf_client import StagingUploader, STAGING_ENDPOINT_ID
+
+            # Get transfer token from Foundry's auth
+            transfer_client = f.auths.get("transfer")
+            if hasattr(transfer_client, "authorizer") and hasattr(transfer_client.authorizer, "access_token"):
+                transfer_token = transfer_client.authorizer.access_token
+            else:
+                raise RuntimeError("Could not get transfer token from Foundry auth")
+
+            # Get NCSA HTTPS token for file uploads (different from transfer token)
+            ncsa_https_scope = "https://auth.globus.org/scopes/82f1b5c6-6e9b-11e5-ba47-22000b92c6ec/https"
+            ncsa_auth = f.auths.get(ncsa_https_scope)
+            if ncsa_auth and hasattr(ncsa_auth, "access_token"):
+                https_token = ncsa_auth.access_token
+            elif hasattr(ncsa_auth, "authorizer") and hasattr(ncsa_auth.authorizer, "access_token"):
+                https_token = ncsa_auth.authorizer.access_token
+            else:
+                # Fallback to transfer token (may not work)
+                console.print("[yellow]Warning: NCSA HTTPS token not found, using transfer token[/yellow]")
+                https_token = transfer_token
+
+            uploader = StagingUploader(transfer_token, https_token=https_token)
+            unique_id, remote_dir = uploader.create_staging_directory()
+
+            console.print(f"  [dim]Staging directory: {remote_dir}[/dim]")
+
+            # Upload files with progress
+            progress.update(task, description=f"Uploading {len(data_files)} files to staging...")
+
+            for i, file_path in enumerate(data_files, 1):
+                progress.update(task, description=f"Uploading [{i}/{len(data_files)}] {file_path.name}...")
+                uploader.upload_file(file_path, remote_dir)
+
+            console.print(f"  [dim]Uploaded {len(data_files)} files[/dim]")
+
+            # Get the authenticated connect client from Foundry
+            progress.update(task, description="Creating dataset record...")
+
+            from mdf_connect_client import MDFConnectClient
+            client = MDFConnectClient(
+                authorizer=f.auths["mdf_connect"],
+                test=test
+            )
+
+            # Create DC block (Dublin Core metadata)
+            client.create_dc_block(
+                title=meta.get('title', 'Untitled Dataset'),
+                authors=meta.get('authors', ['Unknown']),
+                affiliations=[],  # TODO: Extract from paper
+                publisher="Materials Data Facility",
+                publication_year=2025,
+                resource_type="Dataset",
+            )
+
+            # Add description
+            if meta.get('description'):
+                client.dc['descriptions'] = [{
+                    'description': meta['description'],
+                    'descriptionType': 'Abstract'
+                }]
+
+            # Add source DOI as related identifier
+            if meta.get('source_doi'):
+                client.dc['relatedIdentifiers'] = [{
+                    'relatedIdentifier': meta['source_doi'],
+                    'relatedIdentifierType': 'DOI',
+                    'relationType': 'IsSupplementTo'
+                }]
+
+            # Set source name
+            client.set_source_name(source_name)
+
+            # Add staged data as data source (using Globus file manager URL format)
+            progress.update(task, description="Configuring data source...")
+            globus_url = uploader.get_globus_url(remote_dir)
+            client.add_data_source(globus_url)
+
+            # Set organization
+            client.set_organization(meta.get('organization', 'MDF Open'))
+
+            # Update existing or submit new
+            progress.update(task, description="Submitting to MDF...")
+            if update:
+                result = client.submit_dataset(update=update)
+            else:
+                result = client.submit_dataset()
+
+            progress.update(task, description="Done!")
+
+        except ImportError as e:
+            if "mdf_connect_client" in str(e):
+                console.print("[red]Error: mdf_connect_client not installed[/red]")
+                console.print("Install with: [cyan]pip install mdf_connect_client[/cyan]")
+            else:
+                console.print(f"[red]Import error: {e}[/red]")
+            raise typer.Exit(1)
+        except Exception as e:
+            console.print(f"[red]Error submitting to MDF: {e}[/red]")
+            raise typer.Exit(1)
+
+    # Show result
+    if result.get('success'):
+        source_id = result.get('source_id', 'unknown')
+        console.print(Panel(
+            f"[green]Successfully submitted to MDF![/green]\n\n"
+            f"[bold]Source ID:[/bold] {source_id}\n"
+            f"[bold]Environment:[/bold] {env}\n"
+            f"[bold]Staged at:[/bold] {remote_dir}\n\n"
+            f"[dim]Check status with: foundry status {source_id}[/dim]",
+            title="Submission Complete",
+        ))
+    else:
+        console.print(Panel(
+            f"[yellow]Submission returned:[/yellow]\n{result}",
+            title="MDF Response",
+        ))
+
+
+@app.command()
 def version():
     """Show Foundry version."""
     try:
