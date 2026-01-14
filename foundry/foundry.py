@@ -342,8 +342,16 @@ class Foundry(FoundryBase):
         results = forge.match_dois(doi).search()
         if len(results) < 1:
             return None
-        else:
-            return results[0]
+        # Filter to find the result that actually has the matching DOI
+        for result in results:
+            result_doi = result.get('dc', {}).get('identifier', {})
+            if isinstance(result_doi, dict):
+                result_doi = result_doi.get('identifier', '')
+            if result_doi == doi:
+                return result
+        # If no exact match found, return None
+        logger.warning(f"DOI search returned {len(results)} results but none matched DOI {doi}")
+        return None
 
     def get_metadata_by_query(self, q: str, limit: int) -> dict:
         """Submit query to forge client and return results
