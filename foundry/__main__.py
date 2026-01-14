@@ -10,7 +10,6 @@ Usage:
 """
 
 import json
-import sys
 from typing import Optional
 
 import typer
@@ -18,7 +17,6 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from rich import print as rprint
 
 app = typer.Typer(
     name="foundry",
@@ -189,7 +187,7 @@ def schema(
         f = get_foundry()
         try:
             dataset = f.get_dataset(doi)
-        except Exception as e:
+        except Exception:
             console.print(f"[red]Error: Could not find dataset '{doi}'[/red]")
             raise typer.Exit(1)
 
@@ -340,7 +338,7 @@ def push_to_hf(
             console.print(f"[dim]{e}[/dim]")
             raise typer.Exit(1)
 
-        progress.update(task, description=f"Exporting to HuggingFace Hub...")
+        progress.update(task, description="Exporting to HuggingFace Hub...")
         try:
             url = push_to_hub(dataset, repo, token=token, private=private)
         except Exception as e:

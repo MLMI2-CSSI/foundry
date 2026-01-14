@@ -12,7 +12,7 @@ Usage:
 """
 
 try:
-    from .huggingface import push_to_hub
+    from .huggingface import push_to_hub  # noqa: F401
     __all__ = ["push_to_hub"]
 except ImportError:
     # huggingface extras not installed

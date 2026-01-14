@@ -12,7 +12,7 @@ Tools provided:
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +178,8 @@ TOOLS = [
     },
     {
         "name": "get_dataset_schema",
-        "description": "Get the schema of a dataset - what fields it contains, their descriptions, and units. Use this to understand the data structure before loading.",
+        "description": "Get the schema of a dataset - what fields it contains, their descriptions, "
+                       "and units. Use this to understand the data structure before loading.",
         "inputSchema": {
             "type": "object",
             "properties": {

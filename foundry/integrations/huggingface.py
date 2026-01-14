@@ -112,9 +112,6 @@ def push_to_hub(
 
 def _combine_inputs_targets(inputs: Dict, targets: Dict) -> Dict[str, Any]:
     """Combine input and target dictionaries into a single flat dict."""
-    import pandas as pd
-    import numpy as np
-
     combined = {}
 
     for key, value in inputs.items():
@@ -131,7 +128,6 @@ def _combine_inputs_targets(inputs: Dict, targets: Dict) -> Dict[str, Any]:
 def _flatten_data(data: Any) -> Dict[str, Any]:
     """Flatten nested data structure to a dict suitable for HF Dataset."""
     import pandas as pd
-    import numpy as np
 
     if isinstance(data, pd.DataFrame):
         return {col: data[col].tolist() for col in data.columns}
