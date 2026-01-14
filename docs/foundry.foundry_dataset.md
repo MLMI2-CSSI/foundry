@@ -57,7 +57,7 @@ __init__(
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L174"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L220"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `add_data`
 
@@ -76,7 +76,7 @@ Add data to the dataset. User must provide the location of the data as either a 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L209"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L259"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `clean_dc_dict`
 
@@ -88,7 +88,7 @@ Clean the Datacite dictionary of None values
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L205"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L255"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `clear_dataset_cache`
 
@@ -100,7 +100,7 @@ Deletes the cached data for this specific datset
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L213"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L263"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `delete_none`
 
@@ -112,12 +112,16 @@ Delete None values recursively from all of the dictionaries
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L52"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L58"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_as_dict`
 
 ```python
-get_as_dict(split: str = None, as_hdf5: bool = False)
+get_as_dict(
+    split: str = None,
+    as_hdf5: bool = False,
+    include_schema: bool = False
+)
 ```
 
 Returns the data from the dataset as a dictionary 
@@ -128,12 +132,21 @@ Returns the data from the dataset as a dictionary
  
  - <b>`split`</b> (string):  Split to create dataset on. 
  - <b>`**Default`</b>: ** ``None`` 
+ - <b>`as_hdf5`</b> (bool):  If True, return raw HDF5 data. 
+ - <b>`**Default`</b>: ** ``False`` 
+ - <b>`include_schema`</b> (bool):  If True, return data with schema information.  Useful for AI agents that need to understand the data structure. 
+ - <b>`**Default`</b>: ** ``False`` 
 
-Returns: (dict) Dictionary of all the data from the specified split 
+
+
+**Returns:**
+ 
+ - <b>`dict`</b>:  Dictionary of all the data from the specified split. 
+ - <b>`If include_schema is True, returns {"data"`</b>:  ..., "schema": ...} 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L83"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L129"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_as_tensorflow`
 
@@ -154,7 +167,7 @@ Returns: (TensorflowSequence) Tensorflow Sequence of all the data from the speci
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L68"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L114"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_as_torch`
 
@@ -175,7 +188,7 @@ Returns: (TorchDataset) PyTorch Dataset of all the data from the specified split
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L134"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L180"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_citation`
 
@@ -189,12 +202,34 @@ get_citation() → str
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L52"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L86"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `get_schema`
+
+```python
+get_schema() → dict
+```
+
+Get the schema of this dataset - what fields it contains. 
+
+
+
+**Returns:**
+ 
+ - <b>`dict`</b>:  Schema with fields, splits, data type, and metadata. 
+
+---
+
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L58"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_as_dict`
 
 ```python
-get_as_dict(split: str = None, as_hdf5: bool = False)
+get_as_dict(
+    split: str = None,
+    as_hdf5: bool = False,
+    include_schema: bool = False
+)
 ```
 
 Returns the data from the dataset as a dictionary 
@@ -205,12 +240,21 @@ Returns the data from the dataset as a dictionary
  
  - <b>`split`</b> (string):  Split to create dataset on. 
  - <b>`**Default`</b>: ** ``None`` 
+ - <b>`as_hdf5`</b> (bool):  If True, return raw HDF5 data. 
+ - <b>`**Default`</b>: ** ``False`` 
+ - <b>`include_schema`</b> (bool):  If True, return data with schema information.  Useful for AI agents that need to understand the data structure. 
+ - <b>`**Default`</b>: ** ``False`` 
 
-Returns: (dict) Dictionary of all the data from the specified split 
+
+
+**Returns:**
+ 
+ - <b>`dict`</b>:  Dictionary of all the data from the specified split. 
+ - <b>`If include_schema is True, returns {"data"`</b>:  ..., "schema": ...} 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L150"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry_dataset.py#L196"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `validate_metadata`
 

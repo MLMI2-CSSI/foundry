@@ -189,12 +189,12 @@ Returns the set of fields that have been explicitly set on this model instance.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L90"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L93"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryDatacite`
 A model for the Datacite schema based on the Datacite (dc_model.py) class. 
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L94"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L97"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
@@ -234,7 +234,7 @@ Returns the set of fields that have been explicitly set on this model instance.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L114"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L120"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `FoundryBase`
 Configuration information for Foundry instance 
@@ -266,7 +266,7 @@ Returns the set of fields that have been explicitly set on this model instance.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L131"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/models.py#L137"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `model_dump`
 
