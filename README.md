@@ -23,6 +23,17 @@
 pip install foundry-ml
 ```
 
+Need optional integrations? Install extras only when you need them:
+
+```bash
+pip install "foundry-ml[torch]"        # Enable dataset.get_as_torch()
+pip install "foundry-ml[tensorflow]"   # Enable dataset.get_as_tensorflow()
+pip install "foundry-ml[huggingface]"  # Enable push-to-hub
+pip install "foundry-ml[excel]"        # Excel import support via openpyxl
+```
+
+> PyTorch/TensorFlow extras expect wheels compiled against NumPy 2.0. Install PyTorch 2.3+ and TensorFlow 2.18+ (or newer builds with NumPy 2 support) to avoid ABI errors.
+
 ```python
 from foundry import Foundry
 
@@ -79,10 +90,10 @@ foundry mcp install  # Add to Claude Code
 |---------|-------------|
 | Search | Find datasets by keyword, DOI, or browse catalog |
 | Load | Automatic download, caching, and format conversion |
-| PyTorch/TensorFlow | `dataset.get_as_torch()`, `dataset.get_as_tensorflow()` |
+| PyTorch/TensorFlow (extras) | `dataset.get_as_torch()`, `dataset.get_as_tensorflow()` |
 | CLI | Terminal-based workflows |
 | MCP Server | AI assistant integration |
-| HuggingFace Export | Publish to HuggingFace Hub |
+| HuggingFace Export (extra) | Publish to HuggingFace Hub |
 
 ## Available Datasets
 
@@ -125,4 +136,4 @@ See [CONTRIBUTING.md](docs/how-to-contribute/contributing.md) for details.
 
 This work was supported by the National Science Foundation under NSF Award Number: 1931306 "Collaborative Research: Framework: Machine Learning Materials Innovation Infrastructure".
 
-Foundry integrates with [Materials Data Facility](https://materialsdatafacility.org), [DLHub](https://www.dlhub.org), and [MAST-ML](https://mastmldocs.readthedocs.io/).
+Foundry integrates with [Materials Data Facility](https://materialsdatafacility.org), [FuncX](https://www.funcx.org), and [MAST-ML](https://mastmldocs.readthedocs.io/).
