@@ -15,8 +15,8 @@ import json
 import builtins
 
 import mdf_toolbox
-from mdf_forge import Forge
 from foundry import foundry
+from foundry.mdf_client import MDFClient
 from foundry.foundry_dataset import FoundryDataset
 from foundry.auth import PubAuths
 from foundry.https_upload import upload_to_endpoint
@@ -93,17 +93,17 @@ def _delete_test_data(dataset):
 
 def test_foundry_init():
     f = foundry.Foundry(authorizers=auths)
-    assert isinstance(f.forge_client, Forge)
+    assert isinstance(f.forge_client, MDFClient)
     assert isinstance(f.connect_client, MDFConnectClient)
 
     if not is_gha:
 
         f2 = foundry.Foundry(download=False, authorizers=auths, no_browser=False, no_local_server=True)
-        assert isinstance(f2.forge_client, Forge)
+        assert isinstance(f2.forge_client, MDFClient)
         assert isinstance(f2.connect_client, MDFConnectClient)
 
         f3 = foundry.Foundry(download=False, authorizers=auths, no_browser=True, no_local_server=False)
-        assert isinstance(f3.forge_client, Forge)
+        assert isinstance(f3.forge_client, MDFClient)
         assert isinstance(f3.connect_client, MDFConnectClient)
 
 
