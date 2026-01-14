@@ -3,11 +3,11 @@ import pytest
 import os
 
 from mdf_connect_client import MDFConnectClient
-from mdf_forge import Forge
 import mdf_toolbox
 import pandas as pd
 
 from foundry import foundry
+from foundry.mdf_client import MDFClient
 
 is_gha = os.getenv("GITHUB_ACTIONS")
 client_id = os.getenv("CLIENT_ID")
@@ -87,7 +87,7 @@ def test_foundry_init(auths, elwood_data):
     test_dataset_name, test_doi, expected_title = elwood_data
 
     f = foundry.Foundry(authorizers=auths)
-    assert isinstance(f.forge_client, Forge)
+    assert isinstance(f.forge_client, MDFClient)
     assert isinstance(f.connect_client, MDFConnectClient)
 
 def test_search(auths, elwood_data):
