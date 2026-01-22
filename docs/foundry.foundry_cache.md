@@ -22,7 +22,7 @@ The FoundryCache manages the local storage of FoundryDataset objects
 
 ```python
 __init__(
-    forge_client: Forge,
+    forge_client: MDFClient,
     transfer_client: Any,
     use_globus,
     interval,
@@ -38,7 +38,7 @@ Initializes a FoundryCache object.
 
 **Args:**
  
- - <b>`forge_client`</b> (Forge):  The Forge client object. 
+ - <b>`forge_client`</b> (MDFClient):  The MDF client object. 
  - <b>`transfer_client`</b> (Any):  The transfer client object. 
  - <b>`use_globus`</b> (bool):  Flag indicating whether to use Globus for downloading. 
  - <b>`interval`</b> (int):  How often to wait before checking Globus transfer status. 

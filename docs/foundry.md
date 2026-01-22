@@ -9,6 +9,7 @@
 
 **Global Variables**
 ---------------
+- **mdf_client**
 - **auth**
 - **https_download**
 - **jsonschema_models**
@@ -18,6 +19,7 @@
 - **foundry_dataset**
 - **https_upload**
 - **foundry**
+- **errors**
 
 
 

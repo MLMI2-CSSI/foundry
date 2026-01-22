@@ -8,7 +8,7 @@ Methods to download files from a Globus endpoint
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/https_download.py#L12"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/https_download.py#L16"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `recursive_ls`
 
@@ -37,7 +37,7 @@ Find all files in a Globus directory recursively
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/https_download.py#L55"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/https_download.py#L69"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>function</kbd> `download_file`
 
@@ -55,6 +55,41 @@ Download a file to disk
  - <b>`base_directory`</b>:  Base directory for storing downloaded files 
  - <b>`https_config`</b>:  Configuration defining the URL of the server and the name of the dataset 
  - <b>`timeout`</b>:  Timeout for the download request in seconds (default: 1800) 
+
+
+
+**Returns:**
+ 
+ - <b>`str`</b>:  Path to the downloaded file 
+
+
+
+**Raises:**
+ 
+ - <b>`DownloadError`</b>:  If the download fails for any reason 
+
+
+---
+
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/https_download.py#L59"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+## <kbd>class</kbd> `DownloadError`
+Raised when a file download fails. 
+
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/https_download.py#L62"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `__init__`
+
+```python
+__init__(url: str, reason: str, destination: str = None)
+```
+
+
+
+
+
+
+
 
 
 

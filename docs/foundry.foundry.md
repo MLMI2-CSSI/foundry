@@ -783,7 +783,7 @@ __init__(
     no_local_server: bool = False,
     index: str = 'mdf',
     authorizers: dict = None,
-    use_globus: bool = True,
+    use_globus: bool = False,
     verbose: bool = False,
     interval: int = 10,
     parallel_https: int = 4,
@@ -821,7 +821,7 @@ Returns the set of fields that have been explicitly set on this model instance.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L441"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L484"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `check_status`
 
@@ -849,7 +849,7 @@ Check the status of your submission.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L256"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L283"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `dataset_from_metadata`
 
@@ -879,7 +879,7 @@ Converts the result of a forge query to a FoundryDatset object
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L343"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L378"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `filter_datasets_by_query`
 
@@ -904,7 +904,7 @@ Filters the given metadata based on the provided query string.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L283"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L310"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_dataset`
 
@@ -930,7 +930,7 @@ Should only return a single result.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L302"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L329"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_metadata_by_doi`
 
@@ -956,7 +956,7 @@ Should only return a single result.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L321"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L356"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_metadata_by_query`
 
@@ -981,12 +981,12 @@ Submit query to forge client and return results
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L245"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L271"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `list`
 
 ```python
-list(limit: int = None)
+list(limit: int = None, as_json: bool = False)
 ```
 
 List available Foundry datasets 
@@ -996,16 +996,17 @@ List available Foundry datasets
 **Args:**
  
  - <b>`limit`</b> (int):  maximum number of results to return 
+ - <b>`as_json`</b> (bool):  If True, return results as list of dicts (agent-friendly) 
 
 
 
 **Returns:**
  
- - <b>`List[FoundryDataset]`</b>:  List of FoundryDataset objects 
+ - <b>`List[FoundryDataset] or DataFrame or List[dict]`</b>:  Available datasets 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L380"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L415"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `publish_dataset`
 
@@ -1017,19 +1018,27 @@ publish_dataset(
 )
 ```
 
-Submit a dataset for publication; can choose to submit via HTTPS using `local_data_path` or via Globus  Transfer using the `globus_data_source` argument. Only one upload method may be specified. 
+Submit a dataset for publication via HTTPS using `local_data_path` or via Globus Transfer using the `globus_data_source` attribute. Only one upload method may be used. 
+
+
 
 **Args:**
  
  - <b>`foundry_dataset`</b> (FoundryDataset):  The dataset to be published. 
  - <b>`update`</b> (bool):  True if this is an update to a prior data package. 
- - <b>`test`</b> (bool):  If True, do not submit the dataset for publication (ie transfer to the MDF endpoint).  Default is False. 
+ - <b>`test`</b> (bool):  If True, do not submit the dataset for publication (i.e., transfer to the MDF endpoint).  Default is False. 
 
 
 
 **Returns:**
  
- - <b>`dict`</b>:  MDF Connect Response. Response from MDF Connect to allow tracking of dataset. Contains `source_id`, which can be used to check the status of the submission. 
+ - <b>`dict`</b>:  MDF Connect Response. Response from MDF Connect to allow tracking  of dataset. Contains `source_id`, which can be used to check the  status of the submission. 
+
+
+
+**Raises:**
+ 
+ - <b>`ValueError`</b>:  If no data source is specified or if both data sources are specified. 
 
 ---
 
@@ -1041,7 +1050,8 @@ Submit a dataset for publication; can choose to submit via HTTPS using `local_da
 search(
     query: str = None,
     limit: int = None,
-    as_list: bool = False
+    as_list: bool = False,
+    as_json: bool = False
 ) → List[FoundryDataset]
 ```
 
@@ -1056,12 +1066,13 @@ This method searches for available Foundry datasets based on the provided query 
  - <b>`query`</b> (str):  The query string to match. If a DOI is provided, it retrieves the metadata for that specific dataset. 
  - <b>`limit`</b> (int):  The maximum number of results to return. 
  - <b>`as_list`</b> (bool):  If True, the search results will be returned as a list instead of a DataFrame. 
+ - <b>`as_json`</b> (bool):  If True, return results as a list of dictionaries (agent-friendly). 
 
 
 
 **Returns:**
  
- - <b>`List[FoundryDataset] or DataFrame`</b>:  A list of search results as FoundryDataset objects or a DataFrame if as_list is False. 
+ - <b>`List[FoundryDataset] or DataFrame or List[dict]`</b>:  Search results in the requested format. 
 
 
 
@@ -1080,7 +1091,7 @@ This method searches for available Foundry datasets based on the provided query 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L360"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/foundry.py#L395"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `search_results_to_dataframe`
 
