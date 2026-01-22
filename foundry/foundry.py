@@ -317,14 +317,21 @@ class Foundry(FoundryBase):
 
         Returns:
              (FoundryDataset): A FoundryDataset loaded from the dataset metadata
+
+        Raises:
+            DatasetNotFoundError: If no dataset matches the given DOI
         """
+        from .errors import DatasetNotFoundError
+
         logger.info('using DOI to retrieve metadata')
         forge = self.forge_client.match_resource_types("dataset")
         results = forge.match_dois(doi).search()
         if len(results) < 1:
-            return None
-        else:
-            return self.dataset_from_metadata(results[0])
+            raise DatasetNotFoundError(
+                query=doi,
+                search_type="DOI"
+            )
+        return self.dataset_from_metadata(results[0])
 
     def get_metadata_by_doi(self, doi: str) -> dict:
         """Query foundry datasets by DOI

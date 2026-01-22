@@ -58,13 +58,38 @@ def _get_files(tc, ep, queue, max_depth):
 
 
 class DownloadError(Exception):
-    """Raised when a file download fails."""
+    """Raised when a file download fails.
+
+    Attributes:
+        url: The URL that failed to download
+        reason: Description of what went wrong
+        destination: Where the file was being saved
+        recovery_hint: Actionable suggestion for resolving the error
+    """
 
     def __init__(self, url: str, reason: str, destination: str = None):
         self.url = url
         self.reason = reason
         self.destination = destination
-        super().__init__(f"Failed to download {url}: {reason}")
+
+        # Provide actionable hints based on error type
+        if "timeout" in reason.lower():
+            self.recovery_hint = "Try increasing the timeout or check your network connection."
+        elif "403" in reason or "forbidden" in reason.lower():
+            self.recovery_hint = "Access denied. Try using Globus transfer with use_globus=True."
+        elif "404" in reason or "not found" in reason.lower():
+            self.recovery_hint = "File not found on server. The dataset may have moved or been removed."
+        elif "connection" in reason.lower() or "network" in reason.lower():
+            self.recovery_hint = "Check your network connection and try again."
+        elif "disk" in reason.lower() or "space" in reason.lower() or "write" in reason.lower():
+            self.recovery_hint = "Check disk space and write permissions for the cache directory."
+        else:
+            self.recovery_hint = "Try use_globus=True for Globus transfer, or check your network."
+
+        message = f"Failed to download {url}: {reason}"
+        if self.recovery_hint:
+            message += f" Hint: {self.recovery_hint}"
+        super().__init__(message)
 
 
 def download_file(item, base_directory, https_config, timeout=1800):

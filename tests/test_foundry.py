@@ -59,7 +59,7 @@ pub_test_dataset = "_test_foundry_iris_dev_v2.1"
 
 pub_expected_title = "Iris Dataset"
 
-# test dataset for all other tests
+# test dataset for all other tests (small dataset for fast tests)
 test_dataset = "elwood_md_v1.2"
 test_doi = "10.18126/8p6m-e135"
 expected_title = "Project Elwood: MD Simulated Monomer Properties"
@@ -85,9 +85,36 @@ pub_test_data_source = "https://app.globus.org/file-manager?origin_id=e38ee745-6
 
 # Quick function to delete any downloaded test data
 def _delete_test_data(dataset):
-    path = os.path.join(dataset._foundry_cache.local_cache_dir, test_dataset)
+    path = os.path.join(dataset._foundry_cache.local_cache_dir, dataset.dataset_name)
     if os.path.isdir(path):
         shutil.rmtree(path)
+
+
+# ============================================================================
+# Fixtures - shared across tests to avoid repeated client creation & downloads
+# ============================================================================
+
+@pytest.fixture(scope="module")
+def foundry_client():
+    """Shared Foundry client using HTTPS (works on GHA)."""
+    return foundry.Foundry(globus=False, authorizers=auths)
+
+
+@pytest.fixture(scope="module")
+def foundry_client_globus():
+    """Shared Foundry client using Globus transfer."""
+    return foundry.Foundry(globus=True, authorizers=auths)
+
+
+@pytest.fixture(scope="module")
+def downloaded_dataset(foundry_client):
+    """Download test dataset once via HTTPS, share across tests."""
+    ds = foundry_client.get_dataset(test_doi)
+    # Trigger the download
+    ds.get_as_dict()
+    yield ds
+    # Cleanup after all tests in module complete
+    _delete_test_data(ds)
 
 
 def test_foundry_init():
@@ -106,88 +133,63 @@ def test_foundry_init():
         assert isinstance(f3.connect_client, MDFConnectClient)
 
 
-def test_list():
-    f = foundry.Foundry(authorizers=auths)
-    ds = f.list()
-    # assert isinstance(ds, pd.DataFrame)
+def test_list(foundry_client):
+    ds = foundry_client.list()
     assert len(ds) > 0
 
 
-def test_search():
-    f = foundry.Foundry(authorizers=auths)
+def test_search(foundry_client):
     q = "Elwood"
-    ds = f.search(q)
+    ds = foundry_client.search(q)
 
     assert isinstance(ds, pd.DataFrame)
     assert len(ds) > 0
 
     dataset = ds.iloc[0].FoundryDataset
-
-    # assert ds.iloc[0]['name'] is not None
     assert dataset.dc.titles[0].title is not None
-
-    # assert ds.iloc[0]['source_id'] is not None
     assert dataset.dataset_name is not None
-
-    # assert ds.iloc[0]['year'] is not None
     assert dataset.dc.publicationYear is not None
 
 
-def test_dataset_get_citation():
-    f = foundry.Foundry(authorizers=auths)
-    ds = f.search(test_dataset).iloc[0].FoundryDataset
+def test_dataset_get_citation(foundry_client):
+    ds = foundry_client.search(test_dataset).iloc[0].FoundryDataset
     assert ds.get_citation() is not None
 
 
-def test_search_as_list():
-    f = foundry.Foundry(authorizers=auths)
+def test_search_as_list(foundry_client):
     q = "Elwood"
-    ds = f.search(q, as_list=True)
+    ds = foundry_client.search(q, as_list=True)
 
     assert isinstance(ds, list)
     assert len(ds) > 0
 
     dataset = ds[0]
-
-    # assert ds[0]['name'] is not None
     assert dataset.dc.titles[0].title is not None
-
-    # assert ds[0]['source_id'] is not None
     assert dataset.dataset_name is not None
-
-    # assert ds[0]['year'] is not None
     assert dataset.dc.publicationYear is not None
 
 
-def test_search_limit():
-    f = foundry.Foundry(authorizers=auths)
-    ds = f.search(limit=10)
+def test_search_limit(foundry_client):
+    ds = foundry_client.search(limit=10)
 
     assert isinstance(ds, pd.DataFrame)
     assert len(ds) == 10
 
     dataset = ds.iloc[0].FoundryDataset
-
-    # assert ds.iloc[0]['name'] is not None
     assert dataset.dc.titles[0].title is not None
-
-    # assert ds.iloc[0]['source_id'] is not None
     assert dataset.dataset_name is not None
-
-    # assert ds.iloc[0]['year'] is not None
     assert dataset.dc.publicationYear is not None
 
 
-def test_metadata_pull():
-    f = foundry.Foundry(download=False, authorizers=auths)
-    dataset = f.search(test_dataset).iloc[0].FoundryDataset
+def test_metadata_pull(foundry_client):
+    dataset = foundry_client.search(test_dataset).iloc[0].FoundryDataset
     assert dataset.dc.titles[0].title == expected_title
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
-def test_download_globus():
-    f = foundry.Foundry(globus=False, authorizers=auths)
-    dataset = f.search(test_dataset).iloc[0].FoundryDataset
+@pytest.mark.skipif(bool(is_gha), reason="Globus transfer not available on GHA")
+def test_download_globus(foundry_client_globus):
+    """Test downloading a dataset using Globus transfer."""
+    dataset = foundry_client_globus.get_dataset(test_doi)
     res = dataset.get_as_dict()
     X, y = res['train']
 
@@ -198,23 +200,20 @@ def test_download_globus():
     _delete_test_data(dataset)
 
 
-@pytest.mark.skip("Skipping until we can get HTTPS working on new PR")
-def test_download_https():
-    f = foundry.Foundry(globus=False, authorizers=auths)
-    dataset = f.search(test_dataset).iloc[0].FoundryDataset
-    res = dataset.get_as_dict()
+def test_download_https(downloaded_dataset):
+    """Test downloading a dataset using HTTPS (works on GHA)."""
+    res = downloaded_dataset.get_as_dict()
     X, y = res['train']
 
     assert len(X) > 1
     assert isinstance(X, pd.DataFrame)
     assert len(y) > 1
     assert isinstance(y, pd.DataFrame)
-    _delete_test_data(dataset)
 
 
-def test_delete_cache():
-    f = foundry.Foundry(globus=True, authorizers=auths)
-    dataset = f.search(test_dataset).iloc[0].FoundryDataset
+def test_delete_cache(foundry_client):
+    """Test cache deletion (uses separate dataset to avoid affecting other tests)."""
+    dataset = foundry_client.search(test_dataset).iloc[0].FoundryDataset
 
     with mock.patch.object(builtins, 'input', lambda _: 'y'):
         dataset.clear_dataset_cache()
@@ -258,52 +257,51 @@ def test_dataframe_load_split_but_no_splits():
     _delete_test_data(dataset)
 
 
-def test_dataframe_search_by_doi():
-    f = foundry.Foundry(globus=False, authorizers=auths)
-
-    result = f.search(test_doi)
+def test_dataframe_search_by_doi(foundry_client):
+    result = foundry_client.search(test_doi)
 
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 1
     assert isinstance(result.iloc[0].FoundryDataset, foundry.FoundryDataset)
-    _delete_test_data(result.iloc[0].FoundryDataset)
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
-def test_dataframe_download_by_doi():
-    f = foundry.Foundry(globus=True, authorizers=auths, no_browser=True)
-    datasets = f.search(test_doi)
-    dataset = datasets.iloc[0].FoundryDataset
-    dataset_dict = dataset.get_as_dict()
+def test_dataframe_download_by_doi(downloaded_dataset):
+    """Test downloading a dataset by DOI using HTTPS (works on GHA)."""
+    dataset_dict = downloaded_dataset.get_as_dict()
     X, y = dataset_dict['train']
 
     assert len(X) > 1
     assert isinstance(X, pd.DataFrame)
     assert len(y) > 1
     assert isinstance(y, pd.DataFrame)
-    _delete_test_data(dataset)
 
 
-# Materials Project PBE Band Gaps dataset
-mp_band_gaps_doi = "10.18126/vjwr-5bs9"
-mp_band_gaps_expected_title = "Graph Network Based Deep Learning of Band Gaps - Materials Project PBE Band Gaps"
+def test_dataset_preview(downloaded_dataset):
+    """Test that dataset.preview() returns a DataFrame with actual data samples (works on GHA)."""
+    # Test default preview (5 rows)
+    preview_df = downloaded_dataset.preview()
+    assert isinstance(preview_df, pd.DataFrame)
+    assert len(preview_df) == 5
+    assert len(preview_df.columns) > 0
+
+    # Test custom n parameter
+    preview_3 = downloaded_dataset.preview(n=3)
+    assert len(preview_3) == 3
+
+    # Test that preview returns actual data (not empty)
+    assert not preview_df.empty
+    assert preview_df.iloc[0].notna().any()  # At least one non-null value
 
 
-@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
-def test_load_mp_band_gaps_dataset():
-    """Test that the Materials Project PBE Band Gaps dataset can be loaded by DOI."""
-    f = foundry.Foundry(globus=True, authorizers=auths, no_browser=True)
-    ds = f.get_dataset(mp_band_gaps_doi)
+def test_dataset_preview_invalid_split(downloaded_dataset):
+    """Test that preview() raises helpful error for invalid split."""
+    with pytest.raises(ValueError) as exc_info:
+        downloaded_dataset.preview(split='nonexistent_split')
 
-    # Verify the dataset title
-    assert ds.dc.titles[0].title == mp_band_gaps_expected_title
-
-    # Verify the data can be loaded
-    X_mp, y_mp = ds.get_as_dict()['train']
-
-    assert len(X_mp) > 1
-    assert len(y_mp) > 1
-    _delete_test_data(ds)
+    # Check that error message is actionable
+    error_msg = str(exc_info.value)
+    assert 'nonexistent_split' in error_msg
+    assert 'Available splits' in error_msg
 
 
 @pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')

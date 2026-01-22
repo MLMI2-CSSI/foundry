@@ -120,7 +120,12 @@ class FoundryCache():
         files_to_download = list(tqdm(task_generator, desc="Finding files", unit="file"))
 
         if not files_to_download:
-            logger.warning(f"No files found for dataset: {dataset_name}")
+            logger.warning(
+                f"No files found for dataset: {dataset_name}. "
+                f"This could mean the dataset hasn't been published yet, "
+                f"or the source_id is incorrect. "
+                f"Try searching with: foundry.search('{dataset_name}')"
+            )
             return
 
         with ThreadPoolExecutor(self.parallel_https) as executor:
@@ -368,7 +373,11 @@ class FoundryCache():
 
         # Check to see whether file exists at path
         if not os.path.isfile(path_to_file):
-            raise FileNotFoundError(f"No file found at expected path: {path_to_file}")
+            raise FileNotFoundError(
+                f"No file found at expected path: {path_to_file}. "
+                f"The dataset may not have been downloaded yet. "
+                f"Try: dataset.clear_dataset_cache() then reload the dataset."
+            )
 
         # Handle Foundry-defined types.
         if foundry_schema.data_type == "tabular":
@@ -388,7 +397,12 @@ class FoundryCache():
                     break
             if dataframe is None:
                 logger.fatal(f"Cannot read {path_to_file} as tabular data, failed to load")
-                raise ValueError(f"Cannot read tabular data from {path_to_file}")
+                raise ValueError(
+                    f"Cannot read tabular data from {path_to_file}. "
+                    f"Tried JSON, CSV, and Excel formats. "
+                    f"The file may be corrupted or in an unsupported format. "
+                    f"Try: dataset.clear_dataset_cache() to re-download."
+                )
             return (
                 dataframe[self.get_keys(foundry_schema, "input")],
                 dataframe[self.get_keys(foundry_schema, "target")],
@@ -411,7 +425,11 @@ class FoundryCache():
                         tmp_data[s][key] = f[key][0:]
             return tmp_data
         else:
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"Data type '{foundry_schema.data_type}' is not supported. "
+                f"Foundry currently supports 'tabular' and 'hdf5' data types. "
+                f"Please check the dataset schema or contact the dataset authors."
+            )
 
     def get_keys(self,
                  foundry_schema: FoundrySchema,
