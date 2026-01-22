@@ -14,11 +14,13 @@ Also includes staging upload functionality for publishing local data to MDF with
 - **STAGING_ENDPOINT_ID**
 - **STAGING_BASE_PATH**
 - **TRANSFER_API_BASE**
+- **MDF_INDEX_ID**
+- **MDF_TEST_INDEX_ID**
 
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L22"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L26"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `StagingUploader`
 Handles uploading files to MDF staging endpoint. 
@@ -27,7 +29,7 @@ This allows users to publish local data to MDF without needing Globus Connect Pe
 
 Usage:  uploader = StagingUploader(transfer_token)  unique_id, remote_dir = uploader.create_staging_directory()  uploader.upload_file(Path("data.csv"), remote_dir)  # Then use globus://{STAGING_ENDPOINT_ID}{remote_dir}/ as data source 
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L36"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L40"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
@@ -49,7 +51,7 @@ Initialize uploader with Globus tokens.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L74"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L78"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `create_staging_directory`
 
@@ -66,7 +68,7 @@ Create a unique directory on the staging endpoint.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L162"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L166"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_globus_url`
 
@@ -91,7 +93,7 @@ This is the format expected by MDF Connect for data sources.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L133"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L137"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `upload_directory`
 
@@ -120,7 +122,7 @@ Upload all files from a local directory.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L100"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L104"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `upload_file`
 
@@ -150,12 +152,12 @@ Upload a single file to the staging endpoint via HTTPS.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L178"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L182"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `MDFClient`
 Minimal MDF client for dataset search and download. 
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L181"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L185"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
@@ -177,7 +179,7 @@ Initialize the MDF client.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L255"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L307"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `globus_download`
 
@@ -195,7 +197,7 @@ Download data using Globus Transfer.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L210"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L247"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `match_dois`
 
@@ -207,7 +209,7 @@ Filter by DOI.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L205"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L226"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `match_organizations`
 
@@ -219,7 +221,7 @@ Filter by organization.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L200"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L221"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `match_resource_types`
 
@@ -231,7 +233,25 @@ Filter by resource type.
 
 ---
 
-<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L215"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L231"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+
+### <kbd>method</kbd> `match_source_names`
+
+```python
+match_source_names(source_name: str) → MDFClient
+```
+
+Filter by source name or source ID. 
+
+
+
+**Args:**
+ 
+ - <b>`source_name`</b>:  The source_name or source_id of the dataset.  If a source_id is provided (e.g., 'dataset_v1.1'),  the version suffix is stripped automatically. 
+
+---
+
+<a href="https://github.com/MLMI2-CSSI/foundry/tree/main/foundry/mdf_client.py#L252"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `search`
 
@@ -245,6 +265,19 @@ search(
 ```
 
 Search for datasets. 
+
+
+
+**Args:**
+ 
+ - <b>`q`</b>:  Free-text search query 
+ - <b>`advanced`</b>:  Force advanced query mode. Automatically enabled  when field-specific filters (DOI, source_name) are used. 
+ - <b>`limit`</b>:  Maximum number of results to return 
+
+
+
+**Returns:**
+ List of dataset metadata dictionaries 
 
 
 
