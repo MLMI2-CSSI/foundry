@@ -116,12 +116,20 @@ class FoundryCache():
                                       https_config['source_ep_id'],
                                       https_config['folder_to_crawl'])
 
+        # Collect files first to show accurate progress
+        files_to_download = list(tqdm(task_generator, desc="Finding files", unit="file"))
+
+        if not files_to_download:
+            logger.warning(f"No files found for dataset: {dataset_name}")
+            return
+
         with ThreadPoolExecutor(self.parallel_https) as executor:
-            # First submit all files
-            futures = [executor.submit(download_file, f, self.local_cache_dir, https_config)
-                       for f in tqdm(task_generator, disable=not self.verbose, desc="Finding files")]
-            # Check that they completed successfully
-            for result in tqdm(as_completed(futures), disable=not self.verbose, desc="Downloading files"):
+            # Submit all download tasks
+            futures = {executor.submit(download_file, f, self.local_cache_dir, https_config): f
+                       for f in files_to_download}
+            # Track progress as downloads complete
+            for result in tqdm(as_completed(futures), total=len(futures),
+                               desc="Downloading", unit="file"):
                 if result.exception() is not None:
                     for f in futures:
                         f.cancel()

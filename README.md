@@ -77,6 +77,26 @@ foundry --help
 foundry mcp install  # Add to Claude Code
 ```
 
+## Export to HuggingFace Hub
+
+Share datasets with the broader ML community:
+
+```bash
+pip install "foundry-ml[huggingface]"
+foundry push-to-hf 10.18126/abc123 --repo your-username/dataset-name
+```
+
+Or programmatically:
+
+```python
+from foundry.integrations.huggingface import push_to_hub
+
+dataset = f.get_dataset("10.18126/abc123")
+push_to_hub(dataset, repo_id="your-username/dataset-name")
+```
+
+Exports include auto-generated Dataset Cards with full metadata, citations, and field documentation.
+
 ## Documentation
 
 - [Getting Started](https://ai-materials-and-chemistry.gitbook.io/foundry/quickstart)

@@ -8,6 +8,7 @@ from collections import deque
 
 import requests
 from globus_sdk import TransferClient
+from tqdm.auto import tqdm
 
 
 logger = logging.getLogger(__name__)
@@ -108,16 +109,28 @@ def download_file(item, base_directory, https_config, timeout=1800):
         with requests.get(url, stream=True, timeout=timeout) as response:
             response.raise_for_status()
 
-            downloaded_size = 0
+            total_size = int(response.headers.get('content-length', 0))
             logger.info(f"Starting download: {url}")
 
-            with open(destination, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
-                        downloaded_size += len(chunk)
+            # Show progress bar for files > 1MB
+            show_progress = total_size > 1024 * 1024
+            filename = os.path.basename(item.get('name', 'file'))
 
-            logger.info(f"Downloaded {downloaded_size / (1 << 20):,.2f} MB to {destination}")
+            with open(destination, "wb") as f:
+                if show_progress and total_size:
+                    with tqdm(total=total_size, unit='B', unit_scale=True,
+                              desc=filename, leave=False) as pbar:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:
+                                f.write(chunk)
+                                pbar.update(len(chunk))
+                else:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+
+            if total_size:
+                logger.info(f"Downloaded {total_size / (1 << 20):,.2f} MB to {destination}")
             return destination
 
     except requests.exceptions.RequestException as e:
