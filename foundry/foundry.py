@@ -368,11 +368,9 @@ class Foundry(FoundryBase):
         """
 
         forge = self.forge_client.match_resource_types("dataset").match_organizations('foundry')
-        metadata = forge.search(advanced=True)
-        if q:
-            metadata = self.filter_datasets_by_query(q, metadata)
-        if limit:
-            metadata = metadata[:limit]
+        # Pass query to Globus Search for server-side filtering (more efficient)
+        # Use advanced=True for exact field matching on resource_type and organizations
+        metadata = forge.search(q=q, advanced=True, limit=limit or 10)
         return metadata
 
     def filter_datasets_by_query(self, query_string: str, metadata: List[Dict]) -> List[Dict]:
