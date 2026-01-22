@@ -23,7 +23,6 @@ from foundry.https_upload import upload_to_endpoint
 from tests.test_data import datacite_data, valid_metadata, invalid_metadata
 
 
-
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 is_gha = os.getenv("GITHUB_ACTIONS")
@@ -285,6 +284,28 @@ def test_dataframe_download_by_doi():
     _delete_test_data(dataset)
 
 
+# Materials Project PBE Band Gaps dataset
+mp_band_gaps_doi = "10.18126/vjwr-5bs9"
+mp_band_gaps_expected_title = "Graph Network Based Deep Learning of Band Gaps - Materials Project PBE Band Gaps"
+
+
+@pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
+def test_load_mp_band_gaps_dataset():
+    """Test that the Materials Project PBE Band Gaps dataset can be loaded by DOI."""
+    f = foundry.Foundry(globus=True, authorizers=auths, no_browser=True)
+    ds = f.get_dataset(mp_band_gaps_doi)
+
+    # Verify the dataset title
+    assert ds.dc.titles[0].title == mp_band_gaps_expected_title
+
+    # Verify the data can be loaded
+    X_mp, y_mp = ds.get_as_dict()['train']
+
+    assert len(X_mp) > 1
+    assert len(y_mp) > 1
+    _delete_test_data(ds)
+
+
 @pytest.mark.skip(reason='Omitting testing beyond search functionality until next story')
 @pytest.mark.skipif(bool(is_gha), reason="Test does not succeed on GHA - no Globus endpoint")
 def test_globus_dataframe_load():
@@ -309,7 +330,7 @@ def test_globus_dataframe_load():
 #                         download=True,
 #                         globus=False,
 #                         authorizers=auths)
-    
+
 #     timestamp = datetime.now().timestamp()
 #     short_name = "https_peanuts_pub_{:.0f}".format(timestamp)
 #     local_path = "./data/https_test"

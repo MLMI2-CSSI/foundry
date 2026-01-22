@@ -18,6 +18,10 @@ STAGING_ENDPOINT_ID = "82f1b5c6-6e9b-11e5-ba47-22000b92c6ec"
 STAGING_BASE_PATH = "/tmp"
 TRANSFER_API_BASE = "https://transfer.api.globus.org/v0.10"
 
+# Globus Search Index IDs
+MDF_INDEX_ID = "1a57bbe5-5272-477f-9d31-343b8258b7a5"
+MDF_TEST_INDEX_ID = "aeccc263-f083-45f5-ab1d-08ee702b3384"
+
 
 class StagingUploader:
     """Handles uploading files to MDF staging endpoint.
@@ -193,9 +197,26 @@ class MDFClient:
         self.transfer_client = transfer_client
         self.data_mdf_authorizer = data_mdf_authorizer
         self.petrel_authorizer = petrel_authorizer
+        self._reset_query_state()
+
+    def _reset_query_state(self):
+        """Reset all query filters to their default state."""
         self._resource_types: List[str] = []
         self._organizations: List[str] = []
+        self._source_names: List[str] = []
         self._dois: List[str] = []
+
+    @property
+    def _has_field_filters(self) -> bool:
+        """Check if any field-specific filters are set.
+
+        Field filters require advanced query mode in Globus Search
+        for exact matching.
+        """
+        return bool(
+            self._dois or
+            self._source_names
+        )
 
     def match_resource_types(self, resource_type: str) -> "MDFClient":
         """Filter by resource type."""
@@ -205,6 +226,22 @@ class MDFClient:
     def match_organizations(self, organization: str) -> "MDFClient":
         """Filter by organization."""
         self._organizations = [organization]
+        return self
+
+    def match_source_names(self, source_name: str) -> "MDFClient":
+        """Filter by source name or source ID.
+
+        Args:
+            source_name: The source_name or source_id of the dataset.
+                If a source_id is provided (e.g., 'dataset_v1.1'),
+                the version suffix is stripped automatically.
+        """
+        import re
+        # Strip version suffix if present (e.g., _v1.1, _v2.0)
+        match = re.search(r"_v[0-9]+\.[0-9]+$", source_name)
+        if match:
+            source_name = source_name[:match.start()]
+        self._source_names = [source_name]
         return self
 
     def match_dois(self, doi: str) -> "MDFClient":
@@ -219,38 +256,53 @@ class MDFClient:
         limit: int = 10,
         **kwargs,
     ) -> List[Dict]:
-        """Search for datasets."""
+        """Search for datasets.
+
+        Args:
+            q: Free-text search query
+            advanced: Force advanced query mode. Automatically enabled
+                when field-specific filters (DOI, source_name) are used.
+            limit: Maximum number of results to return
+
+        Returns:
+            List of dataset metadata dictionaries
+        """
         if self.search_client is None:
             raise RuntimeError("Search client not configured")
 
-        query_parts = []
-        if q:
-            query_parts.append(q)
-        for rt in self._resource_types:
-            query_parts.append(f'mdf.resource_type:"{rt}"')
-        for org in self._organizations:
-            query_parts.append(f'mdf.organizations:"{org}"')
-        for doi in self._dois:
-            query_parts.append(f'dc.identifier.identifier:"{doi}"')
+        # Use advanced mode for field-specific filters (exact matching)
+        use_advanced = advanced or self._has_field_filters
 
-        full_query = " AND ".join(query_parts) if query_parts else "*"
+        try:
+            query_parts = []
+            if q:
+                query_parts.append(q)
+            for rt in self._resource_types:
+                query_parts.append(f'mdf.resource_type:"{rt}"')
+            for org in self._organizations:
+                query_parts.append(f'mdf.organizations:"{org}"')
+            for source_name in self._source_names:
+                query_parts.append(f'mdf.source_name:"{source_name}"')
+            for doi in self._dois:
+                query_parts.append(f'dc.identifier.identifier:"{doi}"')
 
-        index_id = "1a57bbe5-5272-477f-9d31-343b8258b7a5" if self.index == "mdf" else "aeccc263-f083-45f5-ab1d-08ee702b3384"
+            full_query = " AND ".join(query_parts) if query_parts else "*"
+            index_id = MDF_INDEX_ID if self.index == "mdf" else MDF_TEST_INDEX_ID
 
-        results = self.search_client.search(index_id, full_query, limit=limit, advanced=advanced)
+            results = self.search_client.search(
+                index_id, full_query, limit=limit, advanced=use_advanced
+            )
 
-        self._resource_types = []
-        self._organizations = []
-        self._dois = []
-
-        # Extract content from Globus Search response structure
-        # Structure: gmeta[].entries[].content
-        contents = []
-        for gmeta_entry in results.get("gmeta", []):
-            for entry in gmeta_entry.get("entries", []):
-                if "content" in entry:
-                    contents.append(entry["content"])
-        return contents
+            # Extract content from Globus Search response structure
+            # Structure: gmeta[].entries[].content
+            contents = []
+            for gmeta_entry in results.get("gmeta", []):
+                for entry in gmeta_entry.get("entries", []):
+                    if "content" in entry:
+                        contents.append(entry["content"])
+            return contents
+        finally:
+            self._reset_query_state()
 
     def globus_download(
         self,
