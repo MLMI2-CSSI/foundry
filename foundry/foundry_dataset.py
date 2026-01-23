@@ -4,6 +4,7 @@ import os
 import html
 from json2table import convert
 
+import pandas as pd
 from pydantic import ValidationError
 
 from .foundry_cache import FoundryCache
@@ -110,6 +111,90 @@ class FoundryDataset():
         }
 
     load = get_as_dict
+
+    def preview(self, n: int = 5, split: str = None) -> pd.DataFrame:
+        """Preview first n rows of actual data without loading entire dataset into memory.
+
+        This method provides a quick way to inspect what the data looks like.
+        Unlike _repr_html_ which shows metadata (title, authors, schema),
+        preview() shows actual data samples.
+
+        Args:
+            n: Number of rows to preview (default 5)
+            split: Which split to preview. If None, uses first available split.
+
+        Returns:
+            DataFrame with first n rows, combining input and target columns.
+
+        Example:
+            >>> dataset = f.get_dataset("10.18126/abc123")
+            >>> dataset.preview()  # See first 5 rows
+               formula  bandgap  formation_energy
+            0   Si       1.12     0.0
+            1   GaAs     1.43    -0.21
+            ...
+        """
+        # Determine which split to use
+        if split is None:
+            if self.foundry_schema.splits:
+                split = self.foundry_schema.splits[0].label
+            else:
+                split = 'train'  # Default fallback
+
+        # Load the data
+        data = self.get_as_dict()
+
+        if split not in data:
+            available = list(data.keys())
+            raise ValueError(
+                f"Split '{split}' not found. Available splits: {available}. "
+                f"Try: dataset.preview(split='{available[0]}')"
+            )
+
+        X, y = data[split]
+
+        # Combine inputs and targets into a single DataFrame
+        if isinstance(X, pd.DataFrame) and isinstance(y, pd.DataFrame):
+            df = pd.concat([X, y], axis=1)
+        elif isinstance(X, pd.DataFrame):
+            df = X.copy()
+            if isinstance(y, (pd.Series, pd.DataFrame)):
+                for col in y.columns if hasattr(y, 'columns') else [y.name]:
+                    df[col] = y[col] if hasattr(y, 'columns') else y
+        elif isinstance(X, dict) and isinstance(y, dict):
+            # HDF5 or dict-based data
+            combined = {**X, **y}
+            # Try to create DataFrame from dict values
+            try:
+                df = pd.DataFrame({k: v[:n] if hasattr(v, '__getitem__') else v
+                                   for k, v in combined.items()})
+            except Exception:
+                # If we can't make a DataFrame, show what we have
+                df = pd.DataFrame({'data': [str(combined)[:200] + '...']})
+        else:
+            # Fallback: try to create DataFrame directly
+            try:
+                input_keys = self._foundry_cache.get_keys(self.foundry_schema, "input")
+                target_keys = self._foundry_cache.get_keys(self.foundry_schema, "target")
+
+                df_data = {}
+                if hasattr(X, '__iter__') and not isinstance(X, str):
+                    for i, key in enumerate(input_keys):
+                        if i < len(X) if hasattr(X, '__len__') else True:
+                            val = X[i] if hasattr(X, '__getitem__') else X
+                            df_data[key] = val[:n] if hasattr(val, '__getitem__') else val
+                if hasattr(y, '__iter__') and not isinstance(y, str):
+                    for i, key in enumerate(target_keys):
+                        if i < len(y) if hasattr(y, '__len__') else True:
+                            val = y[i] if hasattr(y, '__getitem__') else y
+                            df_data[key] = val[:n] if hasattr(val, '__getitem__') else val
+
+                df = pd.DataFrame(df_data)
+            except Exception as e:
+                logger.warning(f"Could not create DataFrame preview: {e}")
+                df = pd.DataFrame({'input': [str(X)[:100]], 'target': [str(y)[:100]]})
+
+        return df.head(n)
 
     def get_as_torch(self, split: str = None):
         """Returns the data from the dataset as a TorchDataset

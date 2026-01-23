@@ -27,6 +27,7 @@ class TestDownloadFile:
         mock_response = mock.Mock()
         mock_response.iter_content = mock.Mock(return_value=[b"Example file content"])
         mock_response.raise_for_status = mock.Mock()
+        mock_response.headers = {"content-length": "20"}
         mock_response.__enter__ = mock.Mock(return_value=mock_response)
         mock_response.__exit__ = mock.Mock(return_value=False)
 
@@ -74,6 +75,7 @@ class TestDownloadFile:
         mock_response = mock.Mock()
         mock_response.iter_content = mock.Mock(return_value=[b"data"])
         mock_response.raise_for_status = mock.Mock()
+        mock_response.headers = {"content-length": "4"}
         mock_response.__enter__ = mock.Mock(return_value=mock_response)
         mock_response.__exit__ = mock.Mock(return_value=False)
 
